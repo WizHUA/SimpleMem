@@ -190,7 +190,8 @@ class MultiTenantVectorStore:
             scores = []
             for idx, row in df.iterrows():
                 score = 0
-                entry_keywords = set(k.lower() for k in (row["keywords"] or []))
+                row_keywords = row["keywords"] if row["keywords"] is not None else []
+                entry_keywords = set(k.lower() for k in row_keywords)
                 entry_text = row["lossless_restatement"].lower()
 
                 for kw in keywords:
@@ -267,7 +268,8 @@ class MultiTenantVectorStore:
             if persons:
                 persons_lower = set(p.lower() for p in persons)
                 for i, row in df.iterrows():
-                    row_persons = set(p.lower() for p in (row["persons"] or []))
+                    persons_val = row["persons"] if row["persons"] is not None else []
+                    row_persons = set(p.lower() for p in persons_val)
                     if not persons_lower.intersection(row_persons):
                         mask[i] = False
 
@@ -284,7 +286,8 @@ class MultiTenantVectorStore:
                 entities_lower = set(e.lower() for e in entities)
                 for i, row in df.iterrows():
                     if mask[i]:
-                        row_entities = set(e.lower() for e in (row["entities"] or []))
+                        entities_val = row["entities"] if row["entities"] is not None else []
+                        row_entities = set(e.lower() for e in entities_val)
                         if not entities_lower.intersection(row_entities):
                             mask[i] = False
 
