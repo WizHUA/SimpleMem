@@ -64,13 +64,19 @@ class Settings:
     # LLM Provider Configuration
     llm_provider: str = field(default_factory=lambda: os.getenv(
         "LLM_PROVIDER",
-        "openrouter"  # Options: "openrouter", "ollama"
+        "openrouter"  # Options: "openrouter", "requesty", "ollama"
     ))
 
     # OpenRouter Configuration (used when llm_provider is "openrouter")
     openrouter_base_url: str = field(default_factory=lambda: os.getenv(
         "OPENROUTER_BASE_URL",
         "https://openrouter.ai/api/v1"
+    ))
+
+    # Requesty Configuration (used when llm_provider is "requesty")
+    requesty_base_url: str = field(default_factory=lambda: os.getenv(
+        "REQUESTY_BASE_URL",
+        "https://router.requesty.ai/v1"
     ))
 
     # Ollama Configuration (used when llm_provider is "ollama")

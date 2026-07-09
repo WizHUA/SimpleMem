@@ -422,6 +422,17 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
 
 On Linux, `host.docker.internal` is enabled automatically via the Compose file.
 
+### Using Requesty
+
+[Requesty](https://requesty.ai) is an OpenAI-compatible router. To use it, set in `.env`:
+
+```bash
+LLM_PROVIDER=requesty
+REQUESTY_BASE_URL=https://router.requesty.ai/v1
+```
+
+Provide your Requesty API key (from [app.requesty.ai/api-keys](https://app.requesty.ai/api-keys)) when registering. Models use the same `provider/model` naming as OpenRouter (e.g. `openai/gpt-4.1-mini`). See the [Requesty docs](https://docs.requesty.ai) for available models.
+
 ### Useful commands
 
 ```bash
