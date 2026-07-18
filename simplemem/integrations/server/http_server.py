@@ -282,10 +282,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS configuration.
+#
+# Combining a wildcard origin ("*") with allow_credentials=True is invalid per
+# the CORS spec (browsers reject it) and, when Starlette reflects the request
+# Origin, it effectively lets any site make credentialed cross-origin calls.
+# To avoid that, credentials are only enabled when an explicit allow-list of
+# origins is configured via CORS_ALLOWED_ORIGINS (comma-separated). With the
+# default wildcard, credentials are disabled so cross-origin credential theft
+# is not possible.
+_cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "*").strip()
+if _cors_origins_env == "*":
+    _cors_allow_origins = ["*"]
+    _cors_allow_credentials = False
+else:
+    _cors_allow_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
+    _cors_allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_allow_origins,
+    allow_credentials=_cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
