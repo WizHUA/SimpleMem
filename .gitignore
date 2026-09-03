@@ -48,19 +48,29 @@ venv/
 ENV/
 env/
 .venv
+.conda/
+conda-env/
+__pypackages__/
 
 # IDE settings
 .vscode/
 .idea/
+.mypy_cache/
+.ruff_cache/
+.pyright/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
+Desktop.ini
 
 # Configuration files with secrets (root-level only; contains API keys)
 /config.py
 *.env
 .env
+.env.*
+!.env.example
 
 # Database files
 *.db
