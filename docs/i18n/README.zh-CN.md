@@ -85,7 +85,7 @@
 
 <br/>
 
-[🇬🇧 English](../../README.md) •
+[🇬🇧 English](../../README_en.md) •
 **🇨🇳 中文** •
 [🇯🇵 日本語](./README.ja.md) •
 [🇰🇷 한국어](./README.ko.md) •

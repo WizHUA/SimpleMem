@@ -86,7 +86,7 @@
 [🇮🇹 Italiano](./README.it.md) •
 **🇻🇳 Tiếng Việt** •
 [🇹🇷 Türkçe](./README.tr.md) •
-[🇬🇧 English](../../README.md)
+[🇬🇧 English](../../README_en.md)
 
 <br/>
 
