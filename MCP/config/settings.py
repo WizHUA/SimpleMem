@@ -74,6 +74,10 @@ class Settings:
         "OPENROUTER_BASE_URL",
         "https://openrouter.ai/api/v1"
     ))
+    openrouter_api_key: str = field(default_factory=lambda: os.getenv(
+        "OPENROUTER_API_KEY",
+        ""
+    ))
 
     # Requesty Configuration (used when llm_provider is "requesty")
     requesty_base_url: str = field(default_factory=lambda: os.getenv(

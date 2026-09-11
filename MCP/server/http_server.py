@@ -47,7 +47,7 @@ from config.settings import get_settings
 # === Pydantic Models ===
 
 class RegisterRequest(BaseModel):
-    openrouter_api_key: str
+    openrouter_api_key: str = ""
 
 
 class RegisterResponse(BaseModel):
@@ -314,7 +314,9 @@ app.add_middleware(
 async def register(request: RegisterRequest):
     """Register a new user with API key (or placeholder for Ollama)"""
     try:
-        api_key = request.openrouter_api_key
+        # Allow a server-side key for single-instance deployments while still
+        # letting a request-specific key take precedence for multi-tenancy.
+        api_key = request.openrouter_api_key.strip() or settings.openrouter_api_key.strip()
 
         # For Ollama, we don't need a real API key, use a placeholder
         if settings.llm_provider == "ollama":
