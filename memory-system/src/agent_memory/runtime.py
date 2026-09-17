@@ -246,7 +246,13 @@ class MemoryRuntime:
         return updates
 
     async def search(
-        self, scope: Scope, session_id: str, query: str, top_k: int = 10, timeout: float = 30.0, progress=None
+        self,
+        scope: Scope,
+        session_id: str,
+        query: str,
+        top_k: int | None = None,
+        timeout: float = 30.0,
+        progress=None,
     ):
         if timeout <= 0:
             raise ValueError("timeout must be positive")
@@ -360,7 +366,7 @@ class MemoryRuntime:
         scope: Scope,
         session_id: str,
         query: str,
-        top_k: int = 10,
+        top_k: int | None = None,
         timeout: float = 30.0,
         *,
         accelerate: bool = True,
@@ -397,6 +403,8 @@ class MemoryRuntime:
                 plan=retrieved.plan.model_dump(mode="json"),
                 steps=[step.model_dump(mode="json") for step in retrieved.steps],
                 sources=[hit.model_dump(mode="json") for hit in retrieved.results],
+                channels=[channel.model_dump(mode="json") for channel in retrieved.channels],
+                dynamic_k=retrieved.dynamic_k.model_dump(mode="json") if retrieved.dynamic_k else None,
             )
             retrieval_ms = (time.perf_counter() - started) * 1000
             session = await asyncio.to_thread(self.store.get_session, scope, session_id)
@@ -532,6 +540,8 @@ class MemoryRuntime:
             context_tokens=retrieved.context_tokens,
             warnings=warnings,
             memory_updates=updates,
+            channels=retrieved.channels,
+            dynamic_k=retrieved.dynamic_k,
             acceleration=AccelerationTrace(
                 enabled=enabled,
                 cache_hit=cache_status == "hit",

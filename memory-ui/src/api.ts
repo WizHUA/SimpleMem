@@ -65,6 +65,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ topic, project_id: projectId }),
     }),
+  sessions: () => request<Session[]>("/api/v1/sessions"),
   session: (id: string) => request<SessionSnapshot>(`/api/v1/sessions/${id}`),
   append: (
     sessionId: string,
@@ -95,13 +96,12 @@ export const api = {
     }>(`/api/v1/sessions/${sessionId}/extract`, {
       method: "POST",
     }),
-  answer: (sessionId: string, query: string, topK: number, accelerate = true) =>
+  answer: (sessionId: string, query: string, accelerate = true) =>
     request<AnswerResult>("/api/v1/answer", {
       method: "POST",
       body: JSON.stringify({
         session_id: sessionId,
         query,
-        top_k: topK,
         timeout: 180,
         accelerate,
       }),
@@ -109,7 +109,6 @@ export const api = {
   answerStream: async (
     sessionId: string,
     query: string,
-    topK: number,
     accelerate: boolean,
     onStage: (event: RunEvent) => void,
     onFallback: () => void,
@@ -128,15 +127,14 @@ export const api = {
         body: JSON.stringify({
           session_id: sessionId,
           query,
-          top_k: topK,
-          timeout: 180,
+            timeout: 180,
           accelerate,
         }),
       },
     );
     if ([404, 405].includes(response.status)) {
       onFallback();
-      return api.answer(sessionId, query, topK, accelerate);
+      return api.answer(sessionId, query, accelerate);
     }
     if (!response.ok) {
       const data = await response.json().catch(() => null);

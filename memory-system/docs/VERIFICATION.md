@@ -1,14 +1,15 @@
 # 交付验证记录
 
-2026-09-17，`full-forward`，后端版本 `0.3.1`。测试使用仓库指定 `simplemem-agentmemory` 环境；运行库版本见 [requirements.lock](../requirements.lock)。本轮范围不含 Engine 集成。本记录说明已执行范围，不替代目标环境验收。
+2026-09-17，`full-forward`，后端版本 `0.3.2`。测试使用仓库指定 `simplemem-agentmemory` 环境；运行库版本见 [requirements.lock](../requirements.lock)。本轮范围不含 Engine 集成。本记录说明已执行范围，不替代目标环境验收。
 
 | 检查 | 实际结果 | 范围 |
 |---|---|---|
-| Python 测试 | 184 passed | 存储、自动提取/演化、FTS/向量投影、别名链、维护、恢复、取消、隔离、HTTP及原SDK契约 |
+| Python 测试 | 190 passed | 存储、自动提取/演化、FTS/向量投影、别名链、维护、恢复、取消、隔离、HTTP及原SDK契约 |
 | Ruff 检查与格式 | 通过 | `src tests scripts` |
 | 前端 TypeScript 与 Vite 构建 | 通过 | 生成可部署静态产物 |
-| Playwright 交互 | 15 passed | 测试夹具，含引用弹窗与键盘焦点、Markdown代码/链接隔离、历史来源稳定、NDJSON中文分块、真实阶段/回放区分、归档恢复、错误恢复及窄屏 |
+| Playwright 交互 | 18 passed | 测试夹具，含引用弹窗与键盘焦点、Markdown代码/链接隔离、历史来源稳定、NDJSON中文分块、真实阶段/回放区分、归档恢复、错误恢复及窄屏 |
 | Playwright真实后端集成 | 1 passed | 真实FastAPI/临时SQLite，Bearer、版本替代、审计、撤回、幂等 |
+| 本轮动态检索/真实加速观测 | 通过 | 省略top_k自适应，通道状态真实；固定上下文disabled→miss→hit，详见 [观测报告](reports/ADAPTIVE_OBSERVATION.md) |
 | 本轮回答与来源体验 | 通用提示词5/5首次通过 | 真实模型空白zfc、未知昵称、zfc直接回答、当前值更正、主动询问来源；[原始答复](reports/ANSWER_UX_QUALITY.md) |
 | 真实模型冒烟 | 通过 | 抽取两条长期记忆、跨会话召回、生成缓存命中，见 [LIVE_SMOKE](LIVE_SMOKE.md) |
 | 真实模型实用会话 | 严格规则13/14，0请求错误 | 初轮12/14归档；zfc回忆/纠错、跨会话、别名、临时覆盖及超窗口长会话，见 [PRACTICAL_QUALITY](PRACTICAL_QUALITY.md) |
@@ -37,3 +38,5 @@ Python测试有一条来自 Starlette 测试客户端的 AnyIO 弃用提示；�
 `dist/full-forward-delivery.zip` 包含白名单源码、测试、文档、前端构建、当前后端wheel及 `MANIFEST.sha256.json`。不包含私有 `.env`、运行数据库、模型密钥或依赖目录。通过 `scripts/package_delivery.py` 重建。
 
 部署前仍需课程宿主、实际身份系统、HTTPS、目标容量、真实 embedding 服务、数据保留策略和恢复演练验收。当前实现是受控单节点交付版本，未声称已验证多副本水平扩展。
+
+本轮新增：动态K不受前端固定5条或API默认10条限制，实际三路分库统计，会话列表认证隔离及服务端更新时间排序。浏览器新增拖拽/键盘侧栏宽度、收起状态恢复、会话切换与草稿恢复、三路禁用/跳过状态及动态预算展示。

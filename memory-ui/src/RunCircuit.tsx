@@ -7,6 +7,8 @@ export interface RunEvent {
   plan?: import("./types").QueryPlan;
   steps?: import("./types").QueryStep[];
   sources?: import("./types").Hit[];
+  channels?: import("./types").RetrievalChannel[];
+  dynamic_k?: import("./types").DynamicK | null;
 }
 export type RunMode = "idle" | "live" | "recorded" | "error";
 const STAGES = [

@@ -548,7 +548,6 @@ test("阶段解析支持跨字节中文、分块行和无末尾换行", async ({
       const result = await api.answerStream(
         "test",
         "查询",
-        5,
         true,
         (stage: any) => stages.push(stage),
         () => {
@@ -843,13 +842,88 @@ test("检索图明确区分无需检索和检索完成但零证据", async ({ pa
   receipt.query_steps = [];
   await page.reload();
   await page.locator(".process-toggle").click();
-  await expect(page.locator(".flow-caption")).toContainText("本轮无需检索记忆");
-  await expect(page.locator(".flow-pool")).toHaveCount(0);
+  await expect(page.locator(".retrieval-routes")).toContainText("本轮无需检索记忆");
+  await expect(page.locator(".route-library")).toHaveCount(0);
   receipt.plan.route = "both";
   receipt.query_steps = [{ phase: "short_retrieval", action: "semantic_lexical_symbolic_recall", order: 1, input_count: 3, output_count: 0, detail: "没有匹配" }];
   await page.reload();
   await page.locator(".process-toggle").click();
-  await expect(page.locator(".flow-caption")).toContainText("本轮未找到可用的相关记忆");
-  await expect(page.locator(".flow-pool")).toHaveCount(2);
-  await expect(page.locator(".memory-flow svg")).toContainText("短期记忆 · 0");
+  await expect(page.locator(".retrieval-routes")).toContainText("本轮未找到可用的相关记忆");
+  await expect(page.locator(".route-library")).toHaveCount(2);
+  await expect(page.locator(".route-library").first()).toContainText("3 条输入 · 0 条召回");
+});
+
+test("动态K不再由界面固定上限，侧栏支持拖拽键盘和持久收起", async ({ page }) => {
+  const state = await memoryBackend(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await expect(page.getByText("动态 K · 自适应", { exact: true })).toBeVisible();
+  await expect(page.getByRole("spinbutton", { name: "检索上限 Top K" })).toHaveCount(0);
+  await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  expect(state.answers[0].top_k).toBeUndefined();
+  const handle = page.getByRole("separator", { name: "调整记忆面板宽度" });
+  const before = Number(await handle.getAttribute("aria-valuenow"));
+  await handle.focus(); await page.keyboard.press("ArrowLeft");
+  await expect(handle).toHaveAttribute("aria-valuenow", String(before + 24));
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + 100); await page.mouse.down();
+  await page.mouse.move(box.x - 85, box.y + 100); await page.mouse.up();
+  const resized = Number(await handle.getAttribute("aria-valuenow"));
+  expect(resized).toBeGreaterThan(before + 50);
+  await page.reload(); await expect(handle).toHaveAttribute("aria-valuenow", String(resized));
+  await page.getByRole("button", { name: "收起记忆面板", exact: true }).click();
+  await page.reload(); await expect(page.getByRole("button", { name: "展开记忆面板", exact: true })).toBeVisible();
+  await expect(handle).toHaveCount(0);
+});
+
+test("会话列表可搜索切换，草稿保留且不携带上一会话运行记录", async ({ page }) => {
+  await memoryBackend(page);
+  const sessions = [
+    { session_id: "session-demo-123456", topic: "原会话", project_id: "project-one", created_at: "2026-09-17T09:00:00Z" },
+    { session_id: "session-second", topic: "产品评审", project_id: "project-two", created_at: "2026-09-17T10:00:00Z" },
+  ];
+  await page.route("**/api/v1/sessions", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    return route.fulfill({ json: sessions });
+  });
+  await page.route("**/api/v1/sessions/session-second", (route) => route.fulfill({ json: { session: { ...sessions[1], goal: "", plan: [], pending_tasks: [], summary: "", processed_sequence: 0, revision: 1 }, recent_turns: [{ turn_id: "old-second", events: [{ role: "user", content: "第二个会话的历史记录", occurred_at: "2026-09-17T10:00:00Z" }] }], short_memories: [], pending_turns: 1 } }));
+  await page.goto("/");
+  await page.getByLabel("输入消息", { exact: true }).fill("尚未发送的草稿");
+  await page.getByRole("button", { name: "切换会话", exact: true }).click();
+  await page.getByRole("textbox", { name: "搜索会话" }).fill("project-two");
+  await expect(page.locator(".session-option")).toHaveCount(1);
+  await page.locator(".session-option").click();
+  await expect(page.getByRole("heading", { name: "产品评审", exact: true })).toBeVisible();
+  await expect(page.locator(".message-feed")).toContainText("第二个会话的历史记录");
+  await expect(page.getByLabel("输入消息", { exact: true })).toHaveValue("");
+  await expect(page.locator(".process-toggle")).toHaveCount(0);
+  await page.getByRole("button", { name: "切换会话", exact: true }).click();
+  await page.locator(".session-option").filter({ hasText: "原会话" }).click();
+  await expect(page.getByLabel("输入消息", { exact: true })).toHaveValue("尚未发送的草稿");
+  await expect(page.locator(".message-feed")).not.toContainText("第二个会话的历史记录");
+});
+
+test("三路检索显示真实通道状态、分库数量与动态预算", async ({ page }) => {
+  const state = await memoryBackend(page, { stageStream: true });
+  await page.goto("/"); await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  const receipt = state.receipts["answer-1"];
+  receipt.channels = ["short", "long"].flatMap((tier) => [
+    { view: "semantic", tier, status: "disabled", input_count: 0, matched_count: 0, selected_count: 0, detail: "not_configured" },
+    { view: "lexical", tier, status: "complete", input_count: 8, matched_count: 3, selected_count: 1, detail: "fts5_bm25" },
+    { view: "symbolic", tier, status: "skipped", input_count: 0, matched_count: 0, selected_count: 0, detail: "missing_subject_predicate" },
+  ]);
+  receipt.dynamic_k = { planned_depth: 8, required_info_count: 4, candidate_limit: 48, safety_cap: 20, target_k: 8, selected_k: 1, token_limit: 2000, used_tokens: 80, selection_policy: "coverage", score_semantics: "relevance" };
+  await page.reload(); await page.locator(".process-toggle").click();
+  await expect(page.locator(".route-channel.semantic")).toContainText("未配置向量服务");
+  await expect(page.locator('.route-bank-wire[data-view="semantic"].traversed')).toHaveCount(0);
+  await expect(page.locator('.route-bank-wire[data-view="lexical"].traversed')).toHaveCount(2);
+  await page.locator(".route-channel.lexical").click();
+  await expect(page.locator(".route-detail")).toContainText("8 条检查 / 3 条命中 / 1 条最终入选");
+  await expect(page.locator(".route-budget")).toContainText("规划深度 8");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await expect(page.locator(".route-channel.lexical")).toBeVisible();
+  await page.screenshot({ path: "test-results/routes-mobile.png", fullPage: true });
 });

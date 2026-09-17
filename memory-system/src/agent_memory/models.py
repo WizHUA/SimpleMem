@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def utcnow() -> datetime:
@@ -67,6 +67,14 @@ class Session(Contract):
     processed_sequence: int = 0
     revision: int = 0
     created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
+
+    @model_validator(mode="before")
+    @classmethod
+    def legacy_updated_at(cls, value):
+        if isinstance(value, dict) and "updated_at" not in value and "created_at" in value:
+            return {**value, "updated_at": value["created_at"]}
+        return value
 
 
 class Evidence(Contract):
@@ -176,6 +184,29 @@ class QueryStep(Contract):
     detail: str = ""
 
 
+class RetrievalChannel(Contract):
+    view: Literal["semantic", "lexical", "symbolic"]
+    tier: Literal["short", "long"] = "short"
+    status: Literal["complete", "disabled", "skipped"]
+    input_count: int = Field(default=0, ge=0)
+    matched_count: int = Field(default=0, ge=0)
+    selected_count: int = Field(default=0, ge=0)
+    detail: str = ""
+
+
+class RetrievalBudget(Contract):
+    planned_depth: int
+    required_info_count: int
+    candidate_limit: int
+    safety_cap: int
+    target_k: int
+    selected_k: int = 0
+    token_limit: int
+    used_tokens: int = 0
+    selection_policy: str = "slot_diversity_complete_evidence_bundles_within_budget"
+    score_semantics: str = "relevance_not_truth_confidence"
+
+
 class SearchResponse(Contract):
     results: list[Hit]
     plan: QueryPlan
@@ -186,6 +217,8 @@ class SearchResponse(Contract):
     steps: list[QueryStep] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     snapshot_valid_until: datetime | None = None
+    channels: list[RetrievalChannel] = Field(default_factory=list)
+    dynamic_k: RetrievalBudget | None = None
 
 
 class AccelerationTrace(Contract):
@@ -216,6 +249,8 @@ class AnswerContext(Contract):
     selected_k: int = 0
     acceleration: AccelerationTrace | None = None
     run_events: list[dict] = Field(default_factory=list)
+    channels: list[RetrievalChannel] = Field(default_factory=list)
+    dynamic_k: RetrievalBudget | None = None
 
 
 class AnswerResponse(Contract):
@@ -234,6 +269,8 @@ class AnswerResponse(Contract):
     warnings: list[str] = Field(default_factory=list)
     acceleration: AccelerationTrace | None = None
     memory_updates: list[dict] = Field(default_factory=list)
+    channels: list[RetrievalChannel] = Field(default_factory=list)
+    dynamic_k: RetrievalBudget | None = None
 
 
 class EvolutionInput(Contract):

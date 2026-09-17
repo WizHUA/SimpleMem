@@ -60,6 +60,7 @@ export interface Session {
   processed_sequence: number;
   revision: number;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Evidence {
@@ -129,6 +130,27 @@ export interface Hit {
   metadata: Record<string, unknown>;
 }
 
+export interface RetrievalChannel {
+  view: "semantic" | "lexical" | "symbolic";
+  tier: "short" | "long";
+  status: "complete" | "disabled" | "skipped";
+  input_count: number;
+  matched_count: number;
+  selected_count: number;
+  detail: string;
+}
+export interface DynamicK {
+  planned_depth: number;
+  required_info_count: number;
+  candidate_limit: number;
+  safety_cap: number;
+  target_k: number;
+  selected_k: number;
+  token_limit: number;
+  used_tokens: number;
+  selection_policy: string;
+  score_semantics: string;
+}
 export interface AnswerContext {
   sources: Hit[];
   citations: number[];
@@ -138,6 +160,8 @@ export interface AnswerContext {
   retrieval_mode: string;
   candidate_count: number;
   selected_k: number;
+  channels?: RetrievalChannel[];
+  dynamic_k?: DynamicK | null;
   acceleration?: Acceleration | null;
   run_events: import("./RunCircuit").RunEvent[];
 }
@@ -155,6 +179,8 @@ export interface AnswerResult {
   candidate_count: number;
   selected_k: number;
   context_tokens: number;
+  channels?: RetrievalChannel[];
+  dynamic_k?: DynamicK | null;
   warnings: string[];
   acceleration?: Acceleration;
   memory_updates?: Array<{

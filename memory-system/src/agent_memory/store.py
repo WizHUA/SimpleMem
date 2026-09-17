@@ -156,14 +156,16 @@ class SQLiteStore:
 
     def sessions(self, scope):
         with self._lock:
-            return [
+            sessions = [
                 Session.model_validate_json(row["body"])
                 for row in self._db.execute(
                     "SELECT body FROM sessions WHERE tenant=? AND owner=? ORDER BY rowid", self._who(scope)
                 ).fetchall()
             ]
+            return sorted(sessions, key=lambda session: session.updated_at, reverse=True)
 
     def _save_session(self, scope: Scope, session: Session):
+        session.updated_at = utcnow()
         self._db.execute(
             "UPDATE sessions SET body=? WHERE tenant=? AND owner=? AND id=?",
             (session.model_dump_json(), *self._who(scope), session.session_id),

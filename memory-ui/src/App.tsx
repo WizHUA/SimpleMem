@@ -17,7 +17,7 @@ import {
   FlaskConical,
   Settings2,
 } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -26,6 +26,7 @@ import {
   type RunEvent,
   type RunMode,
 } from "./RunCircuit";
+import { SessionPicker, ResizeHandle } from "./WorkspaceControls";
 import { AnswerMessage } from "./AnswerMessage";
 import { ProcessDisclosure } from "./ProcessDisclosure";
 import { LongTermInsights, MemoryChanges } from "./MemoryInsights";
@@ -706,6 +707,7 @@ function ObservePanel({
       </p>
       <section className="experiment-box">
         <h3>固定上下文对照</h3>
+        <ol className="acceleration-guide"><li>运行无缓存基线，记录完整生成耗时。</li><li>运行加速查询，建立当前上下文的缓存。</li><li>再次运行加速查询，观察命中状态与少调用次数。</li></ol>
         <p>{query || "先在左侧完成一次提问，再重复运行同一个问题。"}</p>
         <div className="experiment-actions">
           <button
@@ -785,14 +787,13 @@ function ObservePanel({
                 </td>
               </tr>
               <tr>
-                <th>上下文估算 tokens</th>
-                <td>{baseline?.context_tokens ?? "—"}</td>
-                <td>
-                  {stats.context_tokens_before} → {stats.context_tokens_after}
-                </td>
+                <th>生成输入估算 tokens</th>
+                <td>{baseline?.acceleration?.context_tokens_after ?? "—"}</td>
+                <td>{stats.context_tokens_after}</td>
               </tr>
             </tbody>
           </table>
+          <p className="measurement-note">本次上下文裁剪：全量历史估算 {stats.context_tokens_before} → 实际输入估算 {stats.context_tokens_after} tokens。缓存命中不会把输入长度变为零。</p>
           <p className="measurement-note">
             Token 数为字符数估算，不是供应商计费
             token。单次耗时受网络、模型和系统负载影响；没有重复采样时不宣称加速倍数。
@@ -833,10 +834,13 @@ export default function App() {
   const [baseline, setBaseline] = useState<AnswerResult | null>(null);
   const [lastQuery, setLastQuery] = useState("");
   const [retryQuery, setRetryQuery] = useState("");
-  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(() => localStorage.getItem("memory-inspector-open") !== "false");
+  const [inspectorWidth, setInspectorWidth] = useState(() => Math.max(320, Math.min(720, Number(localStorage.getItem("memory-inspector-width")) || 420)));
+  const drafts = useRef<Record<string, string>>({});
+  useEffect(() => { localStorage.setItem("memory-inspector-open", String(inspectorOpen)); }, [inspectorOpen]);
+  useEffect(() => { localStorage.setItem("memory-inspector-width", String(inspectorWidth)); }, [inspectorWidth]);
   const [tab, setTab] = useState<InspectorTab>("short");
   const [input, setInput] = useState("");
-  const [topK, setTopK] = useState(5);
   const [accelerate, setAccelerate] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -979,7 +983,6 @@ export default function App() {
       const result = await api.answerStream(
         snapshot.session.session_id,
         query,
-        topK,
         useAcceleration,
         (event) => setRunEvents((previous) => [...previous, event]),
         () => {
@@ -1143,6 +1146,14 @@ export default function App() {
           <em>{health?.model_provider || "Memory Engine"}</em>
         </div>
         <div className="header-actions">
+          <SessionPicker currentId={snapshot?.session.session_id} disabled={!!busy} onSelect={(id) => operation("切换会话", async () => {
+            if (snapshot) drafts.current[snapshot.session.session_id] = input;
+            await refresh(id);
+            localStorage.setItem("memory-session-id", id);
+            setInput(drafts.current[id] || ""); setTrace(null); setBaseline(null);
+            setRunEvents([]); setRunMode("idle"); setRetryQuery(""); setLastQuery("");
+            pendingUser.current = null; pendingReply.current = null;
+          })} />
           <button className="command-button inspector-toggle" type="button" aria-expanded={inspectorOpen} onClick={() => setInspectorOpen(!inspectorOpen)}><Database size={15} />{inspectorOpen ? "收起记忆面板" : "展开记忆面板"}</button>
           <button
             className="icon-button"
@@ -1169,6 +1180,7 @@ export default function App() {
           <button
             className="command-button"
             type="button"
+            title="新会话"
             onClick={() => setShowNew(true)}
             disabled={!!busy}
           >
@@ -1209,7 +1221,8 @@ export default function App() {
           </p>
         )}
       </div>
-      <main className={`workspace ${inspectorOpen ? "" : "inspector-closed"}`}>
+      <main className={`workspace ${inspectorOpen ? "" : "inspector-closed"}`} style={{ "--inspector-width": `${inspectorWidth}px` } as CSSProperties}>
+        {inspectorOpen && <ResizeHandle width={inspectorWidth} onResize={setInspectorWidth} />}
         <section className="conversation" aria-label="真实对话">
           <div className="conversation-header">
             <div>
@@ -1220,23 +1233,10 @@ export default function App() {
                   : apiBase}
               </span>
             </div>
-            <label className="top-k-control">
-              检索上限
-              <input
-                aria-label="检索上限 Top K"
-                type="number"
-                min="1"
-                max="20"
-                value={topK}
-                disabled={!!busy}
-                onChange={(event) => {
-                  setTopK(
-                    Math.max(1, Math.min(20, Number(event.target.value) || 1)),
-                  );
-                  setBaseline(null);
-                }}
-              />
-            </label>
+            <div className="adaptive-k" title="系统按问题复杂度、信息需求与证据预算自动选择，不固定返回条数">
+              <Sparkles size={14} /><span>动态 K · 自适应</span>
+              {trace && <strong>本轮 {trace.selected_k} 条证据</strong>}
+            </div>
           </div>
           <div className="message-feed" ref={feedRef}>
             {messages.length === 0 && (

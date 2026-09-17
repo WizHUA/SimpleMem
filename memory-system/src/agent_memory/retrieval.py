@@ -17,7 +17,17 @@ from datetime import datetime
 from uuid import uuid4
 from weakref import WeakValueDictionary
 
-from .models import Hit, Memory, QueryPlan, QueryStep, SearchResponse, Session, utcnow
+from .models import (
+    Hit,
+    Memory,
+    QueryPlan,
+    QueryStep,
+    RetrievalBudget,
+    RetrievalChannel,
+    SearchResponse,
+    Session,
+    utcnow,
+)
 from .ports import Embedder, MemoryModel
 from .providers import ModelOutputError
 from .retrieval_projection import RetrievalProjection
@@ -103,7 +113,7 @@ class Retriever:
         session: Session,
         short: list[Memory],
         long: list[Memory],
-        top_k: int = 10,
+        top_k: int | None = None,
         timeout: float = 30,
         projection_scope: str = "default",
         projection_generation: int | None = None,
@@ -115,7 +125,7 @@ class Retriever:
         User scope is therefore accepted here; session/project scopes are checked.
         """
         plan = self._rule_plan(query, short)
-        if not query.strip() or top_k <= 0:
+        if not query.strip() or (top_k is not None and top_k <= 0):
             return SearchResponse(
                 results=[],
                 plan=plan,
@@ -124,6 +134,7 @@ class Retriever:
                 selected_k=0,
                 context_tokens=0,
                 steps=[],
+                channels=self._idle_channels("empty_query_or_zero_cap"),
             )
         if timeout <= 0:
             raise TimeoutError("query deadline expired")
@@ -172,7 +183,7 @@ class Retriever:
         session: Session,
         short: list[Memory],
         long: list[Memory],
-        top_k: int,
+        top_k: int | None,
         plan: QueryPlan,
         progress=None,
     ) -> SearchResponse:
@@ -231,15 +242,26 @@ class Retriever:
                 context_tokens=0,
                 steps=steps,
                 warnings=warnings,
+                channels=self._idle_channels("route_none"),
             )
-        cap = min(top_k, self.settings.max_top_k)
+        cap = min(top_k, self.settings.max_top_k) if top_k is not None else self.settings.max_top_k
         depth = max(3, min(20, max(plan.depth, len(plan.required_info))))
         target = min(cap, depth)
         candidate_cap = min(self.settings.max_candidates, 6 * depth)
+        budget = RetrievalBudget(
+            planned_depth=plan.depth,
+            required_info_count=len(plan.required_info),
+            candidate_limit=candidate_cap,
+            safety_cap=cap,
+            target_k=target,
+            token_limit=self.settings.retrieval_token_limit,
+        )
         # STM is inspected first even for long-only plans to expose local exceptions.
         # Preserve an actual long-term quota until STM sufficiency is established.
         stm_limit = min(candidate_cap, max(1, candidate_cap // 3))
-        stm, semantic_stm = await self._recall(query, plan, session, short, stm_limit, now, warnings)
+        stm, semantic_stm, channels = await self._recall(
+            query, plan, session, short, stm_limit, now, warnings
+        )
         steps.append(
             QueryStep(
                 order=len(steps) + 1,
@@ -255,6 +277,8 @@ class Retriever:
                 "retrieval",
                 f"短期记忆召回 {len(stm)} 条候选",
                 steps=[step.model_dump(mode="json") for step in steps],
+                channels=[channel.model_dump(mode="json") for channel in channels],
+                dynamic_k=budget.model_dump(mode="json"),
             )
         pool = stm
         short_is_exact = self._exact_short_answer(query, plan, stm, short, session, now)
@@ -262,7 +286,10 @@ class Retriever:
         semantic_long = False
         if need_long:
             remaining = max(0, candidate_cap - len(stm))
-            ltm, semantic_long = await self._recall(query, plan, session, long, remaining, now, warnings)
+            ltm, semantic_long, long_channels = await self._recall(
+                query, plan, session, long, remaining, now, warnings
+            )
+            channels.extend(channel.model_copy(update={"tier": "long"}) for channel in long_channels)
             pool = self._merge(stm + ltm)
             steps.append(
                 QueryStep(
@@ -279,12 +306,18 @@ class Retriever:
                     "retrieval",
                     f"长期记忆补充 {len(ltm)} 条候选，正在筛选证据",
                     steps=[step.model_dump(mode="json") for step in steps],
+                    channels=[channel.model_dump(mode="json") for channel in channels],
+                    dynamic_k=budget.model_dump(mode="json"),
                 )
             warnings.append("long_term_searched")
             if plan.route == "short":
                 warnings.append("short_evidence_uncertain: one long-term supplement performed")
         else:
             warnings.append("short_only: exact single-field lookup; no long-term search")
+            channels.extend(
+                channel.model_copy(update={"tier": "long"})
+                for channel in self._idle_channels("short_evidence_sufficient")
+            )
 
         pool = await asyncio.to_thread(
             self._expand_entities,
@@ -335,6 +368,11 @@ class Retriever:
             )
         )
         selected, used = self._select(ranked, plan, target)
+        budget.selected_k, budget.used_tokens = len(selected), used
+        for channel in channels:
+            channel.selected_count = sum(
+                channel.view in hit.views and hit.memory.tier == channel.tier for hit in selected
+            )
         conflicts = self._pending_conflicts(selected, short + long, session, plan, now)
         if conflicts:
             warnings.append(
@@ -369,7 +407,19 @@ class Retriever:
             context_tokens=used,
             steps=steps,
             warnings=list(dict.fromkeys(warnings)),
+            channels=channels,
+            dynamic_k=budget,
         )
+
+    def _idle_channels(self, reason: str) -> list[RetrievalChannel]:
+        return [
+            RetrievalChannel(
+                view=view,
+                status="disabled" if view == "semantic" and not self.embedder else "skipped",
+                detail="embedding_not_configured" if view == "semantic" and not self.embedder else reason,
+            )
+            for view in ("semantic", "lexical", "symbolic")
+        ]
 
     @staticmethod
     def _applicable(memory: Memory, session: Session) -> bool:
@@ -406,9 +456,9 @@ class Retriever:
         limit: int,
         now: datetime,
         warnings: list[str],
-    ) -> tuple[list[_Match], bool]:
+    ) -> tuple[list[_Match], bool, list[RetrievalChannel]]:
         if limit <= 0:
-            return [], False
+            return [], False, self._idle_channels("candidate_budget_exhausted")
         # A single symbolic label is only one recall view for multi-slot queries.
         # Using it as a global gate can hide every other requested fact, even
         # though the planner supplied separate semantic queries/requirements.
@@ -431,7 +481,7 @@ class Retriever:
             if eligible:
                 warnings.append("symbolic_field_miss: fell back to scoped recall")
         if not eligible:
-            return [], False
+            return [], False, self._idle_channels("no_eligible_memories")
         terms = _terms(" ".join([query, *plan.keywords, *plan.required_info, *plan.semantic_queries]))
         namespace, generation = self._projection_context.get()
         lexical_keys = set(
@@ -499,7 +549,32 @@ class Retriever:
                 add(memory, score, "semantic")
             semantic_used = True
         result = sorted(matches.values(), key=lambda hit: (-hit.score, hit.memory.memory_id))[:limit]
-        return result, semantic_used
+        channels = [
+            RetrievalChannel(
+                view="lexical",
+                status="complete",
+                input_count=len(lexical_eligible),
+                matched_count=sum("lexical" in hit.views for hit in matches.values()),
+                detail="fts5_candidates_bm25_scored",
+            ),
+            RetrievalChannel(
+                view="symbolic",
+                status="complete" if plan.subject and plan.predicate else "skipped",
+                input_count=len(eligible) if plan.subject and plan.predicate else 0,
+                matched_count=sum("symbolic" in hit.views for hit in matches.values()),
+                detail="exact_subject_predicate"
+                if plan.subject and plan.predicate
+                else "subject_and_predicate_required",
+            ),
+            RetrievalChannel(
+                view="semantic",
+                status="complete" if semantic_used else "disabled",
+                input_count=len(eligible) if semantic_used else 0,
+                matched_count=sum("semantic" in hit.views for hit in matches.values()),
+                detail="cosine_threshold_0.35" if semantic_used else "embedding_not_configured",
+            ),
+        ]
+        return result, semantic_used, channels
 
     async def _projected_vectors(self, queries, memories, namespace, generation):
         endpoint, model = getattr(self.embedder, "endpoint", None), getattr(self.embedder, "model", None)

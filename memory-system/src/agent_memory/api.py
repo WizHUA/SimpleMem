@@ -30,7 +30,7 @@ class CreateSession(Contract):
 class Query(Contract):
     session_id: str = Field(min_length=1, max_length=100)
     query: str = Field(min_length=1, max_length=3000)
-    top_k: int = Field(default=10, ge=0, le=100)
+    top_k: int | None = Field(default=None, ge=0, le=100)
     timeout: float = Field(default=180.0, gt=0, le=180)
     accelerate: bool = True
 
@@ -150,6 +150,10 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
     @app.post("/api/v1/sessions", status_code=201)
     async def create_session(body: CreateSession, scope: ScopeDep, service: RuntimeDep):
         return await asyncio.to_thread(service.store.create_session, scope, body.topic, body.project_id)
+
+    @app.get("/api/v1/sessions")
+    async def list_sessions(scope: ScopeDep, service: RuntimeDep):
+        return await asyncio.to_thread(service.store.sessions, scope)
 
     @app.get("/api/v1/sessions/{session_id}")
     async def session_state(session_id: str, scope: ScopeDep, service: RuntimeDep):
