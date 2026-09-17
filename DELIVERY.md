@@ -4,7 +4,7 @@
 
 ## 启动
 
-在 `SimpleMem` 下分别打开两个 PowerShell 终端。环境遵循 [AGENTS.md](AGENTS.md)。未建立 Conda 环境时先运行 `conda env create -f environment.yml`。
+在 `SimpleMem` 或交付包解压根目录下分别打开两个 PowerShell 终端。环境遵循 [AGENTS.md](AGENTS.md)。完整仓库可用 `conda env create -f environment.yml` 重建原环境；精简交付包未包含上游项目环境，首次运行可用 `conda create -n simplemem-agentmemory python=3.12 pip` 创建环境，再执行下面的后端安装命令。已有同名环境时直接复用。
 
 后端：
 
