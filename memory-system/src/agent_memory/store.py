@@ -11,6 +11,7 @@ import threading
 from contextlib import contextmanager
 from pathlib import Path
 
+from .evidence_policy import explicit_persistence_request, question_only
 from .models import (
     Candidate,
     EvolutionInput,
@@ -63,18 +64,31 @@ class SQLiteStore:
                 tenant TEXT NOT NULL, owner TEXT NOT NULL, group_key TEXT NOT NULL,
                 body TEXT NOT NULL, PRIMARY KEY(tenant, owner, group_key)
             );
+            CREATE TABLE IF NOT EXISTS evolution_jobs (
+                tenant TEXT NOT NULL, owner TEXT NOT NULL, session TEXT NOT NULL,
+                id TEXT PRIMARY KEY, memory_ids TEXT NOT NULL
+            );
             PRAGMA user_version=1;
         """)
 
     @contextmanager
     def transaction(self):
         with self._lock:
-            self._db.execute("BEGIN IMMEDIATE")
+            nested = self._db.in_transaction
+            savepoint = new_id("sp")
+            self._db.execute(f"SAVEPOINT {savepoint}" if nested else "BEGIN IMMEDIATE")
             try:
                 yield
-                self._db.commit()
+                if nested:
+                    self._db.execute(f"RELEASE SAVEPOINT {savepoint}")
+                else:
+                    self._db.commit()
             except BaseException:
-                self._db.rollback()
+                if nested:
+                    self._db.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                    self._db.execute(f"RELEASE SAVEPOINT {savepoint}")
+                else:
+                    self._db.rollback()
                 raise
 
     @staticmethod
@@ -131,6 +145,15 @@ class SQLiteStore:
             if row is None:
                 raise NotFoundError("Session not found")
             return Session.model_validate_json(row["body"])
+
+    def sessions(self, scope):
+        with self._lock:
+            return [
+                Session.model_validate_json(row["body"])
+                for row in self._db.execute(
+                    "SELECT body FROM sessions WHERE tenant=? AND owner=? ORDER BY rowid", self._who(scope)
+                ).fetchall()
+            ]
 
     def _save_session(self, scope: Scope, session: Session):
         self._db.execute(
@@ -206,7 +229,7 @@ class SQLiteStore:
                 table: self._db.execute(
                     f"DELETE FROM {table} WHERE tenant=? AND owner=?", self._who(scope)
                 ).rowcount
-                for table in ("summaries", "audit", "memories", "turns", "sessions")
+                for table in ("evolution_jobs", "summaries", "audit", "memories", "turns", "sessions")
             }
 
     def _check_evidence(self, scope: Scope, session: Session, item: Candidate, new_ids: set[str] | None):
@@ -215,6 +238,7 @@ class SQLiteStore:
         if item.valid_from and item.valid_to and item.valid_from >= item.valid_to:
             raise ValueError("Memory valid_from must be before valid_to")
         roles = []
+        factual_sources = []
         for ref in item.evidence:
             row = self._db.execute(
                 "SELECT body FROM turns WHERE tenant=? AND owner=? AND session=? AND id=?",
@@ -226,12 +250,28 @@ class SQLiteStore:
             if ref.event_index >= len(turn.events) or ref.quote not in turn.events[ref.event_index].content:
                 raise ValueError("Evidence quote/index does not match source")
             roles.append(turn.events[ref.event_index].role)
+            factual_sources.append(
+                turn.events[ref.event_index].role != "assistant"
+                and not question_only(turn.events[ref.event_index].content)
+            )
         if new_ids is not None and not any(e.turn_id in new_ids for e in item.evidence):
             raise ValueError("New memories must cite at least one pending turn")
         if item.assertion in {"stated", "observed"} and set(roles) == {"assistant"}:
             raise ValueError("Assistant output alone cannot establish a user or observed fact")
+        if item.assertion in {"stated", "observed"} and all(
+            question_only(ref.quote) for ref in item.evidence
+        ):
+            raise ValueError("Questions alone cannot establish affirmative facts")
+        if item.assertion in {"stated", "observed"} and not any(factual_sources):
+            raise ValueError("Questions and assistant replies cannot establish affirmative facts")
 
     def _save_memory(self, scope: Scope, memory: Memory):
+        previous = self._db.execute(
+            "SELECT body FROM memories WHERE tenant=? AND owner=? AND id=? AND version=?",
+            (*self._who(scope), memory.memory_id, memory.version),
+        ).fetchone()
+        if previous:
+            memory.revision = Memory.model_validate_json(previous["body"]).revision + 1
         self._db.execute(
             "INSERT OR REPLACE INTO memories VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -304,7 +344,7 @@ class SQLiteStore:
                         (e.turn_id, e.event_index, e.quote): e for e in existing.evidence + item.evidence
                     }.values()
                 )
-                updated = existing.model_copy(update={"evidence": merged})
+                updated = existing.model_copy(update={"evidence": merged[-30:]})
                 self._save_memory(scope, updated)
                 self._record(scope, "merge_evidence", updated, existing)
                 return updated
@@ -352,11 +392,7 @@ class SQLiteStore:
             if not new_turns or new_turns != pending[: len(new_turns)]:
                 raise ValueError("Extraction must commit a non-empty contiguous prefix of pending turns")
             explicit_long_term_request = any(
-                event.role == "user"
-                and any(
-                    marker in event.content
-                    for marker in ("长期记忆", "长期规则", "跨会话记住", "长期保存", "存入长期")
-                )
+                event.role == "user" and explicit_persistence_request(event.content)
                 for turn in new_turns
                 for event in turn.events
             )
@@ -376,7 +412,34 @@ class SQLiteStore:
             latest.processed_sequence = new_turns[-1].sequence
             latest.revision += 1
             self._save_session(scope, latest)
+            if items:
+                self._db.execute(
+                    "INSERT INTO evolution_jobs VALUES(?,?,?,?,?)",
+                    (
+                        *self._who(scope),
+                        session.session_id,
+                        new_id("job"),
+                        json.dumps([m.memory_id for m in items]),
+                    ),
+                )
             return items
+
+    def evolution_jobs(self, scope, session_id):
+        with self._lock:
+            self.get_session(scope, session_id)
+            return [
+                dict(row)
+                for row in self._db.execute(
+                    "SELECT id,memory_ids FROM evolution_jobs WHERE tenant=? AND owner=? AND session=? ORDER BY rowid",
+                    (*self._who(scope), session_id),
+                ).fetchall()
+            ]
+
+    def finish_evolution(self, scope, job_id):
+        with self.transaction():
+            self._db.execute(
+                "DELETE FROM evolution_jobs WHERE tenant=? AND owner=? AND id=?", (*self._who(scope), job_id)
+            )
 
     def memories(self, scope: Scope, session_id: str | None = None, tier: str | None = None) -> list[Memory]:
         with self._lock:
@@ -409,15 +472,33 @@ class SQLiteStore:
         with self.transaction():
             source = self.get_memory(scope, memory_id)
             before_result = source
-            allowed_status = {"active", "pending"} if data.action == "retract" else {"active"}
+            allowed_status = {"active", "pending", "archived"} if data.action == "retract" else {"active"}
+            if data.action == "restore":
+                allowed_status = {"archived"}
+            elif data.action == "activate":
+                allowed_status = {"pending"}
             if source.version != data.expected_version or source.status not in allowed_status:
                 raise ConflictError("Memory version/status changed")
-            if data.action == "defer":
+            if data.expected_revision is not None and source.revision != data.expected_revision:
+                raise ConflictError("Memory revision changed; reload before applying the action")
+            if data.action in {"restore", "activate"}:
+                if source.tier == "long" and self._has_unresolved_long_conflict(
+                    scope, source, source.scope_id
+                ):
+                    raise ConflictError("Resolve active conflicting facts before restoring this memory")
+                result = source.model_copy(update={"status": "active"})
+            elif data.action == "archive":
+                result = source.model_copy(update={"status": "archived"})
+            elif data.action == "defer":
                 result = source.model_copy(update={"status": "pending"})
             elif data.action == "retract":
                 result = source.model_copy(update={"status": "retracted"})
             else:
-                if source.tier != "short" or not source.durable or source.scope_type == "session":
+                if (
+                    (source.tier != "short" and data.action != "merge")
+                    or not source.durable
+                    or source.scope_type == "session"
+                ):
                     raise ValueError("Promotion requires a durable short memory scoped to user/project")
                 if source.assertion in {"hypothetical", "inferred"}:
                     raise ValueError("Unverified inference/hypothesis cannot be promoted")
@@ -444,13 +525,18 @@ class SQLiteStore:
                         or target.tier != "long"
                     ):
                         raise ConflictError("Target version/status changed")
+                    if data.target_revision is not None and target.revision != data.target_revision:
+                        raise ConflictError("Target revision changed")
                     if self._fact_key(target) != self._fact_key(source):
                         raise ValueError("Cannot replace a different fact or scope")
+                    if source.memory_id == target.memory_id:
+                        raise ValueError("Evolution source and target must differ")
                     before_result = target
                     if data.action == "merge":
                         if (
                             target.value != source.value
-                            or target.content != source.content
+                            or target.assertion != source.assertion
+                            or target.kind != source.kind
                             or target.valid_from != source.valid_from
                             or target.valid_to != source.valid_to
                         ):
@@ -463,7 +549,19 @@ class SQLiteStore:
                                 for e in target.evidence + source.evidence
                             }.values()
                         )
-                        result = target.model_copy(update={"evidence": evidence})
+                        result = target.model_copy(update={"evidence": evidence[-30:]})
+                    elif data.action == "correct":
+                        old = target.model_copy(update={"status": "retracted"})
+                        self._save_memory(scope, old)
+                        self._record(scope, "correct_retract", old, target)
+                        result = source.model_copy(
+                            update={
+                                "memory_id": target.memory_id,
+                                "version": target.version + 1,
+                                "tier": "long",
+                                "supersedes": f"{target.memory_id}:{target.version}",
+                            }
+                        )
                     else:
                         t = data.effective_at
                         if t is None:
@@ -491,6 +589,108 @@ class SQLiteStore:
             self._record(scope, data.action, result, before_result)
             return result
 
+    def save_group_synthesis(self, scope, path, scope_type, scope_id, synthesis):
+        """Publish a derived summary only if its exact source versions remain current."""
+        with self.transaction():
+            key = json.dumps([scope_type, scope_id, path], ensure_ascii=False)
+            row = self._db.execute(
+                "SELECT body FROM summaries WHERE tenant=? AND owner=? AND group_key=?",
+                (*self._who(scope), key),
+            ).fetchone()
+            if row is None:
+                raise ConflictError("Group changed during synthesis; rebuild before retry")
+            group = json.loads(row["body"])
+            payload = (
+                synthesis.model_dump(mode="json") if hasattr(synthesis, "model_dump") else dict(synthesis)
+            )
+            if not payload.get("source_refs") or not set(payload["source_refs"]) <= set(group["memory_refs"]):
+                raise ValueError("Synthesis sources must belong to current group")
+            now = utcnow()
+            for ref in group["memory_refs"]:
+                mid, version = ref.rsplit(":", 1)
+                memory = self.get_memory(scope, mid)
+                if (
+                    memory.version != int(version)
+                    or memory.status != "active"
+                    or (memory.valid_from and memory.valid_from > now)
+                    or (memory.valid_to and memory.valid_to <= now)
+                ):
+                    raise ConflictError("Summary source no longer active")
+            group["synthesis"] = {**payload, "derived": True, "usable_as_evidence": False}
+            self._db.execute(
+                "UPDATE summaries SET body=? WHERE tenant=? AND owner=? AND group_key=?",
+                (json.dumps(group, ensure_ascii=False), *self._who(scope), key),
+            )
+            return group
+
+    def reconcile_short(self, scope, candidates):
+        from .maintenance import correction_relation, same_fact
+
+        actions = []
+        with self.transaction():
+            for candidate in candidates:
+                source = self.get_memory(scope, candidate.memory_id)
+                if source.tier != "short" or source.status != "active" or source.durable:
+                    continue
+                targets = [
+                    m
+                    for m in self.memories(scope, source.session_id, "short")
+                    if m.status == "active"
+                    and m.memory_id != source.memory_id
+                    and m.recorded_at < source.recorded_at
+                    and self._fact_key(m) == self._fact_key(source)
+                    and m.assertion in {"stated", "observed"}
+                ]
+                if source.assertion not in {"stated", "observed"}:
+                    continue
+                turns = {turn.turn_id: turn for turn in self.turns(scope, source.session_id)}
+                source_times = [
+                    turns[e.turn_id].events[e.event_index].occurred_at
+                    for e in source.evidence
+                    if e.turn_id in turns
+                    and e.event_index < len(turns[e.turn_id].events)
+                    and turns[e.turn_id].events[e.event_index].role != "assistant"
+                ]
+                for target in targets:
+                    relation = correction_relation(source, target, [e.quote for e in source.evidence])
+                    if same_fact(source, target):
+                        relation = "merge"
+                    if relation in {"correct", "supersede", "merge"}:
+                        old_updates = {"status": "retracted" if relation == "correct" else "superseded"}
+                        source_updates = {"supersedes": f"{target.memory_id}:{target.version}"}
+                        if relation == "supersede":
+                            if not source_times:
+                                continue
+                            effective = source.valid_from or max(source_times)
+                            if (
+                                (target.valid_from and effective <= target.valid_from)
+                                or (target.valid_to and effective >= target.valid_to)
+                                or (source.valid_to and effective >= source.valid_to)
+                            ):
+                                continue
+                            old_updates["valid_to"] = effective
+                            source_updates["valid_from"] = effective
+                        if relation == "merge":
+                            combined = list(
+                                {
+                                    (e.turn_id, e.event_index, e.quote): e
+                                    for e in target.evidence + source.evidence
+                                }.values()
+                            )
+                            if len(combined) > 30:
+                                continue
+                            source_updates["evidence"] = combined
+                        old = target.model_copy(update=old_updates)
+                        self._save_memory(scope, old)
+                        self._record(scope, "short_" + relation, old, target)
+                        source = source.model_copy(update=source_updates)
+                        self._save_memory(scope, source)
+                        self._record(scope, "short_reconcile", source, candidate)
+                        actions.append(
+                            {"action": relation, "memory_id": source.memory_id, "target_id": target.memory_id}
+                        )
+        return actions
+
     def history(self, scope: Scope, memory_id: str) -> list[dict]:
         with self._lock:
             self.get_memory(scope, memory_id)
@@ -504,47 +704,61 @@ class SQLiteStore:
             ]
 
     def rebuild_groups(self, scope: Scope) -> list[dict]:
-        # A cheap organization view, not an LLM-generated high-level factual claim.
+        from .maintenance import summary_groups
+
         with self.transaction():
+            previous = {
+                json.dumps([g["scope_type"], g["scope_id"], g["path"]], ensure_ascii=False): g
+                for g in self.groups(scope)
+            }
             self._db.execute("DELETE FROM summaries WHERE tenant=? AND owner=?", self._who(scope))
-            groups: dict[str, dict] = {}
-            now = utcnow()
-            for m in self.memories(scope, tier="long"):
-                if (
-                    m.status != "active"
-                    or (m.valid_from and m.valid_from > now)
-                    or (m.valid_to and m.valid_to <= now)
-                ):
-                    continue
-                path = m.hierarchy_path or [m.kind, m.subject, m.predicate]
-                key = json.dumps([m.scope_type, m.scope_id, path], ensure_ascii=False)
-                group = groups.setdefault(
-                    key,
-                    {
-                        "path": path,
-                        "scope_type": m.scope_type,
-                        "scope_id": m.scope_id,
-                        "memory_refs": [],
-                        "mode": "reference_group",
-                        "updated_at": now.isoformat(),
-                    },
-                )
-                group["memory_refs"].append(f"{m.memory_id}:{m.version}")
-            for key, group in groups.items():
+            groups = summary_groups(self.memories(scope, tier="long"), utcnow())
+            for group in groups:
+                key = json.dumps([group["scope_type"], group["scope_id"], group["path"]], ensure_ascii=False)
+                cached = previous.get(key, {})
+                if cached.get("memory_refs") == group["memory_refs"] and cached.get("synthesis"):
+                    group["synthesis"] = cached["synthesis"]
                 self._db.execute(
                     "INSERT INTO summaries VALUES(?,?,?,?)",
                     (*self._who(scope), key, json.dumps(group, ensure_ascii=False)),
                 )
-            return list(groups.values())
+            return groups
 
     def groups(self, scope: Scope) -> list[dict]:
         with self._lock:
-            return [
+            groups = [
                 json.loads(r["body"])
                 for r in self._db.execute(
                     "SELECT body FROM summaries WHERE tenant=? AND owner=?", self._who(scope)
                 ).fetchall()
             ]
+            now = utcnow()
+            memories = {}
+            valid = []
+            for group in groups:
+                usable = bool(group.get("memory_refs"))
+                for ref in group.get("memory_refs", []):
+                    memory_id, version = ref.rsplit(":", 1)
+                    if memory_id not in memories:
+                        try:
+                            memories[memory_id] = self.get_memory(scope, memory_id)
+                        except NotFoundError:
+                            memories[memory_id] = None
+                    memory = memories[memory_id]
+                    if (
+                        memory is None
+                        or memory.version != int(version)
+                        or memory.status != "active"
+                        or memory.scope_type != group["scope_type"]
+                        or memory.scope_id != group["scope_id"]
+                        or (memory.valid_from and memory.valid_from > now)
+                        or (memory.valid_to and memory.valid_to <= now)
+                    ):
+                        usable = False
+                        break
+                if usable:
+                    valid.append(group)
+            return valid
 
     def hierarchy(self, scope: Scope) -> dict:
         """Build an H-MEM reference tree from actual long-memory versions.

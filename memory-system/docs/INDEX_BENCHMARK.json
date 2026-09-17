@@ -1,0 +1,42 @@
+{
+  "documents": 10000,
+  "repeats": 5,
+  "query": "海棠红",
+  "cold_indexed_ms": 914.9,
+  "samples_ms": {
+    "full_scan": [
+      940.37,
+      1025.41,
+      1198.8,
+      1152.44,
+      1207.5
+    ],
+    "fts_warm": [
+      156.82,
+      177.07,
+      156.27,
+      181.15,
+      203.0
+    ]
+  },
+  "median_ms": {
+    "full_scan": 1152.44,
+    "fts_warm": 177.07
+  },
+  "selected_ids": [
+    "memory-5000"
+  ],
+  "projection_trace": [
+    "fts5_projection: reranked=1; eligible=10000"
+  ],
+  "embedding_input_counts": {
+    "synthetic_cold": 10001,
+    "synthetic_warm": 1
+  },
+  "limitations": [
+    "Synthetic selective query, one process, no network or genuine embedding model.",
+    "Full owner snapshot is still loaded and hashed; semantic cosine still scans eligible vectors.",
+    "The FTS index narrows Python BM25 candidates; it does not implement ANN.",
+    "Same-session searches serialize snapshot sync and recall for consistency."
+  ]
+}

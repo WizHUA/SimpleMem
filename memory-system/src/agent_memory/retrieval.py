@@ -1,19 +1,26 @@
-"""Intent-planned STM-first retrieval; H-MEM paths are organizational metadata.
+"""Intent-planned STM-first retrieval with evidence joins and hierarchy hints.
 
 This small-data implementation scans caller-supplied memories. Candidate budgets
 bound retained search results, not database scan work. An injected embedder enables
-real cosine search; without one the explicitly labelled baseline is lexical only.
+real cosine search; without one the baseline uses lexical and structured evidence.
 """
 
 import asyncio
+import json
 import math
+import os
 import re
+from collections import Counter, defaultdict
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime
+from uuid import uuid4
+from weakref import WeakValueDictionary
 
 from .models import Hit, Memory, QueryPlan, QueryStep, SearchResponse, Session, utcnow
 from .ports import Embedder, MemoryModel
 from .providers import ModelOutputError
+from .retrieval_projection import RetrievalProjection
 from .settings import Settings
 
 
@@ -56,15 +63,39 @@ class _Match:
     memory: Memory
     score: float
     views: set[str] = field(default_factory=set)
+    support: tuple[str, ...] = ()
+    rank_score: float | None = None
+    conflict_pending: list[dict] = field(default_factory=list)
 
 
 class Retriever:
     def __init__(
-        self, settings: Settings, model: MemoryModel | None = None, embedder: Embedder | None = None
+        self,
+        settings: Settings,
+        model: MemoryModel | None = None,
+        embedder: Embedder | None = None,
+        projection: RetrievalProjection | None = None,
     ):
         self.settings = settings
         self.model = model
         self.embedder = embedder
+        self.projection = projection or RetrievalProjection()
+        self._projection_context = ContextVar("retrieval_projection_context", default=("default", 0))
+        self._projection_locks = WeakValueDictionary()
+        self._embedding_instance_id = uuid4().hex
+
+    @staticmethod
+    def projection_namespace(tenant: str, owner: str, session: str = "") -> str:
+        return json.dumps([tenant, owner, session], ensure_ascii=False)
+
+    def clear_projection(self, namespace: str) -> None:
+        self.projection.clear(namespace)
+
+    def clear_owner(self, tenant: str, owner: str) -> None:
+        self.projection.clear_owner(tenant, owner)
+
+    def close(self) -> None:
+        self.projection.close()
 
     async def search(
         self,
@@ -74,6 +105,8 @@ class Retriever:
         long: list[Memory],
         top_k: int = 10,
         timeout: float = 30,
+        projection_scope: str = "default",
+        projection_generation: int | None = None,
     ) -> SearchResponse:
         """Read-only search. TimeoutError means the shared query deadline expired.
 
@@ -93,8 +126,21 @@ class Retriever:
             )
         if timeout <= 0:
             raise TimeoutError("query deadline expired")
-        async with asyncio.timeout(timeout):
-            return await self._search(query, session, short, long, top_k, plan)
+        generation = (
+            self.projection.generation(projection_scope)
+            if projection_generation is None
+            else projection_generation
+        )
+        token = self._projection_context.set((projection_scope, generation))
+        lock = self._projection_locks.setdefault(projection_scope, asyncio.Lock())
+        try:
+            async with asyncio.timeout(timeout), lock:
+                await asyncio.to_thread(
+                    self.projection.sync, projection_scope, short + long, _terms, generation
+                )
+                return await self._search(query, session, short, long, top_k, plan)
+        finally:
+            self._projection_context.reset(token)
 
     @staticmethod
     def _rule_plan(query: str, short: list[Memory]) -> QueryPlan:
@@ -219,15 +265,40 @@ class Retriever:
         else:
             warnings.append("short_only: exact single-field lookup; no long-term search")
 
+        pool = await asyncio.to_thread(
+            self._expand_entities,
+            query,
+            plan,
+            session,
+            short + (long if need_long else []),
+            pool,
+            candidate_cap,
+            now,
+        )
+        linked = sum(bool(hit.support) for hit in pool)
+        if linked:
+            steps.append(
+                QueryStep(
+                    order=len(steps) + 1,
+                    phase="filter",
+                    action="evidence_entity_expansion",
+                    input_count=len(short) + (len(long) if need_long else 0),
+                    output_count=linked,
+                    detail="max_hops=2; explicit_fact_edges; support_sources_required; no inferred identity",
+                )
+            )
+
         # A factual correction/exception is a relation, never an in-place mutation.
         overrides = self._local_overrides(pool, plan)
         if overrides:
             warnings.append("local_override: session/project exception does not change long-term facts")
+        for hit in pool:
+            hit.rank_score = self._rank_score(hit, plan, now)
         ranked = sorted(
             pool,
             key=lambda hit: (
                 hit.memory.memory_id not in overrides,
-                -hit.score,
+                -hit.rank_score,
                 hit.memory.memory_id,
                 -hit.memory.version,
             ),
@@ -239,10 +310,15 @@ class Retriever:
                 action="deduplicate_scope_time_version",
                 input_count=len(stm) + (len(ltm) if need_long else 0),
                 output_count=len(ranked),
-                detail=f"local_overrides={len(overrides)}",
+                detail=f"local_overrides={len(overrides)}; rerank=bounded_age_decay; facts_and_preferences_protected=true",
             )
         )
         selected, used = self._select(ranked, plan, target)
+        conflicts = self._pending_conflicts(selected, short + long, session, plan, now)
+        if conflicts:
+            warnings.append(
+                "pending_conflict_requires_confirmation: " + json.dumps(conflicts, ensure_ascii=False)
+            )
         steps.append(
             QueryStep(
                 order=len(steps) + 1,
@@ -250,7 +326,7 @@ class Retriever:
                 action="dynamic_k_and_token_budget",
                 input_count=len(ranked),
                 output_count=len(selected),
-                detail=f"target={target}; context_tokens={used}",
+                detail=f"target={target}; context_tokens={used}; evidence_chain_bundles=true",
             )
         )
         if plan.required_info:
@@ -284,7 +360,7 @@ class Retriever:
 
     @classmethod
     def _eligible(cls, memory: Memory, session: Session, plan: QueryPlan, now: datetime) -> bool:
-        if not cls._applicable(memory, session) or memory.status in ("retracted", "pending"):
+        if not cls._applicable(memory, session) or memory.status in ("retracted", "pending", "archived"):
             return False
         if plan.subject and memory.subject.casefold() != plan.subject.casefold():
             return False
@@ -335,7 +411,20 @@ class Retriever:
                 warnings.append("symbolic_field_miss: fell back to scoped recall")
         if not eligible:
             return [], False
-        terms = _terms(" ".join([query, *plan.keywords]))
+        terms = _terms(" ".join([query, *plan.keywords, *plan.required_info, *plan.semantic_queries]))
+        namespace, generation = self._projection_context.get()
+        lexical_keys = set(
+            await asyncio.to_thread(
+                self.projection.candidates,
+                namespace,
+                terms,
+                eligible,
+                max(limit * 4, 24),
+                generation,
+            )
+        )
+        lexical_eligible = [m for m in eligible if self.projection.key(m) in lexical_keys]
+        warnings.append(f"fts5_projection: reranked={len(lexical_eligible)}; eligible={len(eligible)}")
         matches: dict[tuple[str, int], _Match] = {}
 
         def add(memory: Memory, score: float, view: str) -> None:
@@ -349,15 +438,18 @@ class Retriever:
         def lexical_recall():
             # Scans can be CPU-heavy on larger owner libraries. Keep them off
             # the host SDK event loop; the outer request still owns the deadline.
-            for memory in eligible:
-                score = _overlap(
-                    terms,
-                    " ".join(
-                        [memory.content, memory.subject, memory.predicate, memory.value, *memory.keywords]
-                    ),
-                )
+            documents = [
+                " ".join([m.content, m.subject, m.predicate, m.value, *m.keywords]) for m in lexical_eligible
+            ]
+            scores = self._bm25(terms, documents)
+            for memory, score in zip(lexical_eligible, scores):
                 if score > 0:
                     add(memory, score, "lexical")
+                path_score = _overlap(terms, " ".join(memory.hierarchy_path))
+                if path_score:
+                    add(memory, 0.4 * path_score, "hierarchy")
+            # Exact symbolic matches survive lexical candidate truncation.
+            for memory in eligible:
                 if (
                     plan.subject
                     and plan.predicate
@@ -370,9 +462,8 @@ class Retriever:
         semantic_used = False
         if self.embedder:
             queries = [text.strip() for text in plan.semantic_queries if text.strip()] or [query]
-            vectors = await self.embedder.encode(queries + [m.content for m in eligible])
-            if len(vectors) != len(queries) + len(eligible):
-                raise ValueError("embedding count mismatch")
+            vectors, reused = await self._projected_vectors(queries, eligible, namespace, generation)
+            warnings.append(f"vector_projection: reused={reused}; documents={len(eligible)}")
 
             def semantic_recall():
                 semantic = []
@@ -388,6 +479,199 @@ class Retriever:
             semantic_used = True
         result = sorted(matches.values(), key=lambda hit: (-hit.score, hit.memory.memory_id))[:limit]
         return result, semantic_used
+
+    async def _projected_vectors(self, queries, memories, namespace, generation):
+        endpoint, model = getattr(self.embedder, "endpoint", None), getattr(self.embedder, "model", None)
+        identity = [endpoint, model, os.getenv("MEMORY_EMBEDDING_REVISION", "1")]
+        if endpoint is None or model is None:
+            identity.append(self._embedding_instance_id)
+        provider = self.projection.digest(json.dumps(identity))
+        digests = [self.projection.digest(memory.content) for memory in memories]
+        cached = await asyncio.to_thread(self.projection.vectors, namespace, provider, digests, generation)
+        missing = {
+            digest: memory.content for digest, memory in zip(digests, memories) if digest not in cached
+        }
+        encoded = await self.embedder.encode(queries + list(missing.values()))
+        if len(encoded) != len(queries) + len(missing):
+            raise ValueError("embedding count mismatch")
+        fresh = dict(zip(missing, encoded[len(queries) :]))
+        if fresh:
+            await asyncio.to_thread(self.projection.save_vectors, namespace, provider, fresh, generation)
+        vectors = cached | fresh
+        reused = sum(digest in cached for digest in digests)
+        return encoded[: len(queries)] + [vectors[digest] for digest in digests], reused
+
+    @staticmethod
+    def _bm25(terms: set[str], documents: list[str]) -> list[float]:
+        """BM25 with Chinese bigrams and English words; bounded score is not confidence."""
+        counters = []
+        for text in documents:
+            counter: Counter[str] = Counter()
+            for segment in re.findall(r"[a-z0-9_]+|[\u4e00-\u9fff]+", text.lower()):
+                allowed = _terms(segment)
+                if re.search(r"[\u4e00-\u9fff]", segment):
+                    tokens = [segment[i : i + 2] for i in range(len(segment) - 1)]
+                    tokens.extend(char for char in segment if char in allowed)
+                    counter.update(token for token in tokens if token in allowed)
+                else:
+                    counter.update(allowed)
+            counters.append(counter)
+        if not counters:
+            return []
+        lengths = [sum(c.values()) for c in counters]
+        average = max(1, sum(lengths) / len(lengths))
+        frequencies = Counter(term for c in counters for term in c)
+        result = []
+        for counter, length in zip(counters, lengths):
+            score = 0.0
+            for term in terms & counter.keys():
+                inverse = math.log(1 + (len(counters) - frequencies[term] + 0.5) / (frequencies[term] + 0.5))
+                tf = counter[term]
+                score += inverse * (tf * 2.2) / (tf + 1.2 * (0.25 + 0.75 * length / average))
+            result.append(score / (1 + score))
+        return result
+
+    @classmethod
+    def _expand_entities(cls, query, plan, session, memories, pool, cap, now):
+        """Bounded exact entity joins, not a claim that connected entities are identical.
+
+        Only explicit alias predicates are reversible. Other relations are directed
+        subject -> value. Every traversed edge is returned as evidence with the leaf.
+        """
+        broad = plan.model_copy(update={"subject": None, "predicate": None})
+        eligible = [m for m in memories if cls._eligible(m, session, broad, now)]
+        factual = [m for m in eligible if m.assertion in ("stated", "observed") and m.kind == "fact"]
+        subjects: dict[str, list[Memory]] = defaultdict(list)
+        for memory in eligible:
+            subjects[memory.subject.casefold().strip()].append(memory)
+        aliases = {"别名", "昵称", "绰号", "又名", "英文名", "中文名", "alias", "nickname", "also known as"}
+        edges: dict[str, list[tuple[str, Memory]]] = defaultdict(list)
+        for memory in factual:
+            source, target = memory.subject.casefold().strip(), memory.value.casefold().strip()
+            if not target or len(target) > 80 or re.search(r"[。？！?！\n;；]", target):
+                continue
+            if memory.predicate.casefold().strip() in aliases:
+                edges[source].append((target, memory))
+                edges[target].append((source, memory))
+            elif target in subjects and target != source:
+                edges[source].append((target, memory))
+
+        def mentioned(name):
+            if not name or len(name) < 2:
+                return False
+            if re.fullmatch(r"[a-z0-9_ ]+", name):
+                return (
+                    re.search(r"(?<![a-z0-9_])" + re.escape(name) + r"(?![a-z0-9_])", query.casefold())
+                    is not None
+                )
+            return name in query.casefold()
+
+        frontier = [(name, ()) for name in sorted(edges) if mentioned(name)]
+        found = {(h.memory.memory_id, h.memory.version): h for h in pool}
+        by_id = {m.memory_id: m for m in eligible}
+        visited = set()
+        terms = _terms(query + " " + " ".join(plan.required_info))
+        additions = []
+        for _ in range(2):
+            following = []
+            for name, path in frontier[:cap]:
+                if name in visited:
+                    continue
+                visited.add(name)
+                for target, edge in edges[name][:cap]:
+                    support = tuple(dict.fromkeys((*path, edge.memory_id)))
+                    following.append((target, support))
+                    for memory in subjects.get(target, [])[:cap]:
+                        if memory.memory_id in support:
+                            continue
+                        relevance = _overlap(terms, f"{memory.predicate} {memory.value} {memory.content}")
+                        if not relevance:
+                            continue
+                        additions.append(
+                            _Match(memory, min(0.95, 0.6 + relevance * 0.3), {"entity_link"}, support)
+                        )
+            frontier = following
+        for hit in sorted(additions, key=lambda h: (-h.score, len(h.support), h.memory.memory_id)):
+            bundle = [by_id[mid] for mid in hit.support] + [hit.memory]
+            extra = sum((m.memory_id, m.version) not in found for m in bundle)
+            if len(found) + extra > cap:
+                protected = {mid for existing in found.values() for mid in existing.support}
+                protected.update(m.memory_id for m in bundle)
+                removable = sorted(
+                    (
+                        key
+                        for key, existing in found.items()
+                        if existing.memory.memory_id not in protected
+                        and existing.score < hit.score
+                        and not existing.support
+                    ),
+                    key=lambda key: (found[key].score, key),
+                )
+                required = len(found) + extra - cap
+                if len(removable) < required:
+                    continue
+                for key in removable[:required]:
+                    del found[key]
+            for memory in bundle[:-1]:
+                key = (memory.memory_id, memory.version)
+                if key not in found:
+                    found[key] = _Match(memory, hit.score * 0.9, {"entity_link_support"})
+            key = (hit.memory.memory_id, hit.memory.version)
+            if key not in found:
+                found[key] = hit
+            else:
+                found[key].views.add("entity_link")
+                found[key].score = max(found[key].score, hit.score)
+                if not mentioned(hit.memory.subject.casefold().strip()):
+                    found[key].support = hit.support
+        return list(found.values())
+
+    @staticmethod
+    def _rank_score(hit: _Match, plan: QueryPlan, now: datetime) -> float:
+        """Age only breaks relevance ties; never deletes or hides stable facts."""
+        memory = hit.memory
+        if plan.temporal_mode == "history" or plan.as_of or memory.kind in ("fact", "preference"):
+            return hit.score
+        age_days = max(0, (now - memory.recorded_at).total_seconds() / 86400)
+        half_life = 90 if memory.tier == "long" else 7
+        return hit.score * (0.95 + 0.05 * 2 ** (-age_days / half_life))
+
+    @classmethod
+    def _pending_conflicts(cls, selected, memories, session, plan, now):
+        """Expose unresolved contradictions as warnings, never as established facts."""
+        if plan.temporal_mode == "history" or plan.as_of:
+            return []
+        broad = plan.model_copy(update={"subject": None, "predicate": None})
+        pending = [
+            m
+            for m in memories
+            if m.status == "pending"
+            and cls._eligible(m.model_copy(update={"status": "active"}), session, broad, now)
+        ]
+        summaries = {}
+        for hit in selected:
+            memory = hit.memory
+            for candidate in pending:
+                if (candidate.subject.casefold(), candidate.predicate.casefold()) != (
+                    memory.subject.casefold(),
+                    memory.predicate.casefold(),
+                ) or candidate.value.casefold() == memory.value.casefold():
+                    continue
+                if candidate.memory_id not in summaries and len(summaries) >= 3:
+                    continue
+                summary = {
+                    "memory_id": candidate.memory_id,
+                    "status": "pending",
+                    "content": candidate.content[:400],
+                    "subject": candidate.subject,
+                    "predicate": candidate.predicate,
+                    "value": candidate.value[:200],
+                    "source_turn_ids": list(dict.fromkeys(e.turn_id for e in candidate.evidence))[:3],
+                    "interpretation": "unconfirmed alternative; do not assert either value without qualification",
+                }
+                summaries[candidate.memory_id] = summary
+                hit.conflict_pending.append(summary)
+        return list(summaries.values())
 
     @staticmethod
     def _merge(matches: list[_Match]) -> list[_Match]:
@@ -478,10 +762,15 @@ class Retriever:
             if len(selected) >= target:
                 break
             # Source label, validity and formatting must fit too; no partial facts.
-            cost = estimate_tokens(self._prompt_fragment(hit.memory))
+            by_id = {h.memory.memory_id: h for h in ranked}
+            bundle = [by_id[mid] for mid in hit.support if mid in by_id] + [hit]
+            bundle = [h for h in bundle if h not in selected]
+            if len(selected) + len(bundle) > target:
+                continue
+            cost = sum(estimate_tokens(self._prompt_fragment(h.memory)) for h in bundle)
             if used + cost > self.settings.retrieval_token_limit:
                 continue
-            selected.append(hit)
+            selected.extend(bundle)
             used += cost
         return selected, used
 
@@ -518,7 +807,11 @@ class Retriever:
                 "matched_views": sorted(hit.views),
                 "hierarchy_path": list(memory.hierarchy_path),
                 "local_override": memory.memory_id in overrides,
-                "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+                "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+                "support_memory_ids": list(hit.support),
+                "rank_score": hit.rank_score if hit.rank_score is not None else hit.score,
+                "age_decay_applied": hit.rank_score is not None and hit.rank_score < hit.score,
+                "conflict_pending": hit.conflict_pending,
                 "evidence": [e.model_dump(mode="json") for e in memory.evidence],
             },
         )

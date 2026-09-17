@@ -1,8 +1,18 @@
 export type Role = "user" | "assistant" | "tool";
 export interface EvolutionInput {
-  action: "promote" | "merge" | "supersede" | "retract" | "defer";
+  action:
+    | "promote"
+    | "merge"
+    | "supersede"
+    | "correct"
+    | "retract"
+    | "defer"
+    | "archive"
+    | "restore"
+    | "activate";
   target_id?: string;
   target_version?: number;
+  target_revision?: number;
   effective_at?: string;
 }
 export interface HistoryEntry {
@@ -59,9 +69,10 @@ export interface Evidence {
 export interface Memory {
   memory_id: string;
   version: number;
+  revision?: number;
   session_id: string;
   tier: "short" | "long";
-  status: "active" | "superseded" | "retracted" | "pending";
+  status: "active" | "superseded" | "retracted" | "pending" | "archived";
   kind: "fact" | "preference" | "event" | "procedure";
   content: string;
   subject: string;
@@ -130,6 +141,65 @@ export interface AnswerResult {
   context_tokens: number;
   warnings: string[];
   acceleration?: Acceleration;
+  memory_updates?: Array<{
+    candidate_count?: number;
+    evolution?: EvolutionReport;
+  }>;
+}
+
+export interface EvolutionReport {
+  applied: Array<{
+    action: string;
+    memory_id: string;
+    source_id?: string;
+    target_id?: string;
+    version?: number;
+  }>;
+  review: Array<{
+    memory_id: string;
+    reason?: string;
+    target_ids?: string[];
+    recommendation?: string;
+    strength?: number;
+    model_proposal?: {
+      relation: string;
+      reason: string;
+      evidence_quotes: string[];
+    };
+  }>;
+  warnings?: string[];
+}
+export interface SummaryGroup {
+  path: string[];
+  level: number;
+  scope_type: string;
+  scope_id: string;
+  mode: string;
+  summary: string;
+  memory_refs: string[];
+  omitted_count?: number;
+  summary_items?: Array<{
+    text: string;
+    memory_ref: string;
+    assertion: string;
+    evidence_count: number;
+  }>;
+  synthesis?: {
+    summary: string;
+    source_refs: string[];
+    coverage_count?: number;
+    group_count?: number;
+  };
+}
+export interface MaintenanceReport extends EvolutionReport {
+  retention: Array<{
+    memory_id: string;
+    strength: number;
+    age_days: number;
+    recommendation: string;
+    evidence_reinforcement: number;
+  }>;
+  group_count: number;
 }
 
 export interface Acceleration {

@@ -11,6 +11,11 @@ const ACTIONS: Record<string, string> = {
   add: "新增记忆",
   close_validity: "关闭旧版本有效期",
   consume_candidate: "消费短期候选",
+  correct: "纠正错误事实",
+  correct_retract: "撤销错误旧事实",
+  archive: "归档记忆",
+  restore: "恢复归档记忆",
+  activate: "激活候选",
 };
 
 function localNow() {
@@ -84,16 +89,25 @@ export function EvolutionDialog({
     !["hypothetical", "inferred"].includes(memory.assertion) &&
     memory.status === "active";
   const [action, setAction] = useState<EvolutionInput["action"]>(
-    eligible ? (targets.length ? "supersede" : "promote") : "retract",
+    memory.status === "pending"
+      ? "activate"
+      : memory.status === "archived"
+        ? "restore"
+        : eligible
+          ? targets.length
+            ? "supersede"
+            : "promote"
+          : "retract",
   );
   const [targetId, setTargetId] = useState(targets[0]?.memory_id || "");
   const [effective, setEffective] = useState(localNow());
   const target = targets.find((item) => item.memory_id === targetId);
-  const needsTarget = action === "supersede" || action === "merge";
+  const needsTarget = ["supersede", "merge", "correct"].includes(action);
   const sameFact =
     target &&
-    target.content === memory.content &&
     target.value === memory.value &&
+    target.kind === memory.kind &&
+    target.assertion === memory.assertion &&
     target.valid_from === memory.valid_from &&
     target.valid_to === memory.valid_to;
   return (
@@ -113,7 +127,11 @@ export function EvolutionDialog({
           onCommit({
             action,
             ...(needsTarget && target
-              ? { target_id: target.memory_id, target_version: target.version }
+              ? {
+                  target_id: target.memory_id,
+                  target_version: target.version,
+                  target_revision: target.revision,
+                }
               : {}),
             ...(action === "supersede"
               ? { effective_at: new Date(effective).toISOString() }
@@ -142,10 +160,22 @@ export function EvolutionDialog({
                 <option value="merge" disabled={!targets.length}>
                   合并相同事实证据
                 </option>
+                <option value="correct" disabled={!targets.length}>
+                  纠正错误事实
+                </option>
               </>
             )}
             {memory.status === "active" && (
-              <option value="defer">暂缓确认</option>
+              <>
+                <option value="defer">暂缓确认</option>
+                <option value="archive">归档记忆</option>
+              </>
+            )}
+            {memory.status === "pending" && (
+              <option value="activate">确认候选并激活</option>
+            )}
+            {memory.status === "archived" && (
+              <option value="restore">恢复归档记忆</option>
             )}
             <option value="retract">撤回记忆</option>
           </select>
@@ -190,7 +220,7 @@ export function EvolutionDialog({
         )}
         {action === "merge" && (
           <p className="measurement-note">
-            只合并内容、值和有效期完全一致的事实，保留双方证据。
+            只合并值、类型、断言和有效期一致的事实，允许措辞不同，保留双方证据。
             {!sameFact && "当前两条记忆不满足精确合并条件，请选择替代或暂缓。"}
           </p>
         )}
@@ -201,7 +231,27 @@ export function EvolutionDialog({
         )}
         {action === "defer" && (
           <p className="measurement-note">
-            记忆转为待确认状态并退出正常检索。当前版本暂不提供恢复操作；后续可重新提供事实并抽取。
+            记忆转为待确认状态并退出正常检索。之后可审阅原文并激活，再决定是否替代旧版本。
+          </p>
+        )}
+        {action === "activate" && (
+          <p className="measurement-note">
+            请先核对原文。激活后候选进入正常检索；如需替代长期旧版本，请继续审阅演化并明确选择“替代”或“纠正”。此动作不自动解决事实冲突。
+          </p>
+        )}
+        {action === "archive" && (
+          <p className="measurement-note">
+            归档后退出正常检索，保留证据与审计，可以恢复。不会删除原始对话。
+          </p>
+        )}
+        {action === "restore" && (
+          <p className="measurement-note">
+            恢复后重新参与检索，仍受有效时间约束。若存在冲突，服务端会拒绝恢复并提示先处理冲突。
+          </p>
+        )}
+        {action === "correct" && (
+          <p className="measurement-note">
+            旧值被认定为错误事实并撤回，新值成为当前版本。与“从某时起发生变化”不同，这不会把错误旧值当作曾经有效的事实。
           </p>
         )}
         {error && (

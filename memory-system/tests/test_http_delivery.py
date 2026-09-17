@@ -88,7 +88,7 @@ async def extract(client, sid, text, request_id):
     assert response.status_code == 201, response.text
     repeated = await client.post(f"/api/v1/sessions/{sid}/turns", json=payload)
     assert repeated.json()["turn"]["turn_id"] == response.json()["turn"]["turn_id"]
-    response = await client.post(f"/api/v1/sessions/{sid}/extract")
+    response = await client.post(f"/api/v1/sessions/{sid}/extract?apply_evolution=false")
     assert response.status_code == 200, response.text
     return response.json()["memories"][0]
 

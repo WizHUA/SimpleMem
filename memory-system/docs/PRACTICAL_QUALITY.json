@@ -1,0 +1,5150 @@
+{
+  "recorded_at": "2026-09-17T06:52:49.409909+00:00",
+  "kind": "real_provider_synthetic_conversations",
+  "cases": [
+    {
+      "name": "未知关系不猜测",
+      "query": "zfc是飞猪吗？",
+      "expected": [],
+      "uncertain": true,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "我没有你关于“zfc”或“飞猪”的昵称记录，无法确认两者是否对应。按你之前告诉我的信息里也没有相关设定。",
+        "citations": [],
+        "sources": [],
+        "retrieval_count": 0,
+        "elapsed_ms": 3079,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "zfc 飞猪",
+            "zfc 是谁",
+            "飞猪 昵称"
+          ],
+          "keywords": [
+            "zfc",
+            "飞猪"
+          ],
+          "required_info": [
+            "zfc 对应的用户身份或昵称",
+            "zfc 与飞猪的关系是否成立",
+            "飞猪是否为某人的昵称或代称"
+          ],
+          "depth": 4,
+          "subject": "zfc",
+          "predicate": "是飞猪吗",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 3,
+            "detail": "route=both; depth=4; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=8"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=24"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "target=4; context_tokens=0; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 0,
+        "selected_k": 0,
+        "context_tokens": 0,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment",
+          "no_supported_result_within_budget"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2370.8459000336006,
+          "generation_ms": 706.3179999822751,
+          "total_ms": 3079.2162000434473,
+          "context_tokens_before": 1100,
+          "context_tokens_after": 1100,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true,
+        "unknown_acknowledged": true
+      },
+      "passed": true
+    },
+    {
+      "name": "告知后直接回忆",
+      "query": "zfc是飞猪吗？",
+      "expected": [
+        "飞猪"
+      ],
+      "uncertain": false,
+      "forbidden": [
+        "无法确认",
+        "外部验证",
+        "不能确认"
+      ],
+      "answer": {
+        "generated_text": "是的，按你之前告诉我的，zfc 是飞猪（zfc 的别名为飞猪）。【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "用户陈述 zfc 是飞猪，即 zfc 的别名为飞猪。",
+            "score": 1.0,
+            "source_file": "[memory:mem_0917580c5215409186b5d71f2b756859]",
+            "chunk_id": "mem_0917580c5215409186b5d71f2b756859:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_0917580c5215409186b5d71f2b756859",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猪",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_10425f88d44a4120b169b60debd82a75",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical",
+                "symbolic"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 1.0,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_988f3a20bcd54d7d88494a0325144285",
+                  "event_index": 0,
+                  "quote": "zfc是飞猪！"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 1,
+        "elapsed_ms": 3480,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "zfc 飞猪 别名",
+            "zfc 是飞猪吗",
+            "zfc 昵称 别名"
+          ],
+          "keywords": [
+            "zfc",
+            "飞猪",
+            "别名"
+          ],
+          "required_info": [
+            "zfc 是否为飞猪（zfc 的别名是否为飞猪）",
+            "该别名的来源或确认依据"
+          ],
+          "depth": 3,
+          "subject": "zfc",
+          "predicate": "别名",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=17"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "target=3; context_tokens=130; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 1,
+        "selected_k": 1,
+        "context_tokens": 130,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=1; eligible=1",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2406.0073000146076,
+          "generation_ms": 1071.536700008437,
+          "total_ms": 3480.1296000368893,
+          "context_tokens_before": 2219,
+          "context_tokens_after": 2219,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 1,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "短期明确纠错",
+      "query": "zfc正确的昵称是什么？只说现在的昵称。",
+      "expected": [
+        "飞猫"
+      ],
+      "uncertain": false,
+      "forbidden": [
+        "飞猪"
+      ],
+      "answer": {
+        "generated_text": "飞猫",
+        "citations": [],
+        "sources": [
+          {
+            "content": "zfc 昵称此前被用户说成飞猪，现已更正为错误说法。",
+            "score": 0.6857142857142857,
+            "source_file": "[memory:mem_83da0130f8404aa68f4982b03529847f]",
+            "chunk_id": "mem_83da0130f8404aa68f4982b03529847f:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_83da0130f8404aa68f4982b03529847f",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猪（已更正为错误）",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_10425f88d44a4120b169b60debd82a75",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.6857142857142857,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_57ba8546edc54fbb9f14284b318b44ec",
+                  "event_index": 0,
+                  "quote": "更正：zfc的昵称不是飞猪，而是飞猫，之前我说错了。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "zfc 的昵称是飞猫（用户更正：之前说飞猪是错的）。",
+            "score": 0.6857142857142857,
+            "source_file": "[memory:mem_fa0f22fd1fbd476ba178dbd4c2c761da]",
+            "chunk_id": "mem_fa0f22fd1fbd476ba178dbd4c2c761da:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_fa0f22fd1fbd476ba178dbd4c2c761da",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猫",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_10425f88d44a4120b169b60debd82a75",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.6857142857142857,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_57ba8546edc54fbb9f14284b318b44ec",
+                  "event_index": 0,
+                  "quote": "更正：zfc的昵称不是飞猪，而是飞猫，之前我说错了。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 2,
+        "elapsed_ms": 3608,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "zfc 现在的昵称",
+            "zfc 昵称更正 飞猫",
+            "zfc 昵称 飞猪 已更正"
+          ],
+          "keywords": [
+            "zfc",
+            "昵称",
+            "飞猫",
+            "飞猪",
+            "更正"
+          ],
+          "required_info": [
+            "zfc 当前有效的昵称"
+          ],
+          "depth": 3,
+          "subject": "zfc",
+          "predicate": "昵称",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 3,
+            "output_count": 2,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=16"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 2,
+            "output_count": 2,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 2,
+            "output_count": 2,
+            "detail": "target=3; context_tokens=260; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 2,
+        "selected_k": 2,
+        "context_tokens": 260,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=2; eligible=2",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2668.0379000026733,
+          "generation_ms": 938.3492000051774,
+          "total_ms": 3608.1490000360645,
+          "context_tokens_before": 3273,
+          "context_tokens_after": 3273,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 2,
+            "evolution": {
+              "applied": [
+                {
+                  "action": "correct",
+                  "memory_id": "mem_fa0f22fd1fbd476ba178dbd4c2c761da",
+                  "target_id": "mem_0917580c5215409186b5d71f2b756859"
+                }
+              ],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "普通会话事实不越界",
+      "query": "zfc是什么昵称？",
+      "expected": [],
+      "uncertain": true,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "我这边没有你告诉过我的相关记录，无法确认“zfc”是什么昵称。你要我按某个昵称记的话，直接告诉我即可。",
+        "citations": [],
+        "sources": [],
+        "retrieval_count": 0,
+        "elapsed_ms": 2827,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "zfc 是什么昵称",
+            "zfc 昵称 指代",
+            "zfc 别名 含义"
+          ],
+          "keywords": [
+            "zfc"
+          ],
+          "required_info": [
+            "zfc 对应的昵称或别名",
+            "该昵称所指的人、项目或事物"
+          ],
+          "depth": 5,
+          "subject": "zfc",
+          "predicate": "昵称",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=both; depth=5; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=10"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=30"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "target=5; context_tokens=0; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 0,
+        "selected_k": 0,
+        "context_tokens": 0,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment",
+          "no_supported_result_within_budget"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 1827.8595000156201,
+          "generation_ms": 998.3952000038698,
+          "total_ms": 2827.802599989809,
+          "context_tokens_before": 1102,
+          "context_tokens_after": 1102,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true,
+        "unknown_acknowledged": true
+      },
+      "passed": true
+    },
+    {
+      "name": "项目多事实写入",
+      "query": "项目的数据库和报告语言分别是什么？",
+      "expected": [
+        "PostgreSQL",
+        "中文"
+      ],
+      "uncertain": false,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "按你之前告诉我的：北辰项目数据库默认使用 **PostgreSQL**【来源1】，报告默认用 **中文**【来源2】。",
+        "citations": [
+          1,
+          2
+        ],
+        "sources": [
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.9245776449733487,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9245776449733487,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.924449455956221,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.924449455956221,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.8588468639193303,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8588468639193303,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚负责数据库迁移（北辰项目规则）",
+            "score": 0.855708053947833,
+            "source_file": "[memory:mem_1e07fa892cc9426cb3a48b03d1fd4090]",
+            "chunk_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "负责事项",
+              "value": "数据库迁移",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.855708053947833,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚负责数据库迁移"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 4,
+        "elapsed_ms": 5723,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "北辰项目默认使用的数据库",
+            "北辰项目报告默认语言",
+            "北辰项目规则 数据库 报告语言"
+          ],
+          "keywords": [
+            "北辰",
+            "PostgreSQL",
+            "报告语言",
+            "中文",
+            "阿岚",
+            "小舟"
+          ],
+          "required_info": [
+            "北辰项目默认数据库",
+            "北辰项目报告默认语言"
+          ],
+          "depth": 4,
+          "subject": "北辰项目",
+          "predicate": "默认使用的数据库和报告语言",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=both; depth=4; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=8"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "candidate_limit=24"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 4,
+            "detail": "target=4; context_tokens=474; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 4,
+        "context_tokens": 474,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 4733.658300014213,
+          "generation_ms": 987.8898000461049,
+          "total_ms": 5723.6451000208035,
+          "context_tokens_before": 2331,
+          "context_tokens_after": 2331,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 5,
+            "evolution": {
+              "applied": [
+                {
+                  "action": "promote",
+                  "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+                  "source_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+                  "target_id": null,
+                  "version": 1
+                },
+                {
+                  "action": "promote",
+                  "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+                  "source_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+                  "target_id": null,
+                  "version": 1
+                },
+                {
+                  "action": "promote",
+                  "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+                  "source_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+                  "target_id": null,
+                  "version": 1
+                },
+                {
+                  "action": "promote",
+                  "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+                  "source_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+                  "target_id": null,
+                  "version": 1
+                },
+                {
+                  "action": "promote",
+                  "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+                  "source_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+                  "target_id": null,
+                  "version": 1
+                }
+              ],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "跨会话直接召回",
+      "query": "北辰项目验收地点在哪里？",
+      "expected": [
+        "海棠"
+      ],
+      "uncertain": false,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "北辰项目验收地点是海棠会议室。【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "北辰项目验收地点是海棠会议室",
+            "score": 1.0,
+            "source_file": "[memory:mem_47d5ad3360ba4096b8c8f4b5aa643a30]",
+            "chunk_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "北辰项目",
+              "predicate": "验收地点",
+              "value": "海棠会议室",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical",
+                "symbolic"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 1.0,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目验收地点是海棠会议室"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.29478960236708907,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.29478960236708907,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.29123018204674433,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.29123018204674433,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.2782932722209328,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.2782932722209328,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚负责数据库迁移（北辰项目规则）",
+            "score": 0.25410521605874087,
+            "source_file": "[memory:mem_1e07fa892cc9426cb3a48b03d1fd4090]",
+            "chunk_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "负责事项",
+              "value": "数据库迁移",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.25410521605874087,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚负责数据库迁移"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 5,
+        "elapsed_ms": 2835,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "北辰项目验收地点",
+            "北辰项目验收会议地址",
+            "北辰项目验收安排"
+          ],
+          "keywords": [
+            "北辰",
+            "验收",
+            "验收地点",
+            "项目验收"
+          ],
+          "required_info": [
+            "北辰项目验收的具体地点",
+            "验收地点相关安排或通知来源"
+          ],
+          "depth": 6,
+          "subject": "北辰项目",
+          "predicate": "验收地点",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=both; depth=6; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "candidate_limit=36"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "target=6; context_tokens=591; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 5,
+        "context_tokens": 591,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 1980.6768000125885,
+          "generation_ms": 853.2380999531597,
+          "total_ms": 2835.675800044555,
+          "context_tokens_before": 2136,
+          "context_tokens_after": 2136,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "别名关联职责",
+      "query": "小舟负责什么工作？",
+      "expected": [
+        "数据库迁移"
+      ],
+      "uncertain": false,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "小舟负责数据库迁移。【来源2】",
+        "citations": [
+          2
+        ],
+        "sources": [
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.728652400755768,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.728652400755768,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚负责数据库迁移（北辰项目规则）",
+            "score": 0.774570852644644,
+            "source_file": "[memory:mem_1e07fa892cc9426cb3a48b03d1fd4090]",
+            "chunk_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "负责事项",
+              "value": "数据库迁移",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [
+                "mem_d0411f8eb4d041e5810a7f79cbb0020a"
+              ],
+              "rank_score": 0.774570852644644,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚负责数据库迁移"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.29478960236708907,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.29478960236708907,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.29123018204674433,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.29123018204674433,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目验收地点是海棠会议室",
+            "score": 0.28436312912468903,
+            "source_file": "[memory:mem_47d5ad3360ba4096b8c8f4b5aa643a30]",
+            "chunk_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "北辰项目",
+              "predicate": "验收地点",
+              "value": "海棠会议室",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.28436312912468903,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目验收地点是海棠会议室"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 5,
+        "elapsed_ms": 3007,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "小舟负责的工作职责",
+            "小舟在北辰项目中的角色",
+            "小舟的工作分工"
+          ],
+          "keywords": [
+            "小舟",
+            "北辰",
+            "项目",
+            "负责",
+            "职责",
+            "角色"
+          ],
+          "required_info": [
+            "小舟的身份或全名",
+            "小舟负责的具体工作内容或职责范围",
+            "小舟所属的项目或团队"
+          ],
+          "depth": 6,
+          "subject": "小舟",
+          "predicate": "负责工作",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 3,
+            "detail": "route=both; depth=6; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "candidate_limit=36"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "evidence_entity_expansion",
+            "input_count": 5,
+            "output_count": 1,
+            "detail": "max_hops=2; explicit_fact_edges; support_sources_required; no inferred identity"
+          },
+          {
+            "order": 5,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 6,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "target=6; context_tokens=591; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 5,
+        "context_tokens": 591,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2394.1979999653995,
+          "generation_ms": 611.4410999580286,
+          "total_ms": 3007.9410999896936,
+          "context_tokens_before": 2685,
+          "context_tokens_after": 2685,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "临时覆盖长期默认",
+      "query": "这一次的报告应该用什么语言？",
+      "expected": [
+        "英文"
+      ],
+      "uncertain": false,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "用英文，按你刚才说的，仅本次报告使用英文。",
+        "citations": [],
+        "sources": [
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.8993451699194642,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8993451699194642,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                },
+                {
+                  "turn_id": "turn_3fe80dfbe2c44204a65bf46a53ce5f11",
+                  "event_index": 0,
+                  "quote": "北辰项目默认中文规则保持不变。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.8244153146877657,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8244153146877657,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.576100505603772,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.576100505603772,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 3,
+        "elapsed_ms": 5688,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "本次报告应使用的语言",
+            "北辰项目报告语言规则",
+            "本次报告语言例外说明"
+          ],
+          "keywords": [
+            "北辰",
+            "报告语言",
+            "英文",
+            "中文"
+          ],
+          "required_info": [
+            "北辰项目默认报告语言规则",
+            "本次报告是否使用英文的明确说明",
+            "本次报告最终应使用的语言"
+          ],
+          "depth": 3,
+          "subject": "北辰项目本次报告",
+          "predicate": "报告语言",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 3,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 1,
+            "output_count": 0,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "candidate_limit=18"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 3,
+            "detail": "target=3; context_tokens=354; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 3,
+        "context_tokens": 354,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 4694.702000007965,
+          "generation_ms": 992.4008000525646,
+          "total_ms": 5688.421099970583,
+          "context_tokens_before": 3156,
+          "context_tokens_after": 3156,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 1,
+            "evolution": {
+              "applied": [
+                {
+                  "action": "merge",
+                  "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+                  "source_id": "mem_76572e741eb04fed89056d841fc6f269",
+                  "target_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+                  "version": 1
+                }
+              ],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "临时覆盖不污染其他会话",
+      "query": "报告默认用什么语言？",
+      "expected": [
+        "中文"
+      ],
+      "uncertain": false,
+      "forbidden": [
+        "默认英文"
+      ],
+      "answer": {
+        "generated_text": "按你之前告诉我的，北辰项目报告默认用中文【来源1】。",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.9196452065110321,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9196452065110321,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                },
+                {
+                  "turn_id": "turn_3fe80dfbe2c44204a65bf46a53ce5f11",
+                  "event_index": 0,
+                  "quote": "北辰项目默认中文规则保持不变。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.8244153146877659,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8244153146877659,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目验收地点是海棠会议室",
+            "score": 0.28436312912468903,
+            "source_file": "[memory:mem_47d5ad3360ba4096b8c8f4b5aa643a30]",
+            "chunk_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "北辰项目",
+              "predicate": "验收地点",
+              "value": "海棠会议室",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.28436312912468903,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目验收地点是海棠会议室"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.2782932722209328,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.2782932722209328,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚负责数据库迁移（北辰项目规则）",
+            "score": 0.25410521605874087,
+            "source_file": "[memory:mem_1e07fa892cc9426cb3a48b03d1fd4090]",
+            "chunk_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "负责事项",
+              "value": "数据库迁移",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.25410521605874087,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚负责数据库迁移"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 5,
+        "elapsed_ms": 3618,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "报告默认使用的语言",
+            "北辰项目报告语言设置",
+            "报告语言偏好或默认配置"
+          ],
+          "keywords": [
+            "北辰",
+            "报告",
+            "默认语言",
+            "语言配置"
+          ],
+          "required_info": [
+            "报告默认语言的具体取值"
+          ],
+          "depth": 5,
+          "subject": "北辰项目报告",
+          "predicate": "默认语言",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "route=both; depth=5; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=10"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "candidate_limit=30"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "target=5; context_tokens=591; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 5,
+        "context_tokens": 591,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2757.2485000127926,
+          "generation_ms": 859.7422000020742,
+          "total_ms": 3618.1357000023127,
+          "context_tokens_before": 2138,
+          "context_tokens_after": 2138,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "项目隔离",
+      "query": "本项目默认数据库是什么？",
+      "expected": [],
+      "uncertain": true,
+      "forbidden": [
+        "PostgreSQL"
+      ],
+      "answer": {
+        "generated_text": "目前没有关于本项目默认数据库的记录，无法回答。",
+        "citations": [],
+        "sources": [],
+        "retrieval_count": 0,
+        "elapsed_ms": 2773,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "本项目默认数据库配置",
+            "默认数据库是什么",
+            "项目数据库选型"
+          ],
+          "keywords": [
+            "默认数据库",
+            "数据库",
+            "南辰"
+          ],
+          "required_info": [
+            "本项目默认数据库的名称/类型"
+          ],
+          "depth": 6,
+          "subject": "南辰项目",
+          "predicate": "默认数据库",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "route=both; depth=6; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 5,
+            "output_count": 0,
+            "detail": "candidate_limit=36"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "target=6; context_tokens=0; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 0,
+        "selected_k": 0,
+        "context_tokens": 0,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment",
+          "no_supported_result_within_budget"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 1884.8188999691047,
+          "generation_ms": 887.0628000004217,
+          "total_ms": 2773.028399969917,
+          "context_tokens_before": 1135,
+          "context_tokens_after": 1135,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true,
+        "unknown_acknowledged": true
+      },
+      "passed": true
+    },
+    {
+      "name": "长期现实变化",
+      "query": "现在验收地点在哪里？只回答当前地点。",
+      "expected": [
+        "梧桐"
+      ],
+      "uncertain": false,
+      "forbidden": [
+        "海棠"
+      ],
+      "answer": {
+        "generated_text": "梧桐会议室",
+        "citations": [],
+        "sources": [
+          {
+            "content": "北辰项目验收地点由海棠会议室改为梧桐会议室，自2026-09-17T06:53:26Z起生效。",
+            "score": 1.0,
+            "source_file": "[memory:mem_47d5ad3360ba4096b8c8f4b5aa643a30]",
+            "chunk_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:2",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+              "version": 2,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "北辰项目",
+              "predicate": "验收地点",
+              "value": "梧桐会议室",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": "2026-09-17T06:53:26.247130+00:00",
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical",
+                "symbolic"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 1.0,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_54d9c7bb57c34c90907cd7ef83e63611",
+                  "event_index": 0,
+                  "quote": "北辰项目验收地点由海棠会议室改为梧桐会议室，从现在开始生效，请更新长期记录。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.2995333053787624,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.2995333053787624,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.2962686023591312,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.2962686023591312,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                },
+                {
+                  "turn_id": "turn_3fe80dfbe2c44204a65bf46a53ce5f11",
+                  "event_index": 0,
+                  "quote": "北辰项目默认中文规则保持不变。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.28354622888583303,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.28354622888583303,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚负责数据库迁移（北辰项目规则）",
+            "score": 0.26107837178986776,
+            "source_file": "[memory:mem_1e07fa892cc9426cb3a48b03d1fd4090]",
+            "chunk_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "负责事项",
+              "value": "数据库迁移",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.26107837178986776,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚负责数据库迁移"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 5,
+        "elapsed_ms": 3808,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "北辰项目当前验收地点",
+            "验收地点更正为梧桐会议室",
+            "北辰项目验收地点最新安排"
+          ],
+          "keywords": [
+            "北辰项目",
+            "验收地点",
+            "梧桐会议室",
+            "海棠会议室",
+            "即刻生效"
+          ],
+          "required_info": [
+            "北辰项目当前生效的验收地点"
+          ],
+          "depth": 6,
+          "subject": "北辰项目",
+          "predicate": "验收地点",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "route=both; depth=6; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 1,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 6,
+            "output_count": 5,
+            "detail": "candidate_limit=36"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "target=6; context_tokens=652; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 5,
+        "context_tokens": 652,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 3117.1721999999136,
+          "generation_ms": 689.6966000203975,
+          "total_ms": 3808.1854000338353,
+          "context_tokens_before": 3040,
+          "context_tokens_after": 3040,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 1,
+            "evolution": {
+              "applied": [
+                {
+                  "action": "supersede",
+                  "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+                  "source_id": "mem_c2be6640843b4803b6419c81102c15b6",
+                  "target_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+                  "version": 2
+                }
+              ],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "长期更新跨会话生效",
+      "query": "项目现在的验收地点是什么？",
+      "expected": [
+        "梧桐"
+      ],
+      "uncertain": false,
+      "forbidden": [
+        "海棠"
+      ],
+      "answer": {
+        "generated_text": "按你之前告诉我的，北辰项目验收地点已由海棠会议室改为梧桐会议室，自2026-09-17T06:53:26Z起生效【来源1】。",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "北辰项目验收地点由海棠会议室改为梧桐会议室，自2026-09-17T06:53:26Z起生效。",
+            "score": 1.0,
+            "source_file": "[memory:mem_47d5ad3360ba4096b8c8f4b5aa643a30]",
+            "chunk_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:2",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+              "version": 2,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "北辰项目",
+              "predicate": "验收地点",
+              "value": "梧桐会议室",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": "2026-09-17T06:53:26.247130+00:00",
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical",
+                "symbolic"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 1.0,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_54d9c7bb57c34c90907cd7ef83e63611",
+                  "event_index": 0,
+                  "quote": "北辰项目验收地点由海棠会议室改为梧桐会议室，从现在开始生效，请更新长期记录。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目默认使用PostgreSQL",
+            "score": 0.2995333053787624,
+            "source_file": "[memory:mem_20134b4d78f7414695eea4deb9d75f24]",
+            "chunk_id": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "默认数据库",
+              "value": "PostgreSQL",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.2995333053787624,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "项目默认使用PostgreSQL"
+                }
+              ]
+            }
+          },
+          {
+            "content": "北辰项目报告默认用中文",
+            "score": 0.2962686023591312,
+            "source_file": "[memory:mem_c93ae0cba906420f9f2e5994b05c1b27]",
+            "chunk_id": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "preference",
+              "subject": "北辰项目",
+              "predicate": "报告默认语言",
+              "value": "中文",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.2962686023591312,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "报告默认用中文"
+                },
+                {
+                  "turn_id": "turn_3fe80dfbe2c44204a65bf46a53ce5f11",
+                  "event_index": 0,
+                  "quote": "北辰项目默认中文规则保持不变。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚的昵称是小舟（北辰项目规则）",
+            "score": 0.28354622888583303,
+            "source_file": "[memory:mem_d0411f8eb4d041e5810a7f79cbb0020a]",
+            "chunk_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "别名",
+              "value": "小舟",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.28354622888583303,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚的昵称是小舟"
+                }
+              ]
+            }
+          },
+          {
+            "content": "阿岚负责数据库迁移（北辰项目规则）",
+            "score": 0.26107837178986776,
+            "source_file": "[memory:mem_1e07fa892cc9426cb3a48b03d1fd4090]",
+            "chunk_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+              "version": 1,
+              "tier": "long",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "阿岚",
+              "predicate": "负责事项",
+              "value": "数据库迁移",
+              "durable": true,
+              "scope_type": "project",
+              "scope_id": "北辰",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "hierarchy",
+                "lexical"
+              ],
+              "hierarchy_path": [
+                "北辰"
+              ],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.26107837178986776,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+                  "event_index": 0,
+                  "quote": "阿岚负责数据库迁移"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 5,
+        "elapsed_ms": 3645,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "北辰项目当前验收地点",
+            "北辰项目验收地点变更",
+            "北辰项目验收地点历史记录"
+          ],
+          "keywords": [
+            "北辰",
+            "验收地点",
+            "验收",
+            "地点变更"
+          ],
+          "required_info": [
+            "北辰项目当前的验收地点",
+            "验收地点是否有变更及其变更时间"
+          ],
+          "depth": 8,
+          "subject": "北辰项目",
+          "predicate": "验收地点",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=both; depth=8; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=16"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 6,
+            "output_count": 5,
+            "detail": "candidate_limit=48"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 5,
+            "output_count": 5,
+            "detail": "target=8; context_tokens=652; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 5,
+        "selected_k": 5,
+        "context_tokens": 652,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=5; eligible=5",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2847.887299954891,
+          "generation_ms": 796.7362999916077,
+          "total_ms": 3645.9078999469057,
+          "context_tokens_before": 2201,
+          "context_tokens_after": 2201,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": false
+      },
+      "passed": false
+    },
+    {
+      "name": "长会话越过原文窗口",
+      "query": "这次发布回滚口令是什么？",
+      "expected": [
+        "松鼠蓝莓"
+      ],
+      "uncertain": false,
+      "forbidden": [],
+      "answer": {
+        "generated_text": "这次发布回滚口令是“松鼠蓝莓”，仅用于当前会话。【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "本次发布的回滚口令是松鼠蓝莓，仅用于当前会话。",
+            "score": 0.9705788778231563,
+            "source_file": "[memory:mem_73f75049f41e4aad9d8f054c8b54ea8b]",
+            "chunk_id": "mem_73f75049f41e4aad9d8f054c8b54ea8b:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_73f75049f41e4aad9d8f054c8b54ea8b",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "发布回滚口令",
+              "predicate": "口令",
+              "value": "松鼠蓝莓",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9705788778231563,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_44b7d623fb124db6a35f920f8a8b3296",
+                  "event_index": 0,
+                  "quote": "这次发布的回滚口令是松鼠蓝莓，只用于当前会话。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "用户表示第14项检查完成，当前无需新增长期规则。",
+            "score": 0.04567190188660385,
+            "source_file": "[memory:mem_04ac8e17315446718dfa5ba925268da3]",
+            "chunk_id": "mem_04ac8e17315446718dfa5ba925268da3:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_04ac8e17315446718dfa5ba925268da3",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "event",
+              "subject": "第14项检查",
+              "predicate": "状态",
+              "value": "已完成",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.0456718956216213,
+              "age_decay_applied": true,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_6ca7e92f9e934af4a48bdf570a4e437e",
+                  "event_index": 0,
+                  "quote": "第14项检查完成，当前无需新增长期规则。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "用户表示第11项检查完成，当前无需新增长期规则。",
+            "score": 0.04567190188660385,
+            "source_file": "[memory:mem_263fb7465196478c869a0871c12192ac]",
+            "chunk_id": "mem_263fb7465196478c869a0871c12192ac:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_263fb7465196478c869a0871c12192ac",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "event",
+              "subject": "第11项检查",
+              "predicate": "状态",
+              "value": "已完成",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.0456718956216213,
+              "age_decay_applied": true,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_78478f29e6a642f3b59c812e6412ee5f",
+                  "event_index": 0,
+                  "quote": "第11项检查完成，当前无需新增长期规则。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 3,
+        "elapsed_ms": 17180,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "本次发布回滚口令",
+            "当前会话设定的发布回滚口令"
+          ],
+          "keywords": [
+            "回滚口令",
+            "松鼠蓝莓",
+            "发布",
+            "当前会话"
+          ],
+          "required_info": [
+            "本次发布回滚口令的值"
+          ],
+          "depth": 3,
+          "subject": "本次发布回滚口令",
+          "predicate": "是",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 19,
+            "output_count": 6,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 6,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 6,
+            "output_count": 6,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 6,
+            "output_count": 3,
+            "detail": "target=3; context_tokens=383; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 6,
+        "selected_k": 3,
+        "context_tokens": 383,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=10; eligible=19",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 16230.728099995758,
+          "generation_ms": 948.1820000219159,
+          "total_ms": 17180.367699998897,
+          "context_tokens_before": 6913,
+          "context_tokens_after": 3748,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 5,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          },
+          {
+            "candidate_count": 5,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          },
+          {
+            "candidate_count": 5,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          },
+          {
+            "candidate_count": 4,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    },
+    {
+      "name": "假设不覆盖事实",
+      "query": "实际回滚口令是什么？",
+      "expected": [
+        "松鼠蓝莓"
+      ],
+      "uncertain": false,
+      "forbidden": [
+        "是青柠"
+      ],
+      "answer": {
+        "generated_text": "实际回滚口令是“松鼠蓝莓”，仅用于当前会话。【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "本次发布的回滚口令是松鼠蓝莓，仅用于当前会话。",
+            "score": 0.9698580863786274,
+            "source_file": "[memory:mem_73f75049f41e4aad9d8f054c8b54ea8b]",
+            "chunk_id": "mem_73f75049f41e4aad9d8f054c8b54ea8b:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_73f75049f41e4aad9d8f054c8b54ea8b",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "发布回滚口令",
+              "predicate": "口令",
+              "value": "松鼠蓝莓",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9698580863786274,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_44b7d623fb124db6a35f920f8a8b3296",
+                  "event_index": 0,
+                  "quote": "这次发布的回滚口令是松鼠蓝莓，只用于当前会话。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "用户提出假设：如果回滚口令是“青柠”会怎样；该假设不改变实际口令。",
+            "score": 0.9274237707432905,
+            "source_file": "[memory:mem_6c55a763d1644be78417544d01a4111a]",
+            "chunk_id": "mem_6c55a763d1644be78417544d01a4111a:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_6c55a763d1644be78417544d01a4111a",
+              "version": 1,
+              "tier": "short",
+              "assertion": "hypothetical",
+              "kind": "fact",
+              "subject": "回滚口令",
+              "predicate": "假设值",
+              "value": "青柠",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9274237707432905,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_14bd0d410043411f99f8e6d36de8a321",
+                  "event_index": 0,
+                  "quote": "如果回滚口令是青柠会怎样？这只是一个假设，不改变实际口令。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "用户表示第14项检查完成，当前无需新增长期规则。",
+            "score": 0.12099027109579363,
+            "source_file": "[memory:mem_04ac8e17315446718dfa5ba925268da3]",
+            "chunk_id": "mem_04ac8e17315446718dfa5ba925268da3:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_04ac8e17315446718dfa5ba925268da3",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "event",
+              "subject": "第14项检查",
+              "predicate": "状态",
+              "value": "已完成",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.12099022443806633,
+              "age_decay_applied": true,
+              "conflict_pending": [],
+              "evidence": [
+                {
+                  "turn_id": "turn_6ca7e92f9e934af4a48bdf570a4e437e",
+                  "event_index": 0,
+                  "quote": "第14项检查完成，当前无需新增长期规则。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 3,
+        "elapsed_ms": 4334,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "实际回滚口令是什么",
+            "本次发布回滚口令",
+            "回滚口令 松鼠蓝莓"
+          ],
+          "keywords": [
+            "回滚口令",
+            "松鼠蓝莓",
+            "青柠"
+          ],
+          "required_info": [
+            "当前会话实际回滚口令值",
+            "该口令仅限当前会话使用的约束"
+          ],
+          "depth": 2,
+          "subject": "回滚口令",
+          "predicate": "是",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=short; depth=2; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 20,
+            "output_count": 6,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 6,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 6,
+            "output_count": 6,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 6,
+            "output_count": 3,
+            "detail": "target=3; context_tokens=392; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 6,
+        "selected_k": 3,
+        "context_tokens": 392,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=11; eligible=20",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 3140.1950999861583,
+          "generation_ms": 1190.5780999804847,
+          "total_ms": 4334.214199974667,
+          "context_tokens_before": 7765,
+          "context_tokens_after": 3805,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 1,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "expected": true,
+        "forbidden": true
+      },
+      "passed": true
+    }
+  ],
+  "model": "deepseek-flash",
+  "embedding_enabled": false,
+  "maintenance": {
+    "status": "ok",
+    "group_count": 1,
+    "groups": [
+      {
+        "path": [
+          "北辰"
+        ],
+        "level": 1,
+        "scope_type": "project",
+        "scope_id": "北辰",
+        "memory_refs": [
+          "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+          "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+          "mem_20134b4d78f7414695eea4deb9d75f24:1",
+          "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+          "mem_47d5ad3360ba4096b8c8f4b5aa643a30:2"
+        ],
+        "mode": "extractive_summary",
+        "summary": "北辰项目 · 报告默认语言：中文\n北辰项目 · 验收地点：梧桐会议室\n北辰项目 · 默认数据库：PostgreSQL\n阿岚 · 别名：小舟\n阿岚 · 负责事项：数据库迁移",
+        "summary_items": [
+          {
+            "text": "北辰项目 · 报告默认语言：中文",
+            "memory_ref": "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "assertion": "stated",
+            "evidence_count": 2
+          },
+          {
+            "text": "北辰项目 · 验收地点：梧桐会议室",
+            "memory_ref": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:2",
+            "assertion": "stated",
+            "evidence_count": 1
+          },
+          {
+            "text": "北辰项目 · 默认数据库：PostgreSQL",
+            "memory_ref": "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "assertion": "stated",
+            "evidence_count": 1
+          },
+          {
+            "text": "阿岚 · 别名：小舟",
+            "memory_ref": "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "assertion": "stated",
+            "evidence_count": 1
+          },
+          {
+            "text": "阿岚 · 负责事项：数据库迁移",
+            "memory_ref": "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "assertion": "stated",
+            "evidence_count": 1
+          }
+        ],
+        "omitted_count": 0,
+        "is_derived_view": true,
+        "usable_as_extraction_evidence": false,
+        "updated_at": "2026-09-17T06:53:55.278904+00:00",
+        "synthesis": {
+          "summary": "阿岚的别名为小舟；阿岚负责数据库迁移。北辰项目默认数据库为PostgreSQL；北辰项目报告默认语言为中文；北辰项目验收地点为梧桐会议室（valid_from 2026-09-17T06:53:26.247130+00:00）。",
+          "source_refs": [
+            "mem_d0411f8eb4d041e5810a7f79cbb0020a:1",
+            "mem_1e07fa892cc9426cb3a48b03d1fd4090:1",
+            "mem_20134b4d78f7414695eea4deb9d75f24:1",
+            "mem_c93ae0cba906420f9f2e5994b05c1b27:1",
+            "mem_47d5ad3360ba4096b8c8f4b5aa643a30:2"
+          ],
+          "coverage_count": 5,
+          "group_count": 5,
+          "is_derived_view": true,
+          "usable_as_extraction_evidence": false
+        }
+      }
+    ],
+    "mode": "evidence_bound_maintenance",
+    "semantic_synthesis": "model_assisted_with_sources",
+    "applied": [],
+    "review": [],
+    "retention": [
+      {
+        "memory_id": "mem_83da0130f8404aa68f4982b03529847f",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_0917580c5215409186b5d71f2b756859",
+        "version": 1,
+        "status": "retracted",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_fa0f22fd1fbd476ba178dbd4c2c761da",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 120,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_76572e741eb04fed89056d841fc6f269",
+        "version": 1,
+        "status": "superseded",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 120,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 120,
+        "evidence_reinforcement": 2,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+        "version": 1,
+        "status": "superseded",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": true,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_c2be6640843b4803b6419c81102c15b6",
+        "version": 1,
+        "status": "superseded",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+        "version": 2,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_73f75049f41e4aad9d8f054c8b54ea8b",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_aca48f7a231349928af31d7da04862b9",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_9a517493ab544bff8728c0bd2ea15305",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_a6be257b545b4538b56aeca6dda42afb",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_d9da691a16014bb59b5bfeb18f036903",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_98030838df314831904be609d23f6159",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_45935d1ba0164696b01ec30d78f7efc9",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_ef9ad949cd064e728890074b4122b30f",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_5cfb391cdcb24796adbaecb9d910d718",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_e546fd73a1d147b386cd8080ce8b03bd",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_4a0e110b9a76401ba1aa3ce3242ad159",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_263fb7465196478c869a0871c12192ac",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_d818b6a745784beb88df2091036d1ab1",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_92f76adc7aa24dfc87567db6d5d85ca7",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_04ac8e17315446718dfa5ba925268da3",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 30,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_f20544d0ceff4f448c703e2dba2a31c7",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_fef09390a14f49e5907109f9fd662741",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_82bfb331222b45e08460c590826f24cf",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_e3a9e737112946ea9131975232d8dd12",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      },
+      {
+        "memory_id": "mem_6c55a763d1644be78417544d01a4111a",
+        "version": 1,
+        "status": "active",
+        "strength": 1.0,
+        "age_days": 0.0,
+        "half_life_days": 180,
+        "evidence_reinforcement": 1,
+        "expired": false,
+        "recommendation": "keep",
+        "measurement": "age_evidence_heuristic_not_truth_probability",
+        "recoverable": false
+      }
+    ],
+    "warnings": [],
+    "forgetting_policy": "recoverable_archive_no_automatic_fact_deletion"
+  },
+  "memory_inventory": [
+    {
+      "content": "zfc 昵称此前被用户说成飞猪，现已更正为错误说法。",
+      "kind": "fact",
+      "subject": "zfc",
+      "predicate": "别名",
+      "value": "飞猪（已更正为错误）",
+      "keywords": [
+        "zfc",
+        "飞猪",
+        "更正",
+        "否定"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_57ba8546edc54fbb9f14284b318b44ec",
+          "event_index": 0,
+          "quote": "更正：zfc的昵称不是飞猪，而是飞猫，之前我说错了。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_83da0130f8404aa68f4982b03529847f",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_10425f88d44a4120b169b60debd82a75",
+      "scope_id": "session_10425f88d44a4120b169b60debd82a75",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:52:57.726302Z"
+    },
+    {
+      "content": "用户陈述 zfc 是飞猪，即 zfc 的别名为飞猪。",
+      "kind": "fact",
+      "subject": "zfc",
+      "predicate": "别名",
+      "value": "飞猪",
+      "keywords": [
+        "zfc",
+        "飞猪",
+        "别名",
+        "昵称"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_988f3a20bcd54d7d88494a0325144285",
+          "event_index": 0,
+          "quote": "zfc是飞猪！"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_0917580c5215409186b5d71f2b756859",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_10425f88d44a4120b169b60debd82a75",
+      "scope_id": "session_10425f88d44a4120b169b60debd82a75",
+      "tier": "short",
+      "status": "retracted",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:52:54.081668Z"
+    },
+    {
+      "content": "zfc 的昵称是飞猫（用户更正：之前说飞猪是错的）。",
+      "kind": "fact",
+      "subject": "zfc",
+      "predicate": "别名",
+      "value": "飞猫",
+      "keywords": [
+        "zfc",
+        "昵称",
+        "别名",
+        "飞猫",
+        "更正"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_57ba8546edc54fbb9f14284b318b44ec",
+          "event_index": 0,
+          "quote": "更正：zfc的昵称不是飞猪，而是飞猫，之前我说错了。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_fa0f22fd1fbd476ba178dbd4c2c761da",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_10425f88d44a4120b169b60debd82a75",
+      "scope_id": "session_10425f88d44a4120b169b60debd82a75",
+      "tier": "short",
+      "status": "active",
+      "supersedes": "mem_0917580c5215409186b5d71f2b756859:1",
+      "recorded_at": "2026-09-17T06:52:57.726302Z"
+    },
+    {
+      "content": "阿岚的昵称是小舟（北辰项目规则）",
+      "kind": "fact",
+      "subject": "阿岚",
+      "predicate": "别名",
+      "value": "小舟",
+      "keywords": [
+        "阿岚",
+        "小舟",
+        "昵称",
+        "北辰项目"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+          "event_index": 0,
+          "quote": "阿岚的昵称是小舟"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_d0411f8eb4d041e5810a7f79cbb0020a",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_ee9005f9be924fb6a7e93d4bdb50eb33",
+      "scope_id": "北辰",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:06.086249Z"
+    },
+    {
+      "content": "阿岚负责数据库迁移（北辰项目规则）",
+      "kind": "fact",
+      "subject": "阿岚",
+      "predicate": "负责事项",
+      "value": "数据库迁移",
+      "keywords": [
+        "阿岚",
+        "数据库迁移",
+        "职责",
+        "北辰项目"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+          "event_index": 0,
+          "quote": "阿岚负责数据库迁移"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_1e07fa892cc9426cb3a48b03d1fd4090",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_ee9005f9be924fb6a7e93d4bdb50eb33",
+      "scope_id": "北辰",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:06.086249Z"
+    },
+    {
+      "content": "北辰项目默认使用PostgreSQL",
+      "kind": "preference",
+      "subject": "北辰项目",
+      "predicate": "默认数据库",
+      "value": "PostgreSQL",
+      "keywords": [
+        "北辰项目",
+        "PostgreSQL",
+        "数据库",
+        "默认"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+          "event_index": 0,
+          "quote": "项目默认使用PostgreSQL"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_20134b4d78f7414695eea4deb9d75f24",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_ee9005f9be924fb6a7e93d4bdb50eb33",
+      "scope_id": "北辰",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:06.086249Z"
+    },
+    {
+      "content": "北辰项目默认报告语言为中文。",
+      "kind": "preference",
+      "subject": "北辰项目",
+      "predicate": "报告默认语言",
+      "value": "中文",
+      "keywords": [
+        "北辰项目",
+        "报告",
+        "默认语言",
+        "中文"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_3fe80dfbe2c44204a65bf46a53ce5f11",
+          "event_index": 0,
+          "quote": "北辰项目默认中文规则保持不变。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_76572e741eb04fed89056d841fc6f269",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_80710c36fa33483eab9eb2bb1b716e2a",
+      "scope_id": "北辰",
+      "tier": "short",
+      "status": "superseded",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:17.767287Z"
+    },
+    {
+      "content": "北辰项目报告默认用中文",
+      "kind": "preference",
+      "subject": "北辰项目",
+      "predicate": "报告默认语言",
+      "value": "中文",
+      "keywords": [
+        "北辰项目",
+        "报告",
+        "中文",
+        "默认"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+          "event_index": 0,
+          "quote": "报告默认用中文"
+        },
+        {
+          "turn_id": "turn_3fe80dfbe2c44204a65bf46a53ce5f11",
+          "event_index": 0,
+          "quote": "北辰项目默认中文规则保持不变。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_c93ae0cba906420f9f2e5994b05c1b27",
+      "version": 1,
+      "revision": 3,
+      "session_id": "session_ee9005f9be924fb6a7e93d4bdb50eb33",
+      "scope_id": "北辰",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:06.086249Z"
+    },
+    {
+      "content": "北辰项目验收地点是海棠会议室",
+      "kind": "fact",
+      "subject": "北辰项目",
+      "predicate": "验收地点",
+      "value": "海棠会议室",
+      "keywords": [
+        "北辰项目",
+        "验收地点",
+        "海棠会议室"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_73102b97b95e468f8eff10fb51677f67",
+          "event_index": 0,
+          "quote": "项目验收地点是海棠会议室"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": null,
+      "valid_to": "2026-09-17T06:53:26.247130Z",
+      "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+      "version": 1,
+      "revision": 3,
+      "session_id": "session_ee9005f9be924fb6a7e93d4bdb50eb33",
+      "scope_id": "北辰",
+      "tier": "long",
+      "status": "superseded",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:06.087249Z"
+    },
+    {
+      "content": "北辰项目验收地点由海棠会议室改为梧桐会议室，自2026-09-17T06:53:26Z起生效。",
+      "kind": "fact",
+      "subject": "北辰项目",
+      "predicate": "验收地点",
+      "value": "梧桐会议室",
+      "keywords": [
+        "北辰项目",
+        "验收地点",
+        "梧桐会议室",
+        "变更"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_54d9c7bb57c34c90907cd7ef83e63611",
+          "event_index": 0,
+          "quote": "北辰项目验收地点由海棠会议室改为梧桐会议室，从现在开始生效，请更新长期记录。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": "2026-09-17T06:53:26.247130Z",
+      "valid_to": null,
+      "memory_id": "mem_c2be6640843b4803b6419c81102c15b6",
+      "version": 1,
+      "revision": 2,
+      "session_id": "session_623006ac78c14e27b61385f80bc9bb83",
+      "scope_id": "北辰",
+      "tier": "short",
+      "status": "superseded",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:28.122206Z"
+    },
+    {
+      "content": "北辰项目验收地点由海棠会议室改为梧桐会议室，自2026-09-17T06:53:26Z起生效。",
+      "kind": "fact",
+      "subject": "北辰项目",
+      "predicate": "验收地点",
+      "value": "梧桐会议室",
+      "keywords": [
+        "北辰项目",
+        "验收地点",
+        "梧桐会议室",
+        "变更"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_54d9c7bb57c34c90907cd7ef83e63611",
+          "event_index": 0,
+          "quote": "北辰项目验收地点由海棠会议室改为梧桐会议室，从现在开始生效，请更新长期记录。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "北辰"
+      ],
+      "valid_from": "2026-09-17T06:53:26.247130Z",
+      "valid_to": null,
+      "memory_id": "mem_47d5ad3360ba4096b8c8f4b5aa643a30",
+      "version": 2,
+      "revision": 1,
+      "session_id": "session_623006ac78c14e27b61385f80bc9bb83",
+      "scope_id": "北辰",
+      "tier": "long",
+      "status": "active",
+      "supersedes": "mem_47d5ad3360ba4096b8c8f4b5aa643a30:1",
+      "recorded_at": "2026-09-17T06:53:28.122206Z"
+    },
+    {
+      "content": "本次发布的回滚口令是松鼠蓝莓，仅用于当前会话。",
+      "kind": "fact",
+      "subject": "发布回滚口令",
+      "predicate": "口令",
+      "value": "松鼠蓝莓",
+      "keywords": [
+        "回滚口令",
+        "本次发布",
+        "仅当前会话"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_44b7d623fb124db6a35f920f8a8b3296",
+          "event_index": 0,
+          "quote": "这次发布的回滚口令是松鼠蓝莓，只用于当前会话。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_73f75049f41e4aad9d8f054c8b54ea8b",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:36.757918Z"
+    },
+    {
+      "content": "第1项检查已完成。",
+      "kind": "event",
+      "subject": "第1项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第1项"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_0ab70143a9994057ac42a060dbb4a26a",
+          "event_index": 0,
+          "quote": "第1项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_aca48f7a231349928af31d7da04862b9",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:36.757918Z"
+    },
+    {
+      "content": "第2项检查已完成。",
+      "kind": "event",
+      "subject": "第2项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第2项"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_b1543cc7355b45919ecaf20b55892028",
+          "event_index": 0,
+          "quote": "第2项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_9a517493ab544bff8728c0bd2ea15305",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:36.758919Z"
+    },
+    {
+      "content": "第3项检查已完成。",
+      "kind": "event",
+      "subject": "第3项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第3项"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_5351938d01574de2a1e863634336cf81",
+          "event_index": 0,
+          "quote": "第3项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_a6be257b545b4538b56aeca6dda42afb",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:36.758919Z"
+    },
+    {
+      "content": "第4项检查已完成。",
+      "kind": "event",
+      "subject": "第4项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第4项"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_83bcb40b1d4d4dfa9204c057ee0b0931",
+          "event_index": 0,
+          "quote": "第4项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_d9da691a16014bb59b5bfeb18f036903",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:36.758919Z"
+    },
+    {
+      "content": "第5项检查已完成。",
+      "kind": "fact",
+      "subject": "第5项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "第5项检查",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_98a2776ddc1b4910908e5352e539ba93",
+          "event_index": 0,
+          "quote": "第5项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_98030838df314831904be609d23f6159",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:39.848888Z"
+    },
+    {
+      "content": "第6项检查已完成。",
+      "kind": "fact",
+      "subject": "第6项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "第6项检查",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_b753c76088b7486c91b3b4689fbefb67",
+          "event_index": 0,
+          "quote": "第6项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_45935d1ba0164696b01ec30d78f7efc9",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:39.848888Z"
+    },
+    {
+      "content": "第7项检查已完成。",
+      "kind": "fact",
+      "subject": "第7项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "第7项检查",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_d5a35b58fbe349d88985cb6b1a4be776",
+          "event_index": 0,
+          "quote": "第7项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_ef9ad949cd064e728890074b4122b30f",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:39.848888Z"
+    },
+    {
+      "content": "第8项检查已完成。",
+      "kind": "fact",
+      "subject": "第8项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "第8项检查",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_49f0cb8c275440f5831f8b359dbba44d",
+          "event_index": 0,
+          "quote": "第8项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_5cfb391cdcb24796adbaecb9d910d718",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:39.849404Z"
+    },
+    {
+      "content": "第9项检查已完成。",
+      "kind": "fact",
+      "subject": "第9项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "第9项检查",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_5dcbd543b4d64e2ea2bff6407250bed7",
+          "event_index": 0,
+          "quote": "第9项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_e546fd73a1d147b386cd8080ce8b03bd",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:39.849404Z"
+    },
+    {
+      "content": "用户表示第10项检查完成，当前无需新增长期规则。",
+      "kind": "event",
+      "subject": "第10项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第10项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_8708bbbde4d24cba9826ec4ac161a523",
+          "event_index": 0,
+          "quote": "第10项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_4a0e110b9a76401ba1aa3ce3242ad159",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:46.336436Z"
+    },
+    {
+      "content": "用户表示第11项检查完成，当前无需新增长期规则。",
+      "kind": "event",
+      "subject": "第11项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第11项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_78478f29e6a642f3b59c812e6412ee5f",
+          "event_index": 0,
+          "quote": "第11项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_263fb7465196478c869a0871c12192ac",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:46.337443Z"
+    },
+    {
+      "content": "用户表示第12项检查完成，当前无需新增长期规则。",
+      "kind": "event",
+      "subject": "第12项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第12项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_e4464543a2914353af5db907c9a6b9a2",
+          "event_index": 0,
+          "quote": "第12项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_d818b6a745784beb88df2091036d1ab1",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:46.337443Z"
+    },
+    {
+      "content": "用户表示第13项检查完成，当前无需新增长期规则。",
+      "kind": "event",
+      "subject": "第13项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第13项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_bef74c363aa648b8995e57c6b1596ef5",
+          "event_index": 0,
+          "quote": "第13项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_92f76adc7aa24dfc87567db6d5d85ca7",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:46.337443Z"
+    },
+    {
+      "content": "用户表示第14项检查完成，当前无需新增长期规则。",
+      "kind": "event",
+      "subject": "第14项检查",
+      "predicate": "状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第14项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_6ca7e92f9e934af4a48bdf570a4e437e",
+          "event_index": 0,
+          "quote": "第14项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_04ac8e17315446718dfa5ba925268da3",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:46.337443Z"
+    },
+    {
+      "content": "第15项检查已完成，用户表示当前无需新增长期规则。",
+      "kind": "fact",
+      "subject": "第15项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第15项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_3a9fa21287514852bdf6beb6d48f4a64",
+          "event_index": 0,
+          "quote": "第15项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_f20544d0ceff4f448c703e2dba2a31c7",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:48.720764Z"
+    },
+    {
+      "content": "第16项检查已完成，用户表示当前无需新增长期规则。",
+      "kind": "fact",
+      "subject": "第16项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第16项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_1c7f69b3a760414d8d2f1fb60bc14d7f",
+          "event_index": 0,
+          "quote": "第16项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_fef09390a14f49e5907109f9fd662741",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:48.721279Z"
+    },
+    {
+      "content": "第17项检查已完成，用户表示当前无需新增长期规则。",
+      "kind": "fact",
+      "subject": "第17项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第17项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_a89e5d209049428f854d564a0089ac40",
+          "event_index": 0,
+          "quote": "第17项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_82bfb331222b45e08460c590826f24cf",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:48.721794Z"
+    },
+    {
+      "content": "第18项检查已完成，用户表示当前无需新增长期规则。",
+      "kind": "fact",
+      "subject": "第18项检查",
+      "predicate": "完成状态",
+      "value": "已完成",
+      "keywords": [
+        "检查",
+        "第18项",
+        "完成"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_a9ce76691d8944fab9d5a75eb0054776",
+          "event_index": 0,
+          "quote": "第18项检查完成，当前无需新增长期规则。"
+        }
+      ],
+      "assertion": "stated",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_e3a9e737112946ea9131975232d8dd12",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:48.722311Z"
+    },
+    {
+      "content": "用户提出假设：如果回滚口令是“青柠”会怎样；该假设不改变实际口令。",
+      "kind": "fact",
+      "subject": "回滚口令",
+      "predicate": "假设值",
+      "value": "青柠",
+      "keywords": [
+        "回滚口令",
+        "假设",
+        "青柠"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_14bd0d410043411f99f8e6d36de8a321",
+          "event_index": 0,
+          "quote": "如果回滚口令是青柠会怎样？这只是一个假设，不改变实际口令。"
+        }
+      ],
+      "assertion": "hypothetical",
+      "durable": false,
+      "scope_type": "session",
+      "hierarchy_path": [],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_6c55a763d1644be78417544d01a4111a",
+      "version": 1,
+      "revision": 1,
+      "session_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "scope_id": "session_5f8b1cc3d69e44deae875ce87502692f",
+      "tier": "short",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T06:53:53.058072Z"
+    }
+  ],
+  "passed": 13,
+  "total": 14
+}

@@ -20,6 +20,20 @@ import {
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  RunCircuit,
+  RunTimeline,
+  ScenarioGuide,
+  type RunEvent,
+  type RunMode,
+} from "./RunCircuit";
+import { LongTermInsights, MemoryChanges } from "./MemoryInsights";
+import {
+  TraceNotes,
+  VIEW_LABELS,
+  readableStep,
+  traceMode,
+} from "./TraceLanguage";
 
 import {
   ApiError,
@@ -41,6 +55,8 @@ import type {
   HistoryEntry,
   Memory,
   SessionSnapshot,
+  SummaryGroup,
+  MaintenanceReport,
 } from "./types";
 
 type InspectorTab = "short" | "long" | "trace" | "observe";
@@ -108,7 +124,7 @@ function ShortMemoryPanel({
           className={snapshot?.session.summary ? "summary-text" : "empty-text"}
         >
           {snapshot?.session.summary ||
-            "发送包含明确事实的消息后，点击“整理”生成摘要。"}
+            "回答前会自动整理待处理事件，也可点击“整理”单独检查抽取结果。"}
         </p>
       </section>
 
@@ -202,6 +218,36 @@ function ShortMemoryPanel({
         </div>
       </section>
 
+      {memories.some(
+        (memory) =>
+          memory.tier === "short" &&
+          memory.status === "archived" &&
+          memory.session_id === snapshot?.session.session_id,
+      ) && (
+        <details className="archived-memories">
+          <summary>已归档短期记忆</summary>
+          {memories
+            .filter(
+              (memory) =>
+                memory.tier === "short" &&
+                memory.status === "archived" &&
+                memory.session_id === snapshot?.session.session_id,
+            )
+            .map((memory) => (
+              <article className="memory-entry" key={memory.memory_id}>
+                <p>{memory.content}</p>
+                <button
+                  type="button"
+                  className="text-command"
+                  disabled={!!busy}
+                  onClick={() => onPromote(memory)}
+                >
+                  审阅 / 恢复
+                </button>
+              </article>
+            ))}
+        </details>
+      )}
       <section className="plain-section">
         <h3>近期原始对话</h3>
         <div className="raw-list">
@@ -228,12 +274,18 @@ function HierarchyPanel({
   busy,
   onHistory,
   onEvolve,
+  groups,
+  maintenance,
+  onMaintain,
 }: {
   hierarchy: Hierarchy;
   memories: Memory[];
   busy: boolean;
   onHistory: (id: string) => void;
   onEvolve: (memory: Memory) => void;
+  groups: SummaryGroup[];
+  maintenance: MaintenanceReport | null;
+  onMaintain: () => void;
 }) {
   return (
     <div className="inspector-content">
@@ -249,6 +301,15 @@ function HierarchyPanel({
         领域 → 类别 → 线索 →
         记忆版本。相同事实保留演化历史，检索按作用域与有效时间选择版本。此处展示当前用户可见的长期目录。
       </p>
+      <LongTermInsights
+        groups={groups}
+        report={maintenance}
+        memories={memories}
+        busy={busy}
+        onMaintain={onMaintain}
+        onReview={onEvolve}
+        onHistory={onHistory}
+      />
       {hierarchy.domains.length === 0 && (
         <p className="empty-block">
           还没有长期记忆。先整理对话，再将稳定的用户或项目记忆晋升到这里。
@@ -279,7 +340,7 @@ function HierarchyPanel({
                 >
                   查看演化历史
                 </button>
-                {memory.status === "pending" && (
+                {["pending", "archived"].includes(memory.status) && (
                   <button
                     className="text-command"
                     disabled={busy}
@@ -405,7 +466,7 @@ function TracePanel({ trace }: { trace: AnswerResult | null }) {
         <div>
           <h2>意图与查询</h2>
           <span>
-            {trace.elapsed_ms} ms · {trace.retrieval_mode}
+            {trace.elapsed_ms} ms · {traceMode(trace.retrieval_mode)}
           </span>
         </div>
       </div>
@@ -429,15 +490,12 @@ function TracePanel({ trace }: { trace: AnswerResult | null }) {
           <strong>{trace.context_tokens}</strong>
         </div>
       </section>
-      {trace.warnings.length > 0 && (
-        <div className="trace-warnings" role="status">
-          {trace.warnings.map((warning, index) => (
-            <p key={index}>{warning}</p>
-          ))}
-        </div>
-      )}
+      <TraceNotes warnings={trace.warnings} />
       <section className="plain-section">
-        <h3>语义查询</h3>
+        <h3>规划的查询与关键词</h3>
+        <p className="measurement-note">
+          以下来自服务返回的查询计划，不代表模型内部思考，也不表示向量检索已经执行。
+        </p>
         <ol className="query-list">
           {plan.semantic_queries.map((query) => (
             <li key={query}>{query}</li>
@@ -463,19 +521,34 @@ function TracePanel({ trace }: { trace: AnswerResult | null }) {
       <section className="plain-section">
         <h3>实际查询步骤</h3>
         <ol className="step-list">
-          {trace.query_steps.map((step) => (
-            <li key={step.order}>
-              <span>{step.order}</span>
-              <div>
-                <strong>{step.action}</strong>
-                <p>{step.detail}</p>
-              </div>
-              <em>
-                {step.input_count} → {step.output_count}
-              </em>
-            </li>
-          ))}
+          {trace.query_steps.map((step) => {
+            const readable = readableStep(step, trace);
+            return (
+              <li key={step.order}>
+                <span>{step.order}</span>
+                <div>
+                  <strong>{readable.title}</strong>
+                  <p>{readable.detail}</p>
+                  <small className="step-count">{readable.count}</small>
+                </div>
+              </li>
+            );
+          })}
         </ol>
+        <details className="technical-detail">
+          <summary>原始记录（规划与步骤）</summary>
+          <pre>
+            {JSON.stringify(
+              {
+                retrieval_mode: trace.retrieval_mode,
+                plan: trace.plan,
+                query_steps: trace.query_steps,
+              },
+              null,
+              2,
+            )}
+          </pre>
+        </details>
       </section>
       <section className="plain-section">
         <h3>检索来源</h3>
@@ -489,9 +562,64 @@ function TracePanel({ trace }: { trace: AnswerResult | null }) {
               </span>
               <div>
                 <p>{source.content}</p>
+                <div className="source-tags">
+                  <span>
+                    {source.metadata.tier === "long"
+                      ? "长期"
+                      : source.metadata.tier === "short"
+                        ? "短期"
+                        : "记忆来源"}
+                  </span>
+                  <span>{label(String(source.metadata.scope_type || ""))}</span>
+                  {source.metadata.local_override === true && (
+                    <span>本次会话优先</span>
+                  )}
+                  {Array.isArray(source.metadata.matched_views) &&
+                    source.metadata.matched_views
+                      .filter(
+                        (view): view is string => typeof view === "string",
+                      )
+                      .map((view) => (
+                        <span
+                          key={view}
+                          title={
+                            VIEW_LABELS[view]?.[1] ||
+                            "可展开来源原始记录查看通道标识"
+                          }
+                        >
+                          {VIEW_LABELS[view]?.[0] || "其他匹配通道"}
+                        </span>
+                      ))}
+                </div>
+                {Array.isArray(source.metadata.evidence) &&
+                  source.metadata.evidence.length > 0 && (
+                    <details className="source-evidence">
+                      <summary>
+                        展开原文证据（{source.metadata.evidence.length} 条）
+                      </summary>
+                      {source.metadata.evidence.map(
+                        (
+                          item: {
+                            quote?: string;
+                            turn_id?: string;
+                            event_index?: number;
+                          },
+                          evidenceIndex: number,
+                        ) => (
+                          <blockquote key={evidenceIndex}>
+                            <p>{item.quote}</p>
+                            <cite>
+                              事件 {item.turn_id} · 消息{" "}
+                              {(item.event_index ?? 0) + 1}
+                            </cite>
+                          </blockquote>
+                        ),
+                      )}
+                    </details>
+                  )}
                 <details className="technical-detail">
                   <summary>
-                    来源标识与元数据
+                    来源标识与元数据 · 原始记录
                     {trace.citations.includes(index + 1) ? " · 已引用" : ""}
                   </summary>
                   <p>
@@ -512,6 +640,7 @@ function TracePanel({ trace }: { trace: AnswerResult | null }) {
 }
 
 const LABELS: Record<string, string> = {
+  archived: "已归档",
   fact: "事实",
   preference: "偏好",
   event: "事件",
@@ -693,7 +822,13 @@ export default function App() {
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [hierarchy, setHierarchy] = useState<Hierarchy>(EMPTY_HIERARCHY);
+  const [groups, setGroups] = useState<SummaryGroup[]>([]);
+  const [maintenance, setMaintenance] = useState<MaintenanceReport | null>(
+    null,
+  );
   const [trace, setTrace] = useState<AnswerResult | null>(null);
+  const [runEvents, setRunEvents] = useState<RunEvent[]>([]);
+  const [runMode, setRunMode] = useState<RunMode>("idle");
   const [baseline, setBaseline] = useState<AnswerResult | null>(null);
   const [lastQuery, setLastQuery] = useState("");
   const [retryQuery, setRetryQuery] = useState("");
@@ -735,14 +870,17 @@ export default function App() {
 
   async function refresh(sessionId = snapshot?.session.session_id) {
     if (!sessionId) return;
-    const [nextSnapshot, nextMemories, nextHierarchy] = await Promise.all([
-      api.session(sessionId),
-      api.memories(),
-      api.hierarchy(),
-    ]);
+    const [nextSnapshot, nextMemories, nextHierarchy, nextGroups] =
+      await Promise.all([
+        api.session(sessionId),
+        api.memories(),
+        api.hierarchy(),
+        api.groups(),
+      ]);
     setSnapshot(nextSnapshot);
     setMemories(nextMemories);
     setHierarchy(nextHierarchy);
+    setGroups(nextGroups);
   }
   async function createSession() {
     const session = await api.createSession(
@@ -751,6 +889,8 @@ export default function App() {
     );
     localStorage.setItem("memory-session-id", session.session_id);
     setTrace(null);
+    setRunEvents([]);
+    setRunMode("idle");
     setBaseline(null);
     setLastQuery("");
     setRetryQuery("");
@@ -811,9 +951,7 @@ export default function App() {
     if (pendingReply.current?.query !== query)
       pendingReply.current = { query, requestId: crypto.randomUUID() };
     const pending = pendingReply.current;
-    const result =
-      pending.result ||
-      (await api.answer(snapshot.session.session_id, query, topK, accelerate));
+    const result = pending.result || (await runAnswer(query, accelerate));
     pending.result = result;
     setTrace(result);
     setLastQuery(query);
@@ -828,6 +966,42 @@ export default function App() {
     setRetryQuery("");
     pendingReply.current = null;
     await refresh(snapshot.session.session_id);
+  }
+  async function runAnswer(query: string, useAcceleration: boolean) {
+    if (!snapshot) throw new Error("请先创建会话");
+    setRunEvents([]);
+    setTrace(null);
+    setRunMode("live");
+    setTab("trace");
+    let fallback = false;
+    try {
+      const result = await api.answerStream(
+        snapshot.session.session_id,
+        query,
+        topK,
+        useAcceleration,
+        (event) => setRunEvents((previous) => [...previous, event]),
+        () => {
+          fallback = true;
+          setRunMode("idle");
+        },
+      );
+      if (fallback)
+        setRunEvents([
+          {
+            type: "stage",
+            phase: "completed",
+            detail:
+              "当前服务未提供阶段流。仅展示完成后的结果，不模拟实时过程。",
+            elapsed_ms: result.elapsed_ms,
+          },
+        ]);
+      setRunMode("recorded");
+      return result;
+    } catch (cause) {
+      setRunMode("error");
+      throw cause;
+    }
   }
   function handleSend(event: FormEvent) {
     event.preventDefault();
@@ -866,6 +1040,17 @@ export default function App() {
     setError("");
     setEvolution(memory);
   }
+  function handleMaintain() {
+    void operation("维护长期记忆并更新分层摘要", async () => {
+      const report = await api.maintain();
+      setMaintenance(report);
+      await refresh();
+      setBaseline(null);
+      setNotice(
+        `维护完成：${report.applied.length} 项变更，${report.review.length} 项待审阅建议。`,
+      );
+    });
+  }
   function commitEvolution(command: EvolutionInput) {
     if (!evolution) return;
     void operation("应用记忆演化", async () => {
@@ -888,12 +1073,7 @@ export default function App() {
     void operation(
       useAcceleration ? "测量加速查询" : "测量无缓存基线",
       async () => {
-        const result = await api.answer(
-          snapshot.session.session_id,
-          lastQuery,
-          topK,
-          useAcceleration,
-        );
+        const result = await runAnswer(lastQuery, useAcceleration);
         setTrace(result);
         if (!useAcceleration) setBaseline(result);
         setTab("observe");
@@ -995,37 +1175,12 @@ export default function App() {
           </button>
         </div>
       </header>
-      <section className="mechanism" aria-label="记忆运行机制">
-        <div className="mechanism-intro">
-          <span className="live-label">记忆生命周期</span>
-          <p>
-            让对话成为
-            <br />
-            <strong>可追溯的知识。</strong>
-          </p>
-        </div>
-        <div className="mechanism-steps">
-          {steps.map((step, index) => (
-            <button
-              className={`mechanism-step ${tab === step.tab ? "selected" : ""}`}
-              key={step.tab}
-              onClick={() => setTab(step.tab)}
-              aria-pressed={tab === step.tab}
-            >
-              <span className="step-icon">
-                <step.icon size={21} />
-              </span>
-              <span>
-                <strong>{step.title}</strong>
-                <small>{step.detail}</small>
-              </span>
-              {index < steps.length - 1 && (
-                <ArrowRight className="flow-arrow" size={15} />
-              )}
-            </button>
-          ))}
-        </div>
-      </section>
+      <RunCircuit
+        events={runEvents}
+        mode={runMode}
+        result={trace}
+        onInspect={setTab}
+      />
       <div className="global-feedback" aria-live="polite">
         {busy && (
           <p className="busy-bar" role="status">
@@ -1093,7 +1248,7 @@ export default function App() {
                 <MessageSquareText size={35} />
                 <h2>从一条值得记住的信息开始</h2>
                 <p>
-                  写入事实或偏好，整理成短期记忆，再观察它如何进入长期知识和后续回答。
+                  写入事实或偏好，系统会在回答前整理记忆。观察哪些内容被确认、检索和引用。
                 </p>
                 <button
                   className="example-prompt"
@@ -1133,6 +1288,7 @@ export default function App() {
               </article>
             ))}
           </div>
+          <ScenarioGuide onFill={setInput} disabled={!snapshot || !!busy} />
           <form className="composer" onSubmit={handleSend}>
             <div className="composer-field">
               <label className="sr-only" htmlFor="message-input">
@@ -1219,9 +1375,22 @@ export default function App() {
               busy={!!busy}
               onHistory={showHistory}
               onEvolve={handlePromote}
+              groups={groups}
+              maintenance={maintenance}
+              onMaintain={handleMaintain}
             />
           )}
-          {tab === "trace" && <TracePanel trace={trace} />}
+          {tab === "trace" && (
+            <div className="trace-scroll">
+              <RunTimeline events={runEvents} mode={runMode} />
+              <MemoryChanges
+                result={trace}
+                memories={memories}
+                onReview={handlePromote}
+              />
+              <TracePanel trace={trace} />
+            </div>
+          )}
           {tab === "observe" && (
             <ObservePanel
               trace={trace}

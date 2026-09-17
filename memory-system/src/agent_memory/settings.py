@@ -39,6 +39,9 @@ class Settings:
     max_top_k: int = 20
     max_candidates: int = 120
     activation_ttl_seconds: int = 300
+    maintenance_interval: float = field(
+        default_factory=lambda: float(os.getenv("MEMORY_MAINTENANCE_INTERVAL", "300"))
+    )
     model_timeout: float = field(default_factory=lambda: _positive_float("MEMORY_MODEL_TIMEOUT", 30.0))
     model_max_tokens: int = field(default_factory=lambda: _positive_int("MEMORY_MODEL_MAX_TOKENS", 4096))
     api_key: str = field(default_factory=lambda: os.getenv("MEMORY_API_KEY", ""), repr=False)
@@ -56,6 +59,8 @@ class Settings:
     )
 
     def __post_init__(self):
+        if not math.isfinite(self.maintenance_interval) or self.maintenance_interval < 0:
+            raise ValueError("maintenance_interval must be finite and non-negative")
         for name in (
             "pending_turns",
             "window_token_limit",

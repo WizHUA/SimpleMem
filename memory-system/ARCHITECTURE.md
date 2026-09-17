@@ -1,69 +1,73 @@
-# Architecture
+# 长短期记忆系统架构
 
-当前交付状态、实验和宿主验收入口见 [README.md](README.md) 与 [交付说明](../DELIVERY.md)。本页保留原有分层与主线。
+本系统采用模块化单体后端。SQLite 保存权威事件、事实与审计，检索索引和摘要均为可重建投影。HTTP 展示前端与可选 Engine 适配器调用同一个 `MemoryRuntime`；本轮不包含真实课程宿主集成验收。
 
-## 分层
+## 模块边界
 
-```text
-Transport: api.py | integrations/rag_sdk.py
-    只处理协议、可信上下文和错误映射
-
-Application: runtime.py | short_term.py | long_term.py | retrieval.py
-    编排短期窗口、意图查询、长期动作与回答
-
-Domain: models.py | ports.py
-    跨模块数据契约与外部能力接口
-
-Infrastructure: store.py | providers.py | embeddings.py | acceleration.py
-    SQLite、模型与嵌入适配、按精确上下文复用推理
-```
-
-依赖只向下：核心领域不导入 FastAPI、宿主 SDK 或 SimpleMem。`api.py` 和 `rag_sdk.py` 调用同一个 `MemoryRuntime`。
-
-## 关键闭环
-
-```text
-append turn -> recent raw STM -> search/answer
-           -> 5 pending turns or explicit trigger -> model extraction
-           -> short memories + state patch + watermark
-           -> reviewed evolution action -> long versions
-           -> reference grouping / future external index
-```
-
-查询使用 `QueryPlan(route, semantic_queries, keywords, subject, predicate, depth)`。`depth` 决定目标结果数和候选预算，调用者 `top_k` 是最终上限。H-MEM 的 `hierarchy_path` 只用于组织，当前不会取代 SimpleMem 式规划或强制逐层 beam。
-
-多信息需求查询保留各字段的召回空间，不允许一个模型猜测的 subject/predicate 排除其他必需事实。动态深度至少覆盖规划中的需求数，仍受 top_k 与上下文预算限制。词法和向量扫描在线程中执行，外层截止时间约束等待，但 Python 无法强制终止已运行的工作线程。
-
-回答生成前保留数据库版本快照，返回前复验会话和主体审计版本。当前事实查询还记录下一个有效期边界，避免模型运行期间事实自然到期后继续返回旧结果；历史/as_of 查询保持其时间语义。删除、撤回或并发修改造成的不一致返回可重试冲突。
-
-加速只缓存生成阶段。完整提示、来源身份与版本、数据库状态、会话、模型实例和主体共同形成缓存键；每次请求仍执行授权与新鲜检索。TTL/LRU限制结果，重复在途请求共享调用，最后等待者取消时终止任务。向量缓存只复用相同文本的嵌入，不缓存最终候选的授权结果。
-
-## 数据真实性
-
-- 原始 turn 是证据；结构化 memory 是派生结论。
-- 每条抽取结果至少引用一个本批新 turn，旧语境只能补充指代证据。
-- 用户/工具可以建立 `stated/observed`；assistant 只能先保留为计划、假设或推断。
-- 长期晋升必须显式执行；`durable` 是候选提示，不是自动授权。
-- `superseded` 表示过去曾有效，`retracted` 表示原陈述错误。
-- H-MEM 分组和将来的层级摘要是可重建投影，不是权威事实。
-
-## 当前简化
-
-- SQLite 面向单节点计划/验证阶段；多实例部署前迁移 PostgreSQL 或实现进程间写锁。
-- 词法检索按授权 owner 的小集合扫描；大规模阶段改为 FTS/Qdrant 候选查询。
-- token 预算使用保守字符数，接入实际模型时替换为该模型 tokenizer。
-- 语义 relation merge 暂不自动执行；当前 merge 仅接受字段和时间完全相同的事实。
-- H-MEM 当前只按最多三级 `hierarchy_path` 建引用组，不生成可能失真的高层事实摘要。
-
-## 多人协作约束
-
-| 负责方向 | 主要文件 | 不应修改的边界 |
+| 层 | 模块 | 职责 |
 |---|---|---|
-| 短期抽取 | `short_term.py`, `providers.py` | 不直接写 SQL，不决定 owner |
-| 检索 | `retrieval.py` | 不修改事实状态，不生成答案事实 |
-| 生命周期 | `long_term.py`, `store.py` | 不接受无 expected_version 的更新 |
-| HTTP | `api.py` | 不复制业务规则，不把 Header 当认证 |
-| SDK | `integrations/rag_sdk.py` | 不修改 SDK 签名，不捕获 search 错误为空 |
-| 前端 | 未来独立目录/仓库 | 只依赖 OpenAPI，不读取 SQLite |
+| 展示 | 相邻 `memory-ui/` | React/TypeScript 展示对话、真实运行阶段、检索证据、生命周期及加速观测 |
+| 协议 | `api.py`、`integrations/rag_sdk.py` | HTTP/NDJSON、可信身份范围、参数校验和错误映射 |
+| 应用 | `runtime.py`、`short_term.py`、`long_term.py` | 自动抽取、状态更新、演化重试、维护与回答编排 |
+| 检索 | `retrieval.py`、`retrieval_projection.py` | 意图规划、混合候选、证据关系扩展、预算选择及索引投影 |
+| 领域 | `models.py`、`ports.py`、`evidence_policy.py`、`maintenance.py` | 数据契约、证据规则、关系与保留策略 |
+| 基础设施 | `store.py`、`providers.py`、`embeddings.py`、`acceleration.py` | SQLite、模型服务、向量服务及生成缓存 |
 
-共享 `models.py` 或 API Schema 变更时，要同步更新测试和前端契约。模型提示词版本、Embedding 版本和阈值都应进入实验配置记录。
+核心包不导入 FastAPI 或课程 SDK。SimpleMem、Zep、H-MEM 是方法参考，不是被直接调用的运行时组件。
+
+## 在线闭环
+
+```mermaid
+flowchart LR
+    T[保存原始事件] --> W[回答前分批整理待处理记录]
+    W --> E[模型抽取与逐字证据校验]
+    E --> DB[(事务保存记忆、状态、水位和演化任务)]
+    DB --> V[短期更正与长期安全演化]
+    V --> P[模型查询规划]
+    P --> R[短期优先、多视图召回与证据扩展]
+    R --> S[范围、时间、冲突和预算筛选]
+    S --> C{精确生成缓存}
+    C -->|未命中| A[模型生成]
+    C -->|命中| O[复验版本与有效期后返回]
+    A --> O
+```
+
+`answer` 默认先处理积压，每批最多 5 个新 turn，最多补充 15 个已处理 turn 作为语境；turn 是持久化记录单位，不保证等于完整的用户—助手对话轮。`search` 保持只读，不自动调用抽取。手动 `/extract` 仍可独立运行。
+
+原文、抽取结果、摘要和处理水位在同一事务中提交，演化任务同时写入 SQLite outbox。抽取模型、Schema 或证据校验失败时水位不推进；抽取提交后演化失败返回可见警告，任务保留，后续调用可重试，重启后仍可恢复。回答规划或生成失败不会撤销已经成功提交的抽取。
+
+## 证据与记忆演化
+
+- 每个候选必须引用本批至少一个新 turn，并提供准确事件位置和逐字引文。
+- 问句属于对话语境，不能建立肯定事实；截掉问号或混入助手回答不能绕过原事件检查。助手输出本身不能证明用户事实。
+- 用户证据支持的持久、用户/项目范围陈述可以自动晋升；临时约束仍保留在会话范围。
+- 相同结构化事实允许措辞不同，但合并必须保持主体、属性、值、断言、作用域和有效期一致，并保留证据。
+- 明确现实变化使用 `supersede`，关闭旧有效期并建立新版本；明确原说法错误使用 `correct`，撤回错误版本。依据不充分的异值候选进入 `pending`。
+- 模型关系判断提供带引文的审核建议，不能越过确定性规则直接改写事实。
+- `version` 标识事实版本；`revision` 随状态等修改递增。更新同时提供 `expected_version`、`expected_revision`，目标操作还应提供目标对应字段，以防旧页面和状态往返后的过期操作。
+
+## 检索与索引
+
+检索保留 SimpleMem 的意图规划、STM 优先和动态 K 主线。规划结果包含路由、语义查询、关键词、主体/属性、所需信息和时间条件。只有明确而唯一的单字段查询已被短期证据满足时，才跳过长期补充。
+
+词法路线使用中文/英文预分词的 SQLite FTS5 候选投影，再计算有界 BM25 分数；符号路线按主体、属性和作用域等精确约束；配置 Embedding 后增加真实余弦召回。显式实体事实可进行最多两跳证据扩展，支持路径必须附带来源，不能猜测实体身份。层级标签提供附加召回信号，不强制逐层搜索。重复结果按记忆身份与版本归并，保留命中通道；分数不是事实置信度。
+
+投影按可信主体及会话命名空间隔离，内容变化增量同步；向量按模型身份和内容摘要复用。删除使用投影代次防止在途任务重新发布已清理的数据。当前仍先读取授权 owner 的权威快照，再执行投影候选检索和最终约束；没有完成 ANN、数据库级端到端候选下推或分布式向量检索。未配置 Embedding 时明确标为 `lexical_baseline`。
+
+## 长期维护
+
+各层 Domain / Category / Trace 建立提取式来源摘要；可选模型在有限组数、输入数量和时间预算内生成高层概括。摘要标注使用的实际版本和覆盖数量，只作为导航，不能成为新的 Memory 或抽取证据。事实更新、撤回和自然到期会使相关摘要不可继续作为有效视图返回。
+
+维护按年龄与独立证据事件计算保留强度。过期事件可自动归档，衰减较强的稳定事实只产生审核建议；归档可恢复，不销毁历史和证据，恢复也不延长事实有效期。`activate` 用于明确恢复待决候选，`restore` 用于恢复归档项，二者均有状态与版本检查。
+
+独立 HTTP 服务启动周期维护 worker；`MEMORY_MAINTENANCE_INTERVAL` 默认 300 秒，设为 0 禁用。worker 仅处理本服务配置的本地 principal，不是跨租户调度平台，也不会替课程宿主自动启动维护任务。手动 `/maintenance` 保留为可观察的维护入口。
+
+## 运行展示和推理复用
+
+`POST /api/v1/sessions/{id}/answer/stream` 返回 NDJSON：运行阶段、最终回答或错误来自实际任务事件。阶段包含抽取、规划、检索、生成等真实边界；它不输出模型隐藏思维链，也不是逐 token 生成流。
+
+生成缓存以完整提示、来源身份与版本、数据库状态、会话、模型实例及主体为键，采用 TTL/LRU，并合并相同在途请求。每次仍进行授权和新鲜检索；状态修改和有效期跨界会阻止旧结果返回。这属于减少重复生成调用的系统级优化，不是 GPU/KV Cache 或投机解码。
+
+## 交付边界
+
+当前面向单节点。多用户身份体系、跨进程缓存失效、多副本运维和生产容量仍需独立验收。token 预算仍采用保守字符估计。来源 ID 正确不代表摘要或回答已通过逐句忠实度验证；开发用例不能代替 LoCoMo、LongMemEval 等公开基准。测试与运行证据统一见 [VERIFICATION.md](docs/VERIFICATION.md)。

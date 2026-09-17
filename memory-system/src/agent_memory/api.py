@@ -1,15 +1,17 @@
 """Thin HTTP transport. Replace get_scope with host authentication when embedding."""
 
 import asyncio
+import json
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import Field
 
 from . import __version__
@@ -61,9 +63,20 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.runtime = runtime or MemoryRuntime.from_settings(settings)
+        worker = None
+        service = app.state.runtime
+        if runtime is None and service.settings.maintenance_interval > 0:
+            worker = asyncio.create_task(
+                service.maintenance_worker(
+                    Scope(tenant_id=service.settings.local_tenant, owner_id=service.settings.local_owner)
+                )
+            )
         try:
             yield
         finally:
+            if worker:
+                worker.cancel()
+                await asyncio.gather(worker, return_exceptions=True)
             if runtime is None:
                 await app.state.runtime.close()
 
@@ -161,8 +174,8 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
         return await service.append_turn(scope, session_id, body)
 
     @app.post("/api/v1/sessions/{session_id}/extract")
-    async def extract(session_id: str, scope: ScopeDep, service: RuntimeDep):
-        return await service.short_term.extract(scope, session_id)
+    async def extract(session_id: str, scope: ScopeDep, service: RuntimeDep, apply_evolution: bool = True):
+        return await service.extract(scope, session_id, apply_evolution=apply_evolution)
 
     @app.post("/api/v1/search")
     async def search(body: Query, scope: ScopeDep, service: RuntimeDep):
@@ -172,6 +185,68 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
     async def answer(body: Query, scope: ScopeDep, service: RuntimeDep):
         return await service.answer(
             scope, body.session_id, body.query, body.top_k, body.timeout, accelerate=body.accelerate
+        )
+
+    @app.post("/api/v1/sessions/{session_id}/answer/stream")
+    async def answer_stream(
+        session_id: str, body: Query, request: Request, scope: ScopeDep, service: RuntimeDep
+    ):
+        if body.session_id != session_id:
+            raise ValueError("Body session_id must match URL")
+        await asyncio.to_thread(service.store.get_session, scope, session_id)
+
+        async def events():
+            queue = asyncio.Queue(maxsize=32)
+            started = time.perf_counter()
+
+            async def progress(phase, detail):
+                await queue.put(
+                    {
+                        "type": "stage",
+                        "phase": phase,
+                        "detail": detail,
+                        "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
+                    }
+                )
+
+            async def produce():
+                try:
+                    result = await service.answer(
+                        scope,
+                        session_id,
+                        body.query,
+                        body.top_k,
+                        body.timeout,
+                        accelerate=body.accelerate,
+                        progress=progress,
+                    )
+                    await progress("completed", "回答完成，来源与记忆版本已复验")
+                    await queue.put({"type": "result", "answer": result.model_dump(mode="json")})
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # noqa: BLE001 - terminate streaming transport with a sanitized error
+                    response = await error_response(request, exc)
+                    payload = json.loads(response.body)
+                    await queue.put(
+                        {"type": "error", "detail": payload["detail"], "status": response.status_code}
+                    )
+
+            task = asyncio.create_task(produce())
+            try:
+                while True:
+                    item = await queue.get()
+                    yield json.dumps(item, ensure_ascii=False) + "\n"
+                    if item["type"] in {"result", "error"}:
+                        break
+            finally:
+                if not task.done():
+                    task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+        return StreamingResponse(
+            events(),
+            media_type="application/x-ndjson",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
     @app.get("/api/v1/memories")
@@ -193,7 +268,7 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
 
     @app.post("/api/v1/maintenance")
     async def maintain(scope: ScopeDep, service: RuntimeDep):
-        return await service.long_term.maintain(scope)
+        return await service.maintain(scope)
 
     @app.get("/api/v1/groups")
     async def groups(scope: ScopeDep, service: RuntimeDep):
@@ -205,8 +280,7 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
 
     @app.delete("/api/v1/owner/data")
     async def delete_owner_data(scope: ScopeDep, service: RuntimeDep):
-        deleted = await asyncio.to_thread(service.store.delete_owner, scope)
-        service.clear_scope_cache(scope)
+        deleted = await service.delete_owner(scope)
         return {"status": "deleted", "deleted": deleted}
 
     return app

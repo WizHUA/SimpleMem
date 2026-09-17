@@ -26,6 +26,7 @@ class ApiTests(unittest.TestCase):
     def tearDown(self):
         self.client.__exit__(None, None, None)
         # An injected runtime is caller-owned, so the app deliberately did not close it.
+        self.runtime.retriever.close()
         self.runtime.store.close()
         self.folder.cleanup()
 
@@ -121,12 +122,15 @@ class ApiTests(unittest.TestCase):
 
     def test_chat_round_trip_appends_generated_reply(self):
         def chat(prompt):
+            if "短期记忆的增量生成" in prompt:
+                return '{"candidates":[],"summary":"这次报告使用中文"}'
             if "用户意图感知查询规划" in prompt:
                 return '{"route":"short","semantic_queries":["报告语言"],"depth":1}'
             return "这次报告使用中文。"
 
         model = CallableModel(chat)
         self.runtime.model = model
+        self.runtime.short_term.model = model
         self.runtime.retriever.model = model
         session_id = self.client.post("/api/v1/sessions", json={}).json()["session_id"]
         for role, content in (

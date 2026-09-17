@@ -94,10 +94,11 @@ class Candidate(Contract):
 class Memory(Candidate):
     memory_id: str
     version: int = 1
+    revision: int = 1
     session_id: str
     scope_id: str
     tier: Literal["short", "long"] = "short"
-    status: Literal["active", "superseded", "retracted", "pending"] = "active"
+    status: Literal["active", "superseded", "retracted", "pending", "archived"] = "active"
     supersedes: str | None = None
     recorded_at: datetime = Field(default_factory=utcnow)
 
@@ -208,13 +209,18 @@ class AnswerResponse(Contract):
     context_tokens: int = 0
     warnings: list[str] = Field(default_factory=list)
     acceleration: AccelerationTrace | None = None
+    memory_updates: list[dict] = Field(default_factory=list)
 
 
 class EvolutionInput(Contract):
-    action: Literal["promote", "merge", "supersede", "retract", "defer"]
+    action: Literal[
+        "promote", "merge", "supersede", "correct", "retract", "defer", "archive", "restore", "activate"
+    ]
     expected_version: int = Field(ge=1)
+    expected_revision: int | None = Field(default=None, ge=1)
     target_id: str | None = None
     target_version: int | None = Field(default=None, ge=1)
+    target_revision: int | None = Field(default=None, ge=1)
     effective_at: datetime | None = None
 
     @field_validator("effective_at")
@@ -223,3 +229,15 @@ class EvolutionInput(Contract):
         if value is not None and value.tzinfo is None:
             raise ValueError("effective_at must include timezone")
         return value.astimezone(UTC) if value else None
+
+
+class RelationProposal(Contract):
+    relation: Literal["duplicate", "update", "correction", "conflict", "unrelated"]
+    target_id: str | None = None
+    reason: str = Field(max_length=1000)
+    evidence_quotes: list[str] = Field(default_factory=list, max_length=10)
+
+
+class GroupSynthesis(Contract):
+    summary: str = Field(min_length=1, max_length=3000)
+    source_refs: list[str] = Field(min_length=1, max_length=100)

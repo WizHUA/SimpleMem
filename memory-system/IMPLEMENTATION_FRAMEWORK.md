@@ -1,89 +1,71 @@
 # 实现框架与模型调用边界
 
-本项目以独立后端为主体。配套 `memory-ui` 前端只访问 HTTP API；宿主 Engine 通过可选 RAG SDK 适配器访问同一个 `MemoryRuntime`。SimpleMem、Zep 和 H-MEM 是局部方法依据，不是运行时依赖。`full-forward` 的测试与部署状态见 [交付说明](../DELIVERY.md)。
+系统沿用在线查询与长期维护两条主线。前端只访问 HTTP API，核心通过模型接口调用配置的服务。SimpleMem 的结构化压缩和意图检索、Zep 的时间演化、H-MEM 的分层组织分别在局部使用，不表示完整复现这些系统。
 
-## 实现框架
+## 五类模型调用
 
-```mermaid
-flowchart LR
-    UI[展示前端 / 宿主 Engine] --> API[HTTP API / RAG SDK 适配器]
-    API --> RT[MemoryRuntime]
+| 编号 | 时机 | 输入与输出 | 已实现的约束 |
+|---|---|---|---|
+| ① 意图规划 | 配置模型后的 search/answer | 问题、当前任务状态 → `QueryPlan` | 规划路由、语义查询、关键词、字段和时间条件，不把记忆清单或标准答案泄漏给规划器 |
+| ② 回答生成 | 检索与预算选择完成后 | 问题、有限对话上下文、有效证据 → 回答与来源编号 | 精确缓存可避免此次调用；返回前检查数据库状态和有效期 |
+| ③ 结构化抽取 | 回答前自动准备、积压批处理或手动 extract | 最多 5 个新 turn、最多 15 个旧 turn、有限字段提示 → `ExtractionResult` | 证据逐字校验；问句、助手猜测不变成肯定事实；日期值与事实有效期分开 |
+| ④ 关系建议 | 规则无法安全判断同字段不同值时 | 新候选、相关旧事实 → `RelationProposal` | 输出关系、目标、理由和引文，只辅助审核；不得自动越过规则覆盖事实 |
+| ⑤ 分层摘要 | 手动或周期维护时 | 同组当前事实 → `GroupSynthesis` | 必须引用输入版本，标记派生视图和覆盖范围；不可反向作为新事实证据 |
 
-    subgraph Online[在线回答链路]
-        RT --> STM[短期记忆<br/>近期原文・目标・计划・摘要]
-        STM --> P[① 模型意图规划<br/>route・q_sem・q_lex・q_sym・depth]
-        P --> R[动态 K + 三视图检索]
-        R --> LTM[长期事实与历史版本]
-        R --> C[候选合并<br/>范围・时间・版本过滤]
-        LTM --> C
-        C --> CACHE{精确上下文复用}
-        CACHE -->|未命中| A[② 模型回答生成]
-        CACHE -->|命中| OUT
-        A --> OUT[回答 + 引用]
-    end
+五类接口均已实现。①③④⑤采用结构化输出，Schema/证据不合规最多修复一次，两次尝试共享调用截止时间；网络错误不会被伪造为空记忆或正常答案。②使用普通文本，不做格式修复。Embedding 使用独立接口，不计作聊天模型调用。
 
-    subgraph Maintain[记忆生成与维护链路]
-        RT --> T[消息 / 工具事件持久化]
-        T --> W{5 轮 / Token 压力<br/>阶段结束 / 明确纠正}
-        W --> E[③ 模型结构化抽取]
-        E --> S[短期原子记忆 + 状态 Patch]
-        S --> G[规则候选检索与精确去重]
-        G --> Q{关系是否明确?}
-        Q -->|明确| V[版本化动作<br/>ADD・MERGE・SUPERSEDE・RETRACT]
-        Q -->|歧义| J[④ 模型关系判断<br/>后续实现]
-        J --> V
-        V --> DB[(权威关系库)]
-        DB --> IDX[(向量 / 全文检索投影<br/>后续接入)]
-        DB --> H[H-MEM 引用分组]
-        H --> HS[⑤ 模型高层摘要<br/>后续按脏分组批处理]
-    end
+维护模型处理最多 8 个关系审核项或 8 个摘要组，并受总时间预算约束。摘要每组最多输入 12 条事实，未变来源可复用持久化摘要。调用次数必须结合实际轨迹统计：一次 answer 如果有积压，会执行多批③及必要④，然后①和可能的②，不能固定宣称“每次仅两次模型调用”。⑤不在每次查询中执行。
+
+## 数据和失败顺序
+
+```text
+保存用户/工具事件
+  → 读取待处理连续前缀
+  → 模型抽取与来源校验
+  → 事务提交原子记忆 + 会话状态 + 水位 + evolution_jobs
+  → 短期更正 / 长期晋升、合并、更新或待决
+  → 查询规划 → 混合检索 → 证据扩展 → 预算选择
+  → 精确生成复用或模型回答
+  → 状态与时间复验
 ```
 
-图中 ①②③ 已有调用接口；④⑤只保留扩展位置，当前代码不会调用。H-MEM 只组织长期记忆，不替代 ① 的 SimpleMem 意图规划和动态 K。
+抽取前失败不推进水位；抽取后演化失败保留 outbox 任务并返回警告。后续 extract/answer 可重试已提交候选，即使进程重启也不会依赖内存队列。事实版本与状态 revision 分离，带 revision 的操作可拒绝归档—恢复往返后的旧页面请求。
 
-## 哪些步骤调用模型
+明确“从旧值改为新值”属于现实变化，使用证据事件时间或明确有效时间闭合旧版本；明确“之前说错、纠正”属于错误纠正，撤回旧错误版本。没有明确证据时保留冲突并请求核对。短期约束不会因主题相似而自动变成跨会话默认规则。
 
-| 编号 | 调用时机 | 输入 | 结构化输出 | 当前状态 | 单次操作调用数 |
-|---:|---|---|---|---|---:|
-| ① | 每次配置模型后的 search/answer | Query + 当前任务摘要 + 最多 8 条短期记忆 | `QueryPlan` | 已实现 | 1；Schema 错误最多再修复 1 次 |
-| ② | `/answer` 完成检索后 | Query + 短期状态 + 有效检索证据 | 普通回答 + `【来源N】` | 已实现 | 1，不做格式修复 |
-| ③ | 5 个待处理 turn、token 压力或显式触发 | 最多 5 个新 turn + 最多 15 个旧 turn 语境 | `ExtractionResult` | 已实现 | 1；Schema 错误最多再修复 1 次 |
-| ④ | 精确规则无法判断新旧记忆关系 | 新候选 + 同 owner/scope/subject/predicate 的少量旧事实 | `RelationProposal` | 后续实现 | 每个歧义小批次 1 次 |
-| ⑤ | H-MEM 分组变脏且达到批处理条件 | 一个分组内的有效事实摘要和 ID | 带来源的上层摘要 | 后续实现 | 每个脏分组 1 次，不在每次查询调用 |
+## 查询投影和维护
 
-以下步骤不调用聊天大模型：消息持久化、幂等检查、权限和作用域过滤、动态 K 数值计算、精确重复判断、有效时间过滤、版本更新、审计历史、SDK 字段封装。Embedding 是独立的向量模型接口，不应把聊天模型的回答接口当成向量接口。
+FTS5 是可重建词法候选投影；BM25、符号约束、可选余弦相似度和来源明确的实体关系扩展共同提供候选。向量内容投影避免对相同事实重复请求 Embedding。授权、作用域、生命周期和有效期由权威快照决定，不能由索引自行授权。
 
-一次 `/search` 在配置模型后通常调用 ① 一次。一次 `/answer` 通常调用 ① + ②，共两次。一次 `/extract` 通常调用 ③ 一次。只有结构化 JSON 不合法时，① 或③才允许一次格式修复；网络错误直接向上抛出，不重复请求。
+当前仍读取整个授权 owner 的权威集合，再同步和查询投影。尚未完成 ANN、跨节点索引或生产大规模候选下推。实体扩展最多两跳，不是开放域知识图谱推理；层级标签和来源摘要也不能证明模型高层概括必然忠实。
 
-## DeepSeek 接入
+周期维护通过独立 API 服务的生命周期启动，间隔由 `MEMORY_MAINTENANCE_INTERVAL` 控制，默认 300 秒、0 禁用。只面向当前配置 principal；课程宿主自行决定任务调度，本轮不集成真实宿主。周期维护、手动维护和前台演化均保留 SQLite 事务与审计。
 
-后端沿用 `MEMORY_MODEL_*` 配置，不增加第二套密钥变量。将 `MEMORY_MODEL_BASE_URL` 设为 `https://api.deepseek.com`，`MEMORY_MODEL_NAME` 设为 `deepseek-flash`，并在私有 `.env` 中填写 DeepSeek API Key。规划、抽取、回答仍使用同一个 `MemoryRuntime`；DeepSeek 请求关闭默认思考模式，规划和抽取启用 JSON Output。前端只调用本地后端，`/health` 显示 `model_provider=deepseek`。
+## 前端运行轨迹
 
-## GLM 接入
+NDJSON 接口 `/api/v1/sessions/{id}/answer/stream` 在真实处理边界输出 `stage`，并以 `result` 或 `error` 结束。前端可以展示阶段时间线、召回通道、候选数量、筛选结果、证据连接和缓存命中，不需要用动画假装后端仍在推理。
 
-现有 `OpenAICompatibleModel` 会向 `{base_url}/chat/completions` 发请求，使用 Bearer API key。若智谱账户使用官方兼容接口，可配置：
+这里的可视化是可核验的执行轨迹，不是模型内部思维链。最终文本仍在生成完成后返回；当前没有逐 token 的供应商流式转发。旧 SDK `generate_stream` 仍是缓冲兼容模式，与新的 HTTP 阶段事件流是两种不同接口。
+
+## 模型配置与启动
+
+在后端私有 `.env` 中填写 `MEMORY_MODEL_BASE_URL`、`MEMORY_MODEL_NAME`、`MEMORY_MODEL_API_KEY`。同一模型适配器承担上述五类调用；配置了真实 Embedding 才启用向量路线。密钥只留在后端，不写入前端或文档。
 
 ```powershell
-cd "C:\Users\zhangjinhan\Desktop\Agent Mem\memory-system"
-.\.venv\Scripts\Activate.ps1
-$env:MEMORY_MODEL_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
-$env:MEMORY_MODEL_NAME="<你的账户已开通的 GLM 模型名>"
-$env:MEMORY_MODEL_API_KEY="<只保存在本机环境变量中的 API Key>"
-$env:MEMORY_MODEL_TIMEOUT="90"
-$env:MEMORY_MODEL_MAX_TOKENS="4096"
-python -m agent_memory
+# 从 SimpleMem 根目录进入后端；使用既有 Conda 环境。
+cd memory-system
+conda run --no-capture-output -n simplemem-agentmemory python -m pip install -e ".[dev]"
+conda run --no-capture-output -n simplemem-agentmemory python -m agent_memory
 ```
 
-不要把 Key 放进前端、Git、Markdown、请求日志或提交记录。前端只调用本后端；模型请求始终由后端发送。
+`GET /health` 确认实际提供商、模型名和语义检索启用状态。修改 `.env` 后重启服务。OpenAI 兼容适配器支持当前项目使用的 DeepSeek/GLM 配置；具体模型权限和余额由实际账号决定，不由本地测试推断。
 
-先用一个模型完成 ①②③，减少配置和调试成本。实际数据表明回答质量和抽取成本存在明显差异时，再把 `MemoryModel` 拆为 `planner_model / extraction_model / answer_model`；同一个 API key 可以由不同角色适配器复用，但每个角色应独立记录模型名、耗时和 token。
+## 验证路径
 
-## 接入后验证顺序
-
-1. 用 `/health` 确认 `model_configured=true`。
-2. 创建会话并写入 5 个带稳定 `request_id` 的 turn。
-3. 调用 `/extract`，检查候选都引用真实 turn 和逐字 quote。
-4. 调用 `/search`，检查 `plan.route/depth`、`selected_k <= top_k` 和 `mode`。
-5. 调用 `/answer`，检查 `【来源N】` 只引用实际 sources。
-6. 使用错误 JSON 的模拟响应验证只修复一次；使用 503/timeout 验证错误传播且抽取水位不前进。
-7. 在开发集上测量抽取 F1、证据 F1、Recall@K、查询 token 和端到端成本，再决定是否实现 ④⑤。
+1. 无事实时询问“zfc 是飞猪吗”，确认没有把问句写成肯定记忆。
+2. 明确提供昵称，再验证同会话召回；将信息标为跨会话持久规则后验证新会话召回。
+3. 分别测试现实改名、原说法纠正、临时覆盖及没有依据的冲突，核对来源、版本和状态。
+4. 制造超过一批的积压，检查连续水位；注入抽取超时和提交后演化失败，观察不同恢复语义。
+5. 归档、恢复和更新事实，检查检索、摘要、投影及生成缓存同步失效。
+6. 同一上下文对比基线和生成复用，报告真实调用节省；随后修改上下文确认不能继续命中。
+7. 将确定性工程回归、真实模型开发用例和公开基准分别报告。当前尚无公开基准或完整语义忠实度验收结论。

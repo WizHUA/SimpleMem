@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-17T03:26:46.376584+00:00",
+  "generated_at": "2026-09-17T07:01:27.587274+00:00",
   "python": "3.12.14",
   "platform": "Windows-11-10.0.26200-SP0",
   "quality": {
@@ -19,8 +19,8 @@
         ],
         "actual": [
           "language",
-          "diet",
-          "tool"
+          "tool",
+          "diet"
         ]
       },
       {
@@ -83,8 +83,8 @@
         "query": "火星项目秘密口令",
         "expected": [],
         "actual": [
-          "deadline",
-          "tool"
+          "tool",
+          "deadline"
         ]
       }
     ]
@@ -93,25 +93,25 @@
     {
       "memories": 100,
       "runs": 10,
-      "p50_ms": 9.856949967797846,
-      "p95_ms": 10.578199988231063,
-      "peak_mib": 0.08639812469482422,
+      "p50_ms": 29.4158999749925,
+      "p95_ms": 31.60720004234463,
+      "peak_mib": 0.17891311645507812,
       "selected_k": 3
     },
     {
       "memories": 1000,
       "runs": 10,
-      "p50_ms": 79.28335000178777,
-      "p95_ms": 91.6764999856241,
-      "peak_mib": 0.5039043426513672,
+      "p50_ms": 82.34974998049438,
+      "p95_ms": 90.3684999793768,
+      "peak_mib": 0.49572181701660156,
       "selected_k": 3
     },
     {
       "memories": 10000,
       "runs": 10,
-      "p50_ms": 892.0044999977108,
-      "p95_ms": 933.301700046286,
-      "peak_mib": 4.976375579833984,
+      "p50_ms": 684.4672000152059,
+      "p95_ms": 757.7191999880597,
+      "peak_mib": 5.810026168823242,
       "selected_k": 3
     }
   ],
@@ -121,22 +121,22 @@
       {
         "mode": "baseline",
         "runs": 10,
-        "p50_ms": 45.65520002506673,
-        "p95_ms": 47.22760000731796,
+        "p50_ms": 46.140699996612966,
+        "p95_ms": 49.64109999127686,
         "answer_model_calls": 10,
         "avoided_calls": 0,
-        "context_before": 15373,
-        "context_after": 4128
+        "context_before": 16198,
+        "context_after": 4953
       },
       {
         "mode": "accelerated",
         "runs": 10,
-        "p50_ms": 5.904799996642396,
-        "p95_ms": 46.637099992949516,
+        "p50_ms": 10.550049977609888,
+        "p95_ms": 46.70619999524206,
         "answer_model_calls": 1,
         "avoided_calls": 9,
-        "context_before": 15373,
-        "context_after": 4128
+        "context_before": 16198,
+        "context_after": 4953
       }
     ],
     "identical_answers": true,
@@ -148,13 +148,13 @@
         "shared",
         "shared",
         "shared",
-        "shared",
-        "shared",
-        "shared",
-        "shared"
+        "hit",
+        "hit",
+        "hit",
+        "hit"
       ]
     },
-    "write_p50_ms": 1.808750006603077,
-    "write_p95_ms": 2.574399986770004
+    "write_p50_ms": 1.6253000067081302,
+    "write_p95_ms": 2.4896999821066856
   }
 }

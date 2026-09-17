@@ -1,6 +1,6 @@
 # 长短期记忆系统交付
 
-开发分支为 `full-forward`。保留 SimpleMem 式意图规划、短期优先、多视图召回与动态 K 主线；长期层保留有效期、版本历史和来源，H-MEM 当前用于组织展示。
+开发分支为 `full-forward`，当前后端版本为 `0.3.0`。保留 SimpleMem 式意图规划、短期优先、多视图召回与动态 K 主线；增加自动整理与演化、可恢复维护任务、FTS5/向量内容投影、证据约束的别名关联、分层摘要及动态运行展示。本轮排除 Engine 集成。
 
 ## 启动
 
@@ -27,12 +27,16 @@ conda run --no-capture-output -n simplemem-agentmemory pnpm dev
 ## 可演示流程
 
 1. 建立项目会话，记录带事实的消息，查看待整理数量和原始对话。
-2. 点击整理，核对结构化短期记忆及逐字证据。明确“存入长期记忆”的稳定用户/项目事实可直接固化。
+2. 回答前自动整理，或点击整理单独核对结构化记忆及逐字证据。明确持久的用户/项目事实可自动晋升；问题与助手回复不作为独立肯定事实。
 3. 创建同一项目的新会话，查询长期事实，查看检索路由、多视图、筛选和动态 K。
-4. 输入纠正事实后整理，选择已有长期记录进行版本替代；查看历史，再显式撤回，验证旧事实退出当前检索。
+4. 输入明确更正或现实变更，观察自动纠错/版本替代；歧义进入待确认队列。维护页提供分层摘要、归档建议和恢复操作，源记录保持可追溯。
 5. 在运行观测页对同一上下文执行基线、冷缓存、热缓存，比较真实耗时与避免的生成调用。修改对话或记忆后再次验证失效。
 
 界面展示来自后端；模型失败会明确显示错误，不生成演示答案。浏览器测试使用独立夹具和临时数据库，与生产流程分开。
+
+运行回路与时间线由 NDJSON 服务事件驱动，记录实际抽取、规划、召回、生成与复验阶段；“回放”明确使用已有记录，不模拟模型私有思维链。页面内置三组逐步实验引导，示例只填入输入框，发送后才写入。
+
+`MEMORY_MAINTENANCE_INTERVAL=300` 默认每五分钟为本地配置的主体执行维护；设为 `0` 禁用。模型摘要仅为带来源的派生导航视图，不充当新事实。独立运行进程启动该 worker，SDK 宿主需自行调度。
 
 ## 验证入口
 
@@ -47,6 +51,7 @@ conda run --no-capture-output -n simplemem-agentmemory python scripts/evaluate.p
 conda run --no-capture-output -n simplemem-agentmemory python scripts/http_load.py
 # 会实际调用配置的模型：
 conda run --no-capture-output -n simplemem-agentmemory python scripts/live_smoke.py
+conda run --no-capture-output -n simplemem-agentmemory python scripts/practical_quality.py
 cd ../memory-ui
 conda run --no-capture-output -n simplemem-agentmemory pnpm build
 conda run --no-capture-output -n simplemem-agentmemory pnpm exec playwright install chromium
@@ -55,6 +60,10 @@ conda run --no-capture-output -n simplemem-agentmemory pnpm test:integration
 ```
 
 模型小样本已经验证真实抽取、跨会话召回和缓存命中；统计性问答质量仍需独立数据集。完整证据见 [检索与加速评测](memory-system/docs/EVALUATION.md)、[真实模型记录](memory-system/docs/LIVE_SMOKE.md)、[HTTP负载](memory-system/docs/HTTP_LOAD.md)。
+
+本轮 [14个实用会话场景](memory-system/docs/PRACTICAL_QUALITY.md)覆盖未知关系、zfc告知与纠错、跨会话、别名关联、临时覆盖、项目隔离及长会话。严格词面规则13/14；剩余一题当前值和版本正确，但回答附带旧值，仍保留失败。初轮12/14结果另存，不将人工复核改写成自动满分。该报告不同于旧十题集，不能合并分母或宣称公开基准准确率。
+
+[索引对照实验](memory-system/docs/INDEX_BENCHMARK.md)记录1万条候选的首次建索引、暖查询和向量复用。权威库仍读取授权快照，向量仍精确扫描；没有实现ANN或分布式扩展。真实Embedding服务未配置，线上当前使用FTS/BM25、符号、层级和实体关联；向量适配及持久缓存使用协议测试验证。
 
 [真实模型10题小集](memory-system/docs/LIVE_QUALITY.md)保留了[修复前7/10的记录](memory-system/docs/LIVE_QUALITY_INITIAL.md)，修复后严格词面规则为9/10。剩余一题回答了正确的新截止日，并提到已被替代的旧日期，被“禁止出现旧日期”规则判错；实际来源是新版本。报告保留自动失败并单列人工复核，不通过重复运行筛选满分。复现命令为 `python scripts/live_quality.py`，该保守规则未全部通过时退出码为1，须读逐题证据。
 

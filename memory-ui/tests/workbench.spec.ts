@@ -6,6 +6,9 @@ async function memoryBackend(
     failFirstAnswer?: boolean;
     failFirstHealth?: boolean;
     failFirstAssistantAck?: boolean;
+    stageStream?: boolean;
+    streamError?: boolean;
+    readableTrace?: boolean;
   } = {},
 ) {
   const state = {
@@ -55,12 +58,59 @@ async function memoryBackend(
     const path = new URL(route.request().url()).pathname;
     const method = route.request().method();
     const body = route.request().postDataJSON();
-    const json = (data: unknown, status = 200) =>
-      route.fulfill({
+    const json = (data: any, status = 200) => {
+      if (path.endsWith("/answer/stream") && status === 200) {
+        const stages = [
+          {
+            type: "stage",
+            phase: "extraction",
+            detail: "已核验新事件，疑问不确认为事实",
+            elapsed_ms: 5,
+          },
+          {
+            type: "stage",
+            phase: "planning",
+            detail: "规划用户语言偏好查询",
+            elapsed_ms: 40,
+          },
+          {
+            type: "stage",
+            phase: "retrieval",
+            detail: "从短期与长期召回候选",
+            elapsed_ms: 50,
+          },
+          {
+            type: "stage",
+            phase: "generation",
+            detail: "使用入选证据生成回答",
+            elapsed_ms: 55,
+          },
+          ...(options.streamError
+            ? [{ type: "error", detail: "生成阶段连接失败" }]
+            : [
+                {
+                  type: "stage",
+                  phase: "completed",
+                  detail: "回答与来源已返回",
+                  elapsed_ms: 420,
+                },
+                { type: "result", answer: data },
+              ]),
+        ];
+        return route.fulfill({
+          status: 200,
+          contentType: "application/x-ndjson",
+          body: stages.map((event) => JSON.stringify(event)).join("\n") + "\n",
+        });
+      }
+      return route.fulfill({
         status,
         contentType: "application/json",
         body: JSON.stringify(data),
       });
+    };
+    if (path.endsWith("/answer/stream") && !options.stageStream)
+      return json({ detail: "Endpoint unavailable" }, 404);
     if (path === "/health") {
       state.healthCalls++;
       if (options.failFirstHealth && state.healthCalls === 1)
@@ -135,6 +185,7 @@ async function memoryBackend(
     }
     if (path === "/api/v1/memories")
       return json(state.extracted && !state.promoted ? [memory] : []);
+    if (path === "/api/v1/groups") return json([]);
     if (path === "/api/v1/hierarchy")
       return json({
         schema: "hmem-reference/v1",
@@ -172,7 +223,7 @@ async function memoryBackend(
             ]
           : [],
       });
-    if (path === "/api/v1/answer") {
+    if (path === "/api/v1/answer" || path.endsWith("/answer/stream")) {
       state.answers.push(body);
       if (options.failFirstAnswer && state.answers.length === 1)
         return json({ detail: "模型服务响应超时，请重试。" }, 504);
@@ -189,7 +240,18 @@ async function memoryBackend(
             source_file: "memory-001",
             chunk_id: "memory-001:v1",
             engine: "symbolic",
-            metadata: { scope_type: "user" },
+            metadata: {
+              scope_type: "user",
+              ...(options.readableTrace
+                ? {
+                    matched_views: [
+                      "lexical",
+                      "entity_link_support",
+                      "new_channel",
+                    ],
+                  }
+                : {}),
+            },
           },
         ],
         retrieval_count: 1,
@@ -209,17 +271,28 @@ async function memoryBackend(
           {
             order: 1,
             phase: "retrieval",
-            action: "三视图检索",
+            action: options.readableTrace
+              ? "semantic_lexical_symbolic_recall"
+              : "三视图检索",
             input_count: 3,
             output_count: 1,
             detail: "符号、全文、语义候选合并后筛选",
           },
         ],
-        retrieval_mode: "hybrid",
+        retrieval_mode: options.readableTrace ? "lexical_baseline" : "hybrid",
         candidate_count: 3,
         selected_k: 1,
         context_tokens: 80,
-        warnings: [],
+        warnings: options.readableTrace
+          ? [
+              "multi_slot_recall: symbolic labels do not restrict other required fields",
+              "fts5_projection: reranked=3; eligible=8",
+              "long_term_searched",
+              "short_evidence_uncertain: one long-term supplement performed",
+              "required_info_coverage_unverified: retrieval similarity is not entailment",
+              "future_diagnostic: custom opaque payload",
+            ]
+          : [],
         acceleration: {
           enabled: body.accelerate,
           cache_hit: hit,
@@ -370,4 +443,305 @@ test("中文输入法确认键不会误发送，Shift+Enter 保留换行", async
   await expect(input).toHaveValue("中文输入法测试\n");
   await input.press("Enter");
   await expect(page.locator(".message-assistant")).toHaveCount(1);
+});
+
+test("真实阶段协议：运行轨迹、显式回放和场景填入", async ({ page }) => {
+  const state = await memoryBackend(page, { stageStream: true });
+  await page.goto("/");
+  await expect(page.getByLabel("输入消息", { exact: true })).toBeEnabled();
+  await page.locator(".scenario-guide > summary").click();
+  await page
+    .getByRole("button", {
+      name: "zfc 的昵称是飞猪。这里的飞猪只是我朋友的昵称。",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByLabel("输入消息", { exact: true })).toHaveValue(
+    "zfc 的昵称是飞猪。这里的飞猪只是我朋友的昵称。",
+  );
+  expect(state.events).toHaveLength(0);
+  await page.locator(".scenario-guide > summary").click();
+  await page.getByRole("button", { name: "发送消息", exact: true }).click();
+  await expect(page.getByLabel("服务阶段时间线").locator("li")).toHaveCount(5);
+  await expect(page.locator(".run-heading")).toContainText(
+    "运行完成 · 实际记录",
+  );
+  await expect(page.locator(".run-caption")).toContainText(
+    "3 条候选 → 1 条入选证据",
+  );
+  await page.getByRole("button", { name: "回放运行记录" }).click();
+  await expect(page.locator(".run-heading")).toContainText(
+    "记录回放 · 节奏已压缩",
+  );
+  await page.getByRole("button", { name: "退出记录回放" }).click();
+  await expect(page.locator(".run-heading")).toContainText(
+    "运行完成 · 实际记录",
+  );
+  await page.screenshot({
+    path: "test-results/memory-circuit-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByLabel("输入消息", { exact: true })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: "test-results/memory-circuit-mobile.png",
+    fullPage: true,
+  });
+});
+
+test("阶段中断保留已发生事实，不自动重发生成", async ({ page }) => {
+  const state = await memoryBackend(page, {
+    stageStream: true,
+    streamError: true,
+  });
+  await page.goto("/");
+  await send(page);
+  await expect(page.getByRole("alert")).toContainText("生成阶段连接失败");
+  await expect(page.locator(".run-heading")).toContainText("运行中断");
+  await expect(page.getByLabel("服务阶段时间线").locator("li")).toHaveCount(4);
+  expect(state.answers).toHaveLength(1);
+  expect(state.events).toHaveLength(1);
+});
+
+test("阶段解析支持跨字节中文、分块行和无末尾换行", async ({ page }) => {
+  await memoryBackend(page);
+  await page.goto("/");
+  const parsed = await page.evaluate(async () => {
+    const { api } = await import("/src/api.ts");
+    const payload = new TextEncoder().encode(
+      JSON.stringify({
+        type: "stage",
+        phase: "planning",
+        detail: "中文查询规划",
+        elapsed_ms: 3,
+      }) +
+        "\n" +
+        JSON.stringify({
+          type: "result",
+          answer: { generated_text: "完整回答" },
+        }),
+    );
+    const originalFetch = window.fetch;
+    window.fetch = async () =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            for (let index = 0; index < payload.length; index += 5)
+              controller.enqueue(payload.slice(index, index + 5));
+            controller.close();
+          },
+        }),
+        { headers: { "Content-Type": "application/x-ndjson" } },
+      );
+    const stages: any[] = [];
+    try {
+      const result = await api.answerStream(
+        "test",
+        "查询",
+        5,
+        true,
+        (stage: any) => stages.push(stage),
+        () => {
+          throw new Error("unexpected fallback");
+        },
+      );
+      return { result, stages };
+    } finally {
+      window.fetch = originalFetch;
+    }
+  });
+  expect(parsed.stages[0].detail).toBe("中文查询规划");
+  expect(parsed.result.generated_text).toBe("完整回答");
+});
+
+test("新增生命周期：冲突激活、归档恢复、分层摘要和保留建议", async ({
+  page,
+}) => {
+  await memoryBackend(page);
+  const base = {
+    version: 1,
+    revision: 4,
+    session_id: "session-demo-123456",
+    kind: "fact",
+    subject: "项目",
+    predicate: "数据库",
+    value: "SQLite",
+    keywords: [],
+    evidence: [
+      { turn_id: "turn-1", event_index: 0, quote: "项目数据库改为 SQLite" },
+    ],
+    assertion: "stated",
+    durable: true,
+    scope_type: "project",
+    scope_id: "memory-system-demo",
+    hierarchy_path: ["项目", "架构", "数据库"],
+    valid_from: null,
+    valid_to: null,
+    recorded_at: "2026-09-17T09:00:00Z",
+  };
+  const memories = [
+    {
+      ...base,
+      memory_id: "pending-1",
+      tier: "short",
+      status: "pending",
+      content: "项目数据库为 SQLite",
+    },
+    {
+      ...base,
+      memory_id: "archived-1",
+      tier: "long",
+      status: "archived",
+      content: "历史会议记录",
+      predicate: "会议",
+      value: "历史会议记录",
+    },
+  ];
+  const commands: any[] = [];
+  await page.route("**/api/v1/memories", (route) =>
+    route.fulfill({ json: memories }),
+  );
+  await page.route("**/api/v1/groups", (route) =>
+    route.fulfill({
+      json: [
+        {
+          path: ["项目"],
+          level: 1,
+          scope_type: "project",
+          scope_id: "memory-system-demo",
+          mode: "extractive_summary",
+          summary: "项目数据库为 SQLite",
+          memory_refs: ["pending-1:1"],
+          summary_items: [
+            {
+              text: "项目 · 数据库：SQLite",
+              memory_ref: "pending-1:1",
+              assertion: "stated",
+              evidence_count: 1,
+            },
+          ],
+          synthesis: {
+            summary: "项目使用 SQLite 数据库。",
+            source_refs: ["pending-1:1"],
+          },
+        },
+      ],
+    }),
+  );
+  await page.route("**/api/v1/memories/*/evolve", async (route) => {
+    const body = route.request().postDataJSON();
+    commands.push(body);
+    const memory = memories.find((item) =>
+      route.request().url().includes(item.memory_id),
+    )!;
+    memory.status = "active";
+    memory.revision++;
+    await route.fulfill({ json: memory });
+  });
+  await page.route("**/api/v1/maintenance", (route) =>
+    route.fulfill({
+      json: {
+        applied: [],
+        review: [{ memory_id: "archived-1", recommendation: "review_archive" }],
+        warnings: [],
+        group_count: 1,
+        retention: [
+          {
+            memory_id: "archived-1",
+            strength: 0.2,
+            age_days: 180,
+            recommendation: "review_archive",
+            evidence_reinforcement: 1,
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "长期", exact: true }).click();
+  await expect(page.locator(".review-queue")).toContainText("待确认候选 · 1");
+  await page.getByRole("button", { name: "审阅这条候选", exact: true }).click();
+  await expect(page.getByLabel("演化动作", { exact: true })).toHaveValue(
+    "activate",
+  );
+  await page.getByRole("button", { name: "确认激活候选", exact: true }).click();
+  expect(commands[0]).toMatchObject({
+    action: "activate",
+    expected_version: 1,
+    expected_revision: 4,
+  });
+  await expect(page.locator(".review-queue")).toHaveCount(0);
+  await page.getByText("非有效长期记忆与历史", { exact: true }).click();
+  await page
+    .locator(".archived-memories")
+    .getByRole("button", { name: "审阅演化" })
+    .click();
+  await expect(page.getByLabel("演化动作", { exact: true })).toHaveValue(
+    "restore",
+  );
+  await page.getByRole("button", { name: "确认恢复归档记忆" }).click();
+  expect(commands[1]).toMatchObject({
+    action: "restore",
+    expected_revision: 4,
+  });
+  await page.locator(".summary-groups > summary").click();
+  await page.locator(".summary-group > summary").click();
+  await expect(page.locator(".synthesis")).toContainText(
+    "模型辅助摘要 · 派生视图",
+  );
+  await page.getByRole("button", { name: "运行记忆维护", exact: true }).click();
+  await expect(page.getByLabel("维护结果")).toContainText("1 项建议待审阅");
+  await page.getByText("保留强度与归档建议", { exact: true }).click();
+  await expect(page.getByLabel("年龄与证据保留强度")).toHaveAttribute(
+    "value",
+    "0.2",
+  );
+  await page.screenshot({
+    path: "test-results/memory-maintenance-desktop.png",
+    fullPage: true,
+  });
+});
+
+test("检索可读性：中文取舍与真实通道，原始标识折叠保留", async ({ page }) => {
+  await memoryBackend(page, { stageStream: true, readableTrace: true });
+  await page.goto("/");
+  await send(page);
+  await expect(
+    page.getByRole("heading", { name: "本轮做了哪些取舍" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("分别寻找多个信息项", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("仍需核对证据是否充分", { exact: true }),
+  ).toBeVisible();
+  await page.getByText("全文索引已筛选候选", { exact: true }).click();
+  await expect(page.getByLabel("运行说明")).toContainText(
+    "8 条合格记忆中有 3 条进入词法重排",
+  );
+  const raw = page.getByLabel("运行说明").locator("pre");
+  await expect(raw).not.toBeVisible();
+  await page.getByText("原始记录（运行说明）", { exact: true }).click();
+  await expect(raw).toContainText("future_diagnostic: custom opaque payload");
+  await page.getByText("原始记录（运行说明）", { exact: true }).click();
+  await expect(
+    page.getByText("本轮未启用向量检索。", { exact: false }),
+  ).toHaveCount(1);
+  await expect(page.getByText("词法匹配", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("关系链支撑证据", { exact: true })).toHaveCount(
+    1,
+  );
+  await expect(page.getByText("其他匹配通道", { exact: true })).toHaveCount(1);
+  await page.locator(".trace-scroll").evaluate((element) => {
+    element.scrollTop = 270;
+  });
+  await page.screenshot({
+    path: "test-results/memory-readable-trace.png",
+    fullPage: true,
+  });
 });
