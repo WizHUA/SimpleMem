@@ -10,7 +10,7 @@ from agent_memory import __version__
 
 
 def package(output: Path):
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[1]
     repo = root.parent
     if not list((root / "dist").glob(f"*-{__version__}-*.whl")):
         raise SystemExit("Build the current backend wheel before packaging")
