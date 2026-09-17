@@ -37,6 +37,8 @@ export interface EventItem {
   role: Role;
   content: string;
   occurred_at: string;
+  answer_id?: string | null;
+  answer_context?: AnswerContext | null;
 }
 
 export interface Turn {
@@ -127,7 +129,21 @@ export interface Hit {
   metadata: Record<string, unknown>;
 }
 
+export interface AnswerContext {
+  sources: Hit[];
+  citations: number[];
+  query_steps: QueryStep[];
+  plan: QueryPlan | null;
+  elapsed_ms: number;
+  retrieval_mode: string;
+  candidate_count: number;
+  selected_k: number;
+  acceleration?: Acceleration | null;
+  run_events: import("./RunCircuit").RunEvent[];
+}
+
 export interface AnswerResult {
+  answer_id?: string;
   generated_text: string;
   citations: number[];
   sources: Hit[];

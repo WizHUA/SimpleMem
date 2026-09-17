@@ -21,12 +21,13 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  RunCircuit,
   RunTimeline,
   ScenarioGuide,
   type RunEvent,
   type RunMode,
 } from "./RunCircuit";
+import { AnswerMessage } from "./AnswerMessage";
+import { ProcessDisclosure } from "./ProcessDisclosure";
 import { LongTermInsights, MemoryChanges } from "./MemoryInsights";
 import {
   TraceNotes,
@@ -832,6 +833,7 @@ export default function App() {
   const [baseline, setBaseline] = useState<AnswerResult | null>(null);
   const [lastQuery, setLastQuery] = useState("");
   const [retryQuery, setRetryQuery] = useState("");
+  const [inspectorOpen, setInspectorOpen] = useState(true);
   const [tab, setTab] = useState<InspectorTab>("short");
   const [input, setInput] = useState("");
   const [topK, setTopK] = useState(5);
@@ -956,12 +958,12 @@ export default function App() {
     setTrace(result);
     setLastQuery(query);
     setBaseline(null);
-    setTab("trace");
     await api.append(
       snapshot.session.session_id,
       "assistant",
       result.generated_text,
       pending.requestId,
+      result.answer_id,
     );
     setRetryQuery("");
     pendingReply.current = null;
@@ -972,7 +974,6 @@ export default function App() {
     setRunEvents([]);
     setTrace(null);
     setRunMode("live");
-    setTab("trace");
     let fallback = false;
     try {
       const result = await api.answerStream(
@@ -1142,6 +1143,7 @@ export default function App() {
           <em>{health?.model_provider || "Memory Engine"}</em>
         </div>
         <div className="header-actions">
+          <button className="command-button inspector-toggle" type="button" aria-expanded={inspectorOpen} onClick={() => setInspectorOpen(!inspectorOpen)}><Database size={15} />{inspectorOpen ? "收起记忆面板" : "展开记忆面板"}</button>
           <button
             className="icon-button"
             aria-label="连接设置"
@@ -1175,14 +1177,8 @@ export default function App() {
           </button>
         </div>
       </header>
-      <RunCircuit
-        events={runEvents}
-        mode={runMode}
-        result={trace}
-        onInspect={setTab}
-      />
       <div className="global-feedback" aria-live="polite">
-        {busy && (
+        {busy && !["检索记忆并生成回答", "重试回答"].includes(busy) && (
           <p className="busy-bar" role="status">
             <LoaderCircle size={15} className="spin" />
             {busy}…
@@ -1213,7 +1209,7 @@ export default function App() {
           </p>
         )}
       </div>
-      <main className="workspace">
+      <main className={`workspace ${inspectorOpen ? "" : "inspector-closed"}`}>
         <section className="conversation" aria-label="真实对话">
           <div className="conversation-header">
             <div>
@@ -1277,16 +1273,18 @@ export default function App() {
                   </time>
                 </div>
                 {message.role === "assistant" ? (
-                  <div className="message-markdown">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
+                  <>
+                    {message.answer_context && <ProcessDisclosure context={message.answer_context} />}
+                    <AnswerMessage content={message.content} context={message.answer_context} />
+                  </>
                 ) : (
                   <p>{message.content}</p>
                 )}
               </article>
             ))}
+            {(runMode === "live" || runMode === "error" || (runMode === "recorded" && !messages.some((message) => message.answer_id && message.answer_id === trace?.answer_id))) && (
+              <div className="pending-process"><ProcessDisclosure events={runEvents} mode={runMode} context={trace ? { ...trace, run_events: runEvents } : null} />{runMode === "live" && <div className="answer-waiting"><span /><span /><span /></div>}</div>
+            )}
           </div>
           <ScenarioGuide onFill={setInput} disabled={!snapshot || !!busy} />
           <form className="composer" onSubmit={handleSend}>
@@ -1337,7 +1335,7 @@ export default function App() {
             </button>
           </form>
         </section>
-        <aside className="inspector" aria-label="记忆机制检查器">
+        <aside className="inspector" aria-label="记忆机制检查器" hidden={!inspectorOpen}>
           <nav className="tabs" aria-label="检查器视图">
             {steps.map((step) => (
               <button

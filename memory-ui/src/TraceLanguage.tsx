@@ -155,7 +155,7 @@ export function traceMode(mode: string) {
   );
 }
 
-export function readableStep(step: QueryStep, trace: AnswerResult) {
+export function readableStep(step: QueryStep, trace: Pick<AnswerResult, "plan" | "retrieval_mode"> & { context_tokens?: number }) {
   const n = step.input_count,
     out = step.output_count;
   switch (step.action) {
@@ -189,7 +189,7 @@ export function readableStep(step: QueryStep, trace: AnswerResult) {
     case "dynamic_k_and_token_budget":
       return {
         title: "按预算选择回答证据",
-        detail: `结合信息需求、检索上限与上下文长度选择证据，保留关系链。当前上下文估算 ${trace.context_tokens} tokens。`,
+        detail: `结合信息需求、检索上限与上下文长度选择证据，保留关系链。${trace.context_tokens !== undefined ? `当前上下文估算 ${trace.context_tokens} tokens。` : ""}`,
         count: `${n} 条候选 → ${out} 条入选`,
       };
     default:

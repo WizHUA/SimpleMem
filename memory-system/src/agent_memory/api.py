@@ -199,13 +199,14 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
             queue = asyncio.Queue(maxsize=32)
             started = time.perf_counter()
 
-            async def progress(phase, detail):
+            async def progress(phase, detail, **data):
                 await queue.put(
                     {
                         "type": "stage",
                         "phase": phase,
                         "detail": detail,
                         "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
+                        **data,
                     }
                 )
 
@@ -220,7 +221,6 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
                         accelerate=body.accelerate,
                         progress=progress,
                     )
-                    await progress("completed", "回答完成，来源与记忆版本已复验")
                     await queue.put({"type": "result", "answer": result.model_dump(mode="json")})
                 except asyncio.CancelledError:
                     raise

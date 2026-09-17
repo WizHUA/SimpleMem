@@ -9,6 +9,7 @@ async function memoryBackend(
     stageStream?: boolean;
     streamError?: boolean;
     readableTrace?: boolean;
+    citationScenario?: boolean;
   } = {},
 ) {
   const state = {
@@ -19,6 +20,7 @@ async function memoryBackend(
     healthCalls: 0,
     assistantAttempts: [] as string[],
     sessions: 0,
+    receipts: {} as Record<string, any>,
   };
   const session = {
     session_id: "session-demo-123456",
@@ -59,6 +61,10 @@ async function memoryBackend(
     const method = route.request().method();
     const body = route.request().postDataJSON();
     const json = (data: any, status = 200) => {
+      if (data.generated_text) {
+        data.answer_id = `answer-${state.answers.length}`;
+        state.receipts[data.answer_id] = { ...data, run_events: [] };
+      }
       if (path.endsWith("/answer/stream") && status === 200) {
         const stages = [
           {
@@ -97,6 +103,7 @@ async function memoryBackend(
                 { type: "result", answer: data },
               ]),
         ];
+        state.receipts[data.answer_id].run_events = stages.filter((event) => event.type === "stage");
         return route.fulfill({
           status: 200,
           contentType: "application/x-ndjson",
@@ -148,8 +155,9 @@ async function memoryBackend(
         state.events.push({
           ...body,
           requestBody: body,
-          events: body.events.map((event: object) => ({
+          events: body.events.map((event: any) => ({
             ...event,
+            answer_context: event.answer_id ? state.receipts[event.answer_id] : null,
             occurred_at: "2026-09-17T09:00:00Z",
           })),
           turn_id: `turn-${state.events.length + 1}`,
@@ -231,16 +239,17 @@ async function memoryBackend(
         body.accelerate &&
         state.answers.filter((answer) => answer.accelerate).length > 1;
       return json({
-        generated_text: "已记住你的偏好，将优先使用中文。【来源1】",
-        citations: [1],
+        generated_text: options.citationScenario ? `第 ${state.answers.length} 轮：是的，zfc 就是飞猪。【来源1】【来源2】\n\n代码保留：\`【来源1】\`，链接保留：[【来源2】](https://example.com)。缺失引用【来源99】。` : "已记住你的偏好，将优先使用中文。【来源1】",
+        citations: options.citationScenario ? [1, 2] : [1],
         sources: [
           {
-            content: "用户偏好中文说明",
+            content: options.citationScenario ? `第 ${state.answers.length} 轮的昵称记忆：zfc 是飞猪` : "用户偏好中文说明",
             score: 0.92,
             source_file: "memory-001",
             chunk_id: "memory-001:v1",
             engine: "symbolic",
             metadata: {
+              ...memory,
               scope_type: "user",
               ...(options.readableTrace
                 ? {
@@ -253,6 +262,7 @@ async function memoryBackend(
                 : {}),
             },
           },
+          ...(options.citationScenario ? [{ content: `第 ${state.answers.length} 轮的项目记忆`, score: 0.85, source_file: "memory-002", chunk_id: "memory-002:v2", engine: "symbolic", metadata: { ...memory, tier: "long", version: 2, scope_type: "project", evidence: [{ turn_id: "turn-project", event_index: 0, quote: "请长期记住项目代号是蓝鲸" }] } }] : []),
         ],
         retrieval_count: 1,
         elapsed_ms: hit ? 22 : 420,
@@ -334,6 +344,7 @@ test("真实数据契约：对话、原文证据、晋升与来源追踪", async
     page.getByRole("heading", { name: "记忆系统课程演示" }),
   ).toBeVisible();
   await send(page);
+  await page.getByRole("button", { name: "检索", exact: true }).click();
   await expect(page.getByRole("heading", { name: "意图与查询" })).toBeVisible();
   await expect(page.getByText("三视图检索", { exact: true })).toBeVisible();
   expect(state.events).toHaveLength(2);
@@ -462,21 +473,14 @@ test("真实阶段协议：运行轨迹、显式回放和场景填入", async ({
   expect(state.events).toHaveLength(0);
   await page.locator(".scenario-guide > summary").click();
   await page.getByRole("button", { name: "发送消息", exact: true }).click();
-  await expect(page.getByLabel("服务阶段时间线").locator("li")).toHaveCount(5);
-  await expect(page.locator(".run-heading")).toContainText(
-    "运行完成 · 实际记录",
-  );
-  await expect(page.locator(".run-caption")).toContainText(
-    "3 条候选 → 1 条入选证据",
-  );
+  await page.locator(".process-toggle").click();
+  await expect(page.locator(".process-events li")).toHaveCount(5);
+  await expect(page.locator(".process-toggle")).toContainText("已完成检索与回答");
+  await expect(page.locator(".process-summary")).toContainText("3 条候选 → 1 条入选证据");
   await page.getByRole("button", { name: "回放运行记录" }).click();
-  await expect(page.locator(".run-heading")).toContainText(
-    "记录回放 · 节奏已压缩",
-  );
+  await expect(page.locator(".process-toggle")).toContainText("记录回放 · 节奏已压缩");
   await page.getByRole("button", { name: "退出记录回放" }).click();
-  await expect(page.locator(".run-heading")).toContainText(
-    "运行完成 · 实际记录",
-  );
+  await expect(page.locator(".process-toggle")).toContainText("已完成检索与回答");
   await page.screenshot({
     path: "test-results/memory-circuit-desktop.png",
     fullPage: true,
@@ -502,8 +506,9 @@ test("阶段中断保留已发生事实，不自动重发生成", async ({ page 
   await page.goto("/");
   await send(page);
   await expect(page.getByRole("alert")).toContainText("生成阶段连接失败");
-  await expect(page.locator(".run-heading")).toContainText("运行中断");
-  await expect(page.getByLabel("服务阶段时间线").locator("li")).toHaveCount(4);
+  await expect(page.locator(".process-toggle")).toContainText("运行中断");
+  await page.locator(".process-toggle").click();
+  await expect(page.locator(".process-events li")).toHaveCount(4);
   expect(state.answers).toHaveLength(1);
   expect(state.events).toHaveLength(1);
 });
@@ -711,6 +716,8 @@ test("检索可读性：中文取舍与真实通道，原始标识折叠保留",
   await memoryBackend(page, { stageStream: true, readableTrace: true });
   await page.goto("/");
   await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  await page.getByRole("button", { name: "检索", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "本轮做了哪些取舍" }),
   ).toBeVisible();
@@ -744,4 +751,105 @@ test("检索可读性：中文取舍与真实通道，原始标识折叠保留",
     path: "test-results/memory-readable-trace.png",
     fullPage: true,
   });
+});
+
+test("来源随回答持久化：历史不串号、双来源、Markdown安全、Escape返回焦点", async ({ page }) => {
+  const state = await memoryBackend(page, { citationScenario: true, stageStream: true });
+  await page.goto("/");
+  await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(2);
+  expect(state.events[1].requestBody.events[0].answer_id).toBe("answer-1");
+  expect(state.events[1].requestBody.events[0].answer_context).toBeUndefined();
+  await page.reload();
+  const first = page.locator(".message-assistant").first();
+  const firstCitation = first.getByRole("button", { name: "查看来源 1", exact: true });
+  await expect(first.locator("code")).toHaveText("【来源1】");
+  await expect(first.getByRole("link", { name: "【来源2】", exact: true })).toHaveAttribute("href", "https://example.com");
+  await firstCitation.click();
+  await expect(page.getByRole("dialog")).toContainText("第 1 轮的昵称记忆");
+  await expect(page.getByRole("dialog")).not.toContainText("第 2 轮的昵称记忆");
+  await expect(page.getByRole("dialog").locator("blockquote")).toContainText("我偏好中文说明");
+  await page.screenshot({ path: "test-results/premium-source-dialog.png", fullPage: true });
+  await page.keyboard.press("Escape");
+  await expect(firstCitation).toBeFocused();
+  await first.getByRole("button", { name: "查看来源 2", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("第 1 轮的项目记忆");
+  await expect(page.getByRole("dialog")).toContainText("请长期记住项目代号是蓝鲸");
+  await page.getByRole("button", { name: "关闭来源" }).click();
+  await first.getByRole("button", { name: "查看来源 99", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("无法定位此来源");
+  await page.keyboard.press("Escape");
+  await first.locator(".process-toggle").click();
+  await page.getByRole("button", { name: "收起记忆面板", exact: true }).click();
+  await page.screenshot({ path: "test-results/premium-conversation.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await firstCitation.click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await page.screenshot({ path: "test-results/premium-source-mobile.png", fullPage: true });
+});
+
+test("旧回答缺失来源快照时明确告知，不借用最近回答", async ({ page }) => {
+  const state = await memoryBackend(page);
+  state.events.push({ turn_id: "legacy", events: [{ role: "assistant", content: "旧回答【来源1】", occurred_at: "2026-09-17T09:00:00Z" }] });
+  await page.goto("/");
+  await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(2);
+  await page.locator(".message-assistant").first().getByRole("button", { name: "查看来源 1" }).click();
+  await expect(page.getByRole("dialog")).toContainText("来源记录不可用");
+  await expect(page.getByRole("dialog")).not.toContainText("用户偏好中文说明");
+});
+
+test("正在处理显示真实灰字阶段，等待时可展开查询图，尊重减少动态效果", async ({ page }) => {
+  await memoryBackend(page);
+  await page.goto("/");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  // Feed the browser parser a real streaming Response and hold completion separately.
+  await page.evaluate(() => {
+    const original = window.fetch;
+    (window as any).finishTestStream = null;
+    window.fetch = async (...args) => {
+      if (!String(args[0]).endsWith("/answer/stream")) return original(...args);
+      const encoder = new TextEncoder();
+      return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(encoder.encode(JSON.stringify({ type: "stage", phase: "planning", detail: "正在查找 zfc 的昵称", elapsed_ms: 12, plan: { route: "both", semantic_queries: ["zfc 的昵称"], required_info: ["昵称"], keywords: ["zfc"], temporal_mode: "current", depth: 5, subject: "zfc", predicate: "昵称", as_of: null } }) + "\n"));
+        (window as any).finishTestStream = () => controller.close();
+      } }), { headers: { "Content-Type": "application/x-ndjson" } });
+    };
+  });
+  await send(page);
+  await expect(page.locator(".live-detail")).toHaveText("正在查找 zfc 的昵称");
+  await expect(page.locator(".process-toggle")).toContainText("正在理解问题");
+  await page.locator(".process-toggle").click();
+  await expect(page.locator(".query-intent")).toContainText("zfc 的昵称");
+  await expect(page.locator(".process-events li")).toHaveCount(1);
+  expect(await page.locator(".process-spark").evaluate((element) => getComputedStyle(element).animationName)).toBe("none");
+  await page.screenshot({ path: "test-results/premium-live-process.png", fullPage: true });
+  await page.evaluate(() => (window as any).finishTestStream());
+  await expect(page.getByRole("alert")).toContainText("未收到完整回答");
+  await expect(page.locator(".process-toggle")).toContainText("运行中断");
+});
+
+test("检索图明确区分无需检索和检索完成但零证据", async ({ page }) => {
+  const state = await memoryBackend(page, { stageStream: true });
+  await page.goto("/");
+  await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  const receipt = state.receipts["answer-1"];
+  receipt.sources = [];
+  receipt.plan.route = "none";
+  receipt.selected_k = 0;
+  receipt.query_steps = [];
+  await page.reload();
+  await page.locator(".process-toggle").click();
+  await expect(page.locator(".flow-caption")).toContainText("本轮无需检索记忆");
+  await expect(page.locator(".flow-pool")).toHaveCount(0);
+  receipt.plan.route = "both";
+  receipt.query_steps = [{ phase: "short_retrieval", action: "semantic_lexical_symbolic_recall", order: 1, input_count: 3, output_count: 0, detail: "没有匹配" }];
+  await page.reload();
+  await page.locator(".process-toggle").click();
+  await expect(page.locator(".flow-caption")).toContainText("本轮未找到可用的相关记忆");
+  await expect(page.locator(".flow-pool")).toHaveCount(2);
+  await expect(page.locator(".memory-flow svg")).toContainText("短期记忆 · 0");
 });

@@ -239,8 +239,8 @@ class CallableModel:
             raise ValueError("New turn IDs must be unique")
         data = {
             "session": window.session.model_dump(mode="json"),
-            "new_turns": [turn.model_dump(mode="json") for turn in window.new_turns],
-            "context_turns": [turn.model_dump(mode="json") for turn in window.context_turns[-15:]],
+            "new_turns": [turn.prompt_dump() for turn in window.new_turns],
+            "context_turns": [turn.prompt_dump() for turn in window.context_turns[-15:]],
             "reference_fields": [reference.model_dump(mode="json") for reference in window.reference_fields],
         }
         prompt = """你负责短期记忆的增量生成，采用 SimpleMem 式语义结构化压缩。

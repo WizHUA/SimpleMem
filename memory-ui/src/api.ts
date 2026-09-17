@@ -71,6 +71,7 @@ export const api = {
     role: "user" | "assistant" | "tool",
     content: string,
     requestId: string = crypto.randomUUID(),
+    answerId?: string,
   ) =>
     request<{
       extraction_due: boolean;
@@ -81,7 +82,7 @@ export const api = {
       body: JSON.stringify({
         request_id: requestId,
         // Let the server timestamp the event so retries retain an identical payload.
-        events: [{ role, content }],
+        events: [{ role, content, ...(answerId ? { answer_id: answerId } : {}) }],
       }),
     }),
   extract: (sessionId: string) =>

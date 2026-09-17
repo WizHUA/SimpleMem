@@ -107,6 +107,7 @@ class Retriever:
         timeout: float = 30,
         projection_scope: str = "default",
         projection_generation: int | None = None,
+        progress=None,
     ) -> SearchResponse:
         """Read-only search. TimeoutError means the shared query deadline expired.
 
@@ -138,7 +139,7 @@ class Retriever:
                 await asyncio.to_thread(
                     self.projection.sync, projection_scope, short + long, _terms, generation
                 )
-                return await self._search(query, session, short, long, top_k, plan)
+                return await self._search(query, session, short, long, top_k, plan, progress)
         finally:
             self._projection_context.reset(token)
 
@@ -173,6 +174,7 @@ class Retriever:
         long: list[Memory],
         top_k: int,
         plan: QueryPlan,
+        progress=None,
     ) -> SearchResponse:
         warnings: list[str] = []
         steps: list[QueryStep] = []
@@ -212,6 +214,13 @@ class Retriever:
             )
         )
 
+        if progress:
+            await progress(
+                "planning",
+                "查询已规划，开始查找相关记忆",
+                plan=plan.model_dump(mode="json"),
+                steps=[step.model_dump(mode="json") for step in steps],
+            )
         if plan.route == "none":
             return SearchResponse(
                 results=[],
@@ -241,6 +250,12 @@ class Retriever:
                 detail=f"candidate_limit={stm_limit}",
             )
         )
+        if progress:
+            await progress(
+                "retrieval",
+                f"短期记忆召回 {len(stm)} 条候选",
+                steps=[step.model_dump(mode="json") for step in steps],
+            )
         pool = stm
         short_is_exact = self._exact_short_answer(query, plan, stm, short, session, now)
         need_long = plan.route in ("long", "both") or not short_is_exact
@@ -259,6 +274,12 @@ class Retriever:
                     detail=f"candidate_limit={remaining}",
                 )
             )
+            if progress:
+                await progress(
+                    "retrieval",
+                    f"长期记忆补充 {len(ltm)} 条候选，正在筛选证据",
+                    steps=[step.model_dump(mode="json") for step in steps],
+                )
             warnings.append("long_term_searched")
             if plan.route == "short":
                 warnings.append("short_evidence_uncertain: one long-term supplement performed")
@@ -812,6 +833,7 @@ class Retriever:
                 "rank_score": hit.rank_score if hit.rank_score is not None else hit.score,
                 "age_decay_applied": hit.rank_score is not None and hit.rank_score < hit.score,
                 "conflict_pending": hit.conflict_pending,
+                "recorded_at": memory.recorded_at.isoformat(),
                 "evidence": [e.model_dump(mode="json") for e in memory.evidence],
             },
         )

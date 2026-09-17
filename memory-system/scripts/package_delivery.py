@@ -30,6 +30,8 @@ def package(output: Path):
                 "scripts/*.py",
                 "docs/*.md",
                 "docs/*.json",
+                "docs/reports/*.md",
+                "docs/reports/*.json",
                 f"dist/*-{__version__}-*.whl",
             ],
         ),
@@ -37,6 +39,9 @@ def package(output: Path):
             repo / "memory-ui",
             [
                 "README.md",
+                "DESIGN.md",
+                "docs/screenshots/*.png",
+                "docs/screenshots/*.md",
                 "package.json",
                 "pnpm-lock.yaml",
                 "tsconfig.json",

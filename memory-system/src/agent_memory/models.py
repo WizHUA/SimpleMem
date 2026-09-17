@@ -1,5 +1,7 @@
 """Shared contracts. Changes here should be reviewed by all module owners."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import uuid4
@@ -28,6 +30,8 @@ class Event(Contract):
     role: Literal["user", "assistant", "tool"]
     content: str = Field(min_length=1, max_length=16000)
     occurred_at: datetime = Field(default_factory=utcnow)
+    answer_id: str | None = Field(default=None, min_length=1, max_length=100)
+    answer_context: AnswerContext | None = None
 
     @field_validator("occurred_at")
     @classmethod
@@ -40,6 +44,10 @@ class Event(Contract):
 class TurnInput(Contract):
     request_id: str = Field(min_length=1, max_length=100)
     events: list[Event] = Field(min_length=1, max_length=30)
+
+    def prompt_dump(self) -> dict:
+        """Model input excludes UI provenance snapshots and receipt identifiers."""
+        return self.model_dump(mode="json", exclude={"events": {"__all__": {"answer_id", "answer_context"}}})
 
 
 class Turn(TurnInput):
@@ -195,7 +203,23 @@ class AccelerationTrace(Contract):
     token_measurement: str = "conservative_character_estimate"
 
 
+class AnswerContext(Contract):
+    """Server-attested snapshot for this answer, never a new extraction source."""
+
+    sources: list[Hit] = Field(default_factory=list, max_length=20)
+    citations: list[int] = Field(default_factory=list)
+    query_steps: list[QueryStep] = Field(default_factory=list)
+    plan: QueryPlan | None = None
+    elapsed_ms: int = 0
+    retrieval_mode: str = ""
+    candidate_count: int = 0
+    selected_k: int = 0
+    acceleration: AccelerationTrace | None = None
+    run_events: list[dict] = Field(default_factory=list)
+
+
 class AnswerResponse(Contract):
+    answer_id: str | None = None
     generated_text: str
     citations: list[int]
     sources: list[Hit]
@@ -241,3 +265,9 @@ class RelationProposal(Contract):
 class GroupSynthesis(Contract):
     summary: str = Field(min_length=1, max_length=3000)
     source_refs: list[str] = Field(min_length=1, max_length=100)
+
+
+Event.model_rebuild()
+TurnInput.model_rebuild()
+Turn.model_rebuild()
+ExtractionWindow.model_rebuild()

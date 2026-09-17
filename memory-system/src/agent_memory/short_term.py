@@ -1,6 +1,7 @@
 """Report p9: five pending turns, fifteen context turns, token pressure first."""
 
 import asyncio
+import json
 
 from .models import ExtractionWindow, ReferenceFact, Scope, utcnow
 from .ports import ModelNotConfigured
@@ -20,7 +21,7 @@ class ShortTermMemory:
         if budget <= 0:
             raise ValueError("Session state exceeds extraction budget; shorten state before extracting")
         for turn in pending[: self.settings.pending_turns]:
-            cost = estimate_tokens(turn.model_dump_json())
+            cost = estimate_tokens(json.dumps(turn.prompt_dump(), ensure_ascii=False))
             if cost > budget:
                 if not new_turns:
                     raise ValueError(
@@ -73,7 +74,7 @@ class ShortTermMemory:
         context = []
         previous = [t for t in turns if t.sequence <= session.processed_sequence]
         for turn in reversed(previous[-self.settings.context_turns :] if self.settings.context_turns else []):
-            cost = estimate_tokens(turn.model_dump_json())
+            cost = estimate_tokens(json.dumps(turn.prompt_dump(), ensure_ascii=False))
             if cost > budget:
                 break
             context.insert(0, turn)

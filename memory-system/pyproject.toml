@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-memory-service"
-version = "0.3.0"
+version = "0.3.1"
 description = "Independent short and long-term memory backend"
 requires-python = ">=3.11"
 dependencies = [

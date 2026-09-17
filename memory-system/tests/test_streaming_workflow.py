@@ -51,6 +51,9 @@ def test_stream_has_real_ordered_stages_and_single_final_result(tmp_path):
         assert [e["phase"] for e in events if e["type"] == "stage"] == [
             "extraction",
             "planning",
+            "planning",
+            "retrieval",
+            "retrieval",
             "retrieval",
             "generation",
             "completed",
@@ -59,7 +62,29 @@ def test_stream_has_real_ordered_stages_and_single_final_result(tmp_path):
         answer = events[-1]["answer"]
         assert answer["sources"][0]["metadata"]["evidence"][0]["quote"] == "北斗的昵称是小熊。"
         assert answer["memory_updates"][0]["candidate_count"] == 1
-        assert client.get(f"/api/v1/sessions/{sid}").json()["pending_turns"] == 0
+        stages = [e for e in events if e["type"] == "stage"]
+        assert stages[2]["plan"] == answer["plan"]
+        assert stages[-3]["sources"] == answer["sources"]
+        assert stages[-3]["steps"] == answer["query_steps"]
+        assert answer["sources"][0]["metadata"]["recorded_at"]
+        saved = client.post(
+            f"/api/v1/sessions/{sid}/turns",
+            json={
+                "request_id": "reply",
+                "events": [
+                    {
+                        "role": "assistant",
+                        "content": answer["generated_text"],
+                        "answer_id": answer["answer_id"],
+                    }
+                ],
+            },
+        )
+        assert saved.status_code == 201
+        context = saved.json()["turn"]["events"][0]["answer_context"]
+        assert context["sources"] == answer["sources"]
+        assert [e["phase"] for e in context["run_events"]] == [e["phase"] for e in stages]
+        assert client.get(f"/api/v1/sessions/{sid}").json()["pending_turns"] == 1
     runtime.retriever.close()
     runtime.store.close()
 

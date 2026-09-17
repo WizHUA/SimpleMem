@@ -1,0 +1,853 @@
+{
+  "recorded_at": "2026-09-17T07:42:14.157519+00:00",
+  "kind": "real_provider_synthetic_ux",
+  "cases": [
+    {
+      "name": "空白会话的zfc不幻觉",
+      "query": "zfc是飞猪吗？",
+      "required": [],
+      "forbidden": [],
+      "answer": {
+        "answer_id": "answer_51f6861adf1041b2a1e736bc1a60a8d1",
+        "generated_text": "没有足够信息判断。你只问了“zfc是飞猪吗？”，但未说明 zfc 指什么，也没有提供相关事实，因此无法确认。",
+        "citations": [],
+        "sources": [],
+        "retrieval_count": 0,
+        "elapsed_ms": 3513,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "zfc 是飞猪吗",
+            "zfc 的身份或所属",
+            "飞猪 相关人物或项目"
+          ],
+          "keywords": [
+            "zfc",
+            "飞猪"
+          ],
+          "required_info": [
+            "zfc 的身份或归属实体",
+            "zfc 与飞猪的关系",
+            "飞猪所指的对象或主体"
+          ],
+          "depth": 5,
+          "subject": "zfc",
+          "predicate": "是飞猪",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 3,
+            "detail": "route=both; depth=5; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=10"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=30"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "target=5; context_tokens=0; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 0,
+        "selected_k": 0,
+        "context_tokens": 0,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment",
+          "no_supported_result_within_budget"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 2662.787900015246,
+          "generation_ms": 848.5817000037059,
+          "total_ms": 3513.005900022108,
+          "context_tokens_before": 1250,
+          "context_tokens_after": 1250,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "required": true,
+        "forbidden": true,
+        "receipt": true,
+        "admits_unknown": true,
+        "snapshot_bound": true
+      },
+      "passed": true
+    },
+    {
+      "name": "未知昵称不猜测",
+      "query": "mrx的昵称是什么？",
+      "required": [],
+      "forbidden": [],
+      "answer": {
+        "answer_id": "answer_d3ab30523135405493f49613d9057cb6",
+        "generated_text": "没有记录显示 mrx 的昵称是什么。",
+        "citations": [],
+        "sources": [],
+        "retrieval_count": 0,
+        "elapsed_ms": 4681,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "mrx 的昵称",
+            "mrx 别名 称呼",
+            "用户 mrx 的昵称是什么"
+          ],
+          "keywords": [
+            "mrx",
+            "昵称"
+          ],
+          "required_info": [
+            "mrx 对应的昵称",
+            "该昵称所属的会话或时间上下文"
+          ],
+          "depth": 6,
+          "subject": "mrx",
+          "predicate": "昵称",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=both; depth=6; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=36"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "target=6; context_tokens=0; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 0,
+        "selected_k": 0,
+        "context_tokens": 0,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment",
+          "no_supported_result_within_budget"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 3142.313299991656,
+          "generation_ms": 1537.3488000477664,
+          "total_ms": 4681.107499985956,
+          "context_tokens_before": 1252,
+          "context_tokens_after": 1252,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "required": true,
+        "forbidden": true,
+        "receipt": true,
+        "admits_unknown": true,
+        "snapshot_bound": true
+      },
+      "passed": true
+    },
+    {
+      "name": "昵称直接回答",
+      "query": "zfc是飞猪吗？",
+      "required": [
+        "飞猪"
+      ],
+      "forbidden": [
+        "按你之前",
+        "用户说",
+        "你的设定",
+        "外部验证",
+        "无法确认"
+      ],
+      "answer": {
+        "answer_id": "answer_8a6f7f2709c74cb89e1cfb149edc87c9",
+        "generated_text": "是，zfc 的昵称是飞猪。【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "zfc 的昵称是飞猪。",
+            "score": 0.6135099272032395,
+            "source_file": "[memory:mem_6a5c69e1a0af4840ac3eb5a147924afe]",
+            "chunk_id": "mem_6a5c69e1a0af4840ac3eb5a147924afe:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_6a5c69e1a0af4840ac3eb5a147924afe",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猪",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_c43498ce581f4171a3546a780e9e9b45",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.6135099272032395,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T07:42:26.207334+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_8ce6beade79845e98b9e81fa2489f3e1",
+                  "event_index": 0,
+                  "quote": "zfc的昵称是飞猪。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 1,
+        "elapsed_ms": 9180,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "zfc 的昵称",
+            "zfc 昵称 飞猪"
+          ],
+          "keywords": [
+            "zfc",
+            "飞猪",
+            "昵称"
+          ],
+          "required_info": [
+            "zfc 的昵称"
+          ],
+          "depth": 2,
+          "subject": "zfc",
+          "predicate": "昵称",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "route=short; depth=2; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=17"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 1,
+            "output_count": 1,
+            "detail": "target=3; context_tokens=115; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 1,
+        "selected_k": 1,
+        "context_tokens": 115,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=1; eligible=1",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 5649.773099983577,
+          "generation_ms": 3528.9759999723174,
+          "total_ms": 9180.476000008639,
+          "context_tokens_before": 2334,
+          "context_tokens_after": 2334,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 1,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "required": true,
+        "forbidden": true,
+        "receipt": true,
+        "snapshot_bound": true
+      },
+      "passed": true
+    },
+    {
+      "name": "当前值更正",
+      "query": "zfc现在的昵称是什么？",
+      "required": [
+        "飞猫"
+      ],
+      "forbidden": [
+        "按你之前",
+        "用户说",
+        "你的设定",
+        "外部验证",
+        "无法确认",
+        "飞猪"
+      ],
+      "answer": {
+        "answer_id": "answer_5a838816e80b4fd9bbf92e933475e987",
+        "generated_text": "飞猫。【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "zfc 现在的昵称是飞猫，用户更正此前“飞猪”的说法有误。",
+            "score": 0.7363636363636363,
+            "source_file": "[memory:mem_9b3ac7bfc9864d19bdc8ced0e02877d4]",
+            "chunk_id": "mem_9b3ac7bfc9864d19bdc8ced0e02877d4:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_9b3ac7bfc9864d19bdc8ced0e02877d4",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猫",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_c43498ce581f4171a3546a780e9e9b45",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.7363636363636363,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T07:42:36.273787+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6602fb1623314328af042a7c359d727f",
+                  "event_index": 0,
+                  "quote": "更正：zfc现在的昵称是飞猫，不是飞猪，之前说错了。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "zfc 此前被说成昵称“飞猪”的说法已被用户更正为错误。",
+            "score": 0.7090909090909091,
+            "source_file": "[memory:mem_7b816245cf5e464889932782b311c30f]",
+            "chunk_id": "mem_7b816245cf5e464889932782b311c30f:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_7b816245cf5e464889932782b311c30f",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猪（已更正为错误）",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_c43498ce581f4171a3546a780e9e9b45",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.7090909090909091,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T07:42:36.273787+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6602fb1623314328af042a7c359d727f",
+                  "event_index": 0,
+                  "quote": "更正：zfc现在的昵称是飞猫，不是飞猪，之前说错了。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 2,
+        "elapsed_ms": 10046,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "zfc 现在的昵称是什么",
+            "zfc 昵称 飞猫",
+            "zfc 昵称更正 飞猪"
+          ],
+          "keywords": [
+            "zfc",
+            "飞猫",
+            "飞猪",
+            "昵称"
+          ],
+          "required_info": [
+            "zfc 当前生效的昵称",
+            "昵称更正事实（飞猪→飞猫）"
+          ],
+          "depth": 4,
+          "subject": "zfc",
+          "predicate": "昵称",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=both; depth=4; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 3,
+            "output_count": 2,
+            "detail": "candidate_limit=8"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=22"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 2,
+            "output_count": 2,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 2,
+            "output_count": 2,
+            "detail": "target=4; context_tokens=265; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 2,
+        "selected_k": 2,
+        "context_tokens": 265,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=2; eligible=2",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 6570.373900001869,
+          "generation_ms": 3474.154499999713,
+          "total_ms": 10046.059300017077,
+          "context_tokens_before": 3390,
+          "context_tokens_after": 3390,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 2,
+            "evolution": {
+              "applied": [
+                {
+                  "action": "correct",
+                  "memory_id": "mem_9b3ac7bfc9864d19bdc8ced0e02877d4",
+                  "target_id": "mem_6a5c69e1a0af4840ac3eb5a147924afe"
+                }
+              ],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "required": true,
+        "forbidden": true,
+        "receipt": true,
+        "snapshot_bound": true
+      },
+      "passed": true
+    },
+    {
+      "name": "主动询问来源",
+      "query": "你怎么知道zfc叫飞猫？告诉我依据。",
+      "required": [
+        "飞猫"
+      ],
+      "forbidden": [],
+      "answer": {
+        "answer_id": "answer_fd7a05b41a724c5daf9b2fd4cc194022",
+        "generated_text": "依据是你本轮明确更正过：“zfc现在的昵称是飞猫，不是飞猪，之前说错了。”【来源1】",
+        "citations": [
+          1
+        ],
+        "sources": [
+          {
+            "content": "zfc 现在的昵称是飞猫，用户更正此前“飞猪”的说法有误。",
+            "score": 0.7315410864746769,
+            "source_file": "[memory:mem_9b3ac7bfc9864d19bdc8ced0e02877d4]",
+            "chunk_id": "mem_9b3ac7bfc9864d19bdc8ced0e02877d4:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_9b3ac7bfc9864d19bdc8ced0e02877d4",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猫",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_c43498ce581f4171a3546a780e9e9b45",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.7315410864746769,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T07:42:36.273787+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6602fb1623314328af042a7c359d727f",
+                  "event_index": 0,
+                  "quote": "更正：zfc现在的昵称是飞猫，不是飞猪，之前说错了。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "zfc 此前被说成昵称“飞猪”的说法已被用户更正为错误。",
+            "score": 0.714327075272563,
+            "source_file": "[memory:mem_7b816245cf5e464889932782b311c30f]",
+            "chunk_id": "mem_7b816245cf5e464889932782b311c30f:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_7b816245cf5e464889932782b311c30f",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "zfc",
+              "predicate": "别名",
+              "value": "飞猪（已更正为错误）",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_c43498ce581f4171a3546a780e9e9b45",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "entity_link",
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.714327075272563,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T07:42:36.273787+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6602fb1623314328af042a7c359d727f",
+                  "event_index": 0,
+                  "quote": "更正：zfc现在的昵称是飞猫，不是飞猪，之前说错了。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 2,
+        "elapsed_ms": 10099,
+        "plan": {
+          "route": "both",
+          "semantic_queries": [
+            "zfc 昵称 飞猫 的依据 来源",
+            "zfc 昵称 飞猪 更正",
+            "zfc 昵称 变更 历史"
+          ],
+          "keywords": [
+            "zfc",
+            "飞猫",
+            "飞猪",
+            "昵称"
+          ],
+          "required_info": [
+            "zfc 当前昵称的事实内容",
+            "该昵称说法的原始来源或记录出处",
+            "此前“飞猪”说法及更正为“飞猫”的时间与依据",
+            "用户是否亲自陈述过该昵称"
+          ],
+          "depth": 6,
+          "subject": "zfc",
+          "predicate": "昵称",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 4,
+            "detail": "route=both; depth=6; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 3,
+            "output_count": 2,
+            "detail": "candidate_limit=12"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=34"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 2,
+            "output_count": 2,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 2,
+            "output_count": 2,
+            "detail": "target=6; context_tokens=265; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 2,
+        "selected_k": 2,
+        "context_tokens": 265,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=2; eligible=2",
+          "long_term_searched",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 6729.7949000494555,
+          "generation_ms": 3367.5992999924347,
+          "total_ms": 10099.29630003171,
+          "context_tokens_before": 3916,
+          "context_tokens_after": 3666,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [
+          {
+            "candidate_count": 0,
+            "evolution": {
+              "applied": [],
+              "review": [],
+              "warnings": []
+            }
+          }
+        ]
+      },
+      "checks": {
+        "required": true,
+        "forbidden": true,
+        "receipt": true,
+        "explains_requested_source": true,
+        "snapshot_bound": true
+      },
+      "passed": true
+    }
+  ],
+  "model": "deepseek-flash",
+  "embedding_enabled": false,
+  "passed": 5,
+  "total": 5
+}
