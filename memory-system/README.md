@@ -1,6 +1,6 @@
 # Agent Memory Service
 
-这是一个独立的长短期记忆后端骨架，依据《长短期记忆系统方案汇报》实现。它不从 SimpleMem 仓库派生，也不要求当前开发者运行前端。
+这是一个独立的长短期记忆后端骨架
 
 当前目标是给后续开发提供稳定边界：
 
@@ -37,14 +37,18 @@ python -m agent_memory
 
 默认身份固定为环境变量中的本地 principal。不要把服务绑定到公网；生产嵌入时必须替换 `api.get_scope`，从宿主认证结果创建 `Scope`。任意客户端 Header 不是认证。
 
-模型是可选依赖。使用兼容 `/v1/chat/completions` 的服务时配置：
+模型是可选依赖。项目启动时会读取根目录 `.env`，已有进程环境变量优先。使用智谱 GLM 时配置：
 
 ```powershell
-$env:MEMORY_MODEL_BASE_URL="http://127.0.0.1:11434/v1"
-$env:MEMORY_MODEL_NAME="your-model"
-$env:MEMORY_MODEL_API_KEY=""
+$env:MEMORY_MODEL_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
+$env:MEMORY_MODEL_NAME="glm-5.3"
+$env:MEMORY_MODEL_API_KEY="<仅保存在后端的密钥>"
+$env:MEMORY_MODEL_TIMEOUT="90"
+$env:MEMORY_MODEL_MAX_TOKENS="4096"
 python -m agent_memory
 ```
+
+也可以把 `.env.example` 复制为 `.env` 后填写相同三项。`.env` 已被 Git 忽略；不要把密钥写进前端、源码、Markdown 或日志。
 
 未配置模型也可以创建会话、记录轮次、查询近期原文和检查健康状态。
 
@@ -108,3 +112,6 @@ python -m ruff check src tests
 7. 最后接入真实 RAG SDK，运行官方 validation、HTTP 冒烟和报告中的组件/端到端实验。
 
 详细模块和协作边界见 [ARCHITECTURE.md](ARCHITECTURE.md)，开发任务见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+实现流程和所有大模型调用点见 [IMPLEMENTATION_FRAMEWORK.md](IMPLEMENTATION_FRAMEWORK.md)。
+
+独立验证前端位于相邻的 [`../memory-ui`](../memory-ui)。前端只调用 HTTP API，不读取 SQLite，也不保存模型密钥。

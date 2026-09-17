@@ -148,6 +148,15 @@ class Hit(Contract):
     metadata: dict = Field(default_factory=dict)
 
 
+class QueryStep(Contract):
+    order: int = Field(ge=1)
+    phase: Literal["planning", "short_retrieval", "long_retrieval", "filter", "selection"]
+    action: str
+    input_count: int = Field(ge=0)
+    output_count: int = Field(ge=0)
+    detail: str = ""
+
+
 class SearchResponse(Contract):
     results: list[Hit]
     plan: QueryPlan
@@ -155,6 +164,7 @@ class SearchResponse(Contract):
     candidate_count: int
     selected_k: int
     context_tokens: int
+    steps: list[QueryStep] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
 
@@ -164,6 +174,12 @@ class AnswerResponse(Contract):
     sources: list[Hit]
     retrieval_count: int
     elapsed_ms: int
+    plan: QueryPlan | None = None
+    query_steps: list[QueryStep] = Field(default_factory=list)
+    retrieval_mode: str = ""
+    candidate_count: int = 0
+    selected_k: int = 0
+    context_tokens: int = 0
     warnings: list[str] = Field(default_factory=list)
 
 

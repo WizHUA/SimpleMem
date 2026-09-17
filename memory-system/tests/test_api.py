@@ -29,6 +29,7 @@ class ApiTests(unittest.TestCase):
         health = self.client.get("/health")
         self.assertEqual(health.status_code, 200)
         self.assertFalse(health.json()["model_configured"])
+        self.assertIsNone(health.json()["model_name"])
         created = self.client.post("/api/v1/sessions", json={"topic": "报告", "project_id": "p"})
         self.assertEqual(created.status_code, 201)
         session_id = created.json()["session_id"]
@@ -70,6 +71,12 @@ class ApiTests(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_hierarchy_is_derived_from_backend_and_starts_empty(self):
+        response = self.client.get("/api/v1/hierarchy")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["domain_count"], 0)
+        self.assertEqual(response.json()["domains"], [])
 
 
 if __name__ == "__main__":

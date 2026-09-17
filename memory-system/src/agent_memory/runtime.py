@@ -36,10 +36,15 @@ class MemoryRuntime:
         await asyncio.to_thread(self.store.close)
 
     async def health(self):
+        model_name = getattr(self.model, "model", None)
+        endpoint = getattr(self.model, "endpoint", "")
+        provider = "zhipu" if "bigmodel.cn" in endpoint else type(self.model).__name__ if self.model else None
         return {
             "status": "ok" if await asyncio.to_thread(self.store.ping) else "error",
             "storage": "sqlite",
             "model_configured": self.model is not None,
+            "model_name": model_name or ("host_callable" if self.model else None),
+            "model_provider": provider,
             "semantic_retrieval": self.retriever.embedder is not None,
             "scope_mode": "fixed_local_principal",
             "host_sdk": "optional_adapter",
@@ -139,7 +144,9 @@ class MemoryRuntime:
             if budget < 0:
                 raise ValueError("Task/query/evidence exceed prompt budget")
             selected_turns = []
-            for turn in reversed(turns[-self.settings.context_turns :]):
+            # Keep answer prompts bounded even when extraction is delayed and the
+            # session contains several long assistant responses.
+            for turn in reversed(turns[-min(self.settings.context_turns, 8) :]):
                 payload = turn.model_dump(mode="json")
                 cost = estimate_tokens(json.dumps(payload, ensure_ascii=False)) + 2
                 if cost > budget:
@@ -162,5 +169,11 @@ class MemoryRuntime:
             sources=retrieved.results,
             retrieval_count=len(retrieved.results),
             elapsed_ms=int((time.perf_counter() - started) * 1000),
+            plan=retrieved.plan,
+            query_steps=retrieved.steps,
+            retrieval_mode=retrieved.mode,
+            candidate_count=retrieved.candidate_count,
+            selected_k=retrieved.selected_k,
+            context_tokens=retrieved.context_tokens,
             warnings=warnings,
         )

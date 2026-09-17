@@ -5,6 +5,7 @@ import unittest
 from datetime import timedelta
 
 from agent_memory.models import Evidence, Memory, QueryPlan, Session, utcnow
+from agent_memory.providers import ModelOutputError
 from agent_memory.retrieval import Retriever, estimate_tokens
 from agent_memory.settings import Settings
 
@@ -48,6 +49,11 @@ class BrokenProvider:
         raise RuntimeError("provider unavailable")
 
 
+class MalformedPlanner:
+    async def plan(self, query, context):
+        raise ModelOutputError("invalid planner JSON")
+
+
 class TrackingRetriever(Retriever):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -59,6 +65,13 @@ class TrackingRetriever(Retriever):
 
 
 class RetrievalTests(unittest.IsolatedAsyncioTestCase):
+    async def test_malformed_model_plan_falls_back_to_rule_planner(self):
+        result = await Retriever(Settings(), MalformedPlanner()).search(
+            "项目P 截止日期", SESSION, [memory("recent")], []
+        )
+        self.assertEqual(result.plan.route, "both")
+        self.assertIn("model_planner_schema_error: fell back to rule planner", result.warnings)
+
     async def test_dynamic_depth_controls_candidates_and_final_count(self):
         items = [memory(f"m{i:02}", tier="long", scope_type="user", scope_id="owner") for i in range(60)]
         settings = Settings(retrieval_token_limit=20000)
@@ -74,6 +87,11 @@ class RetrievalTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((small.selected_k, large.selected_k, limited.selected_k), (3, 8, 2))
         self.assertEqual((small.candidate_count, large.candidate_count), (18, 48))
         self.assertEqual(small.mode, "lexical_baseline")
+        self.assertEqual(
+            [step.phase for step in small.steps],
+            ["planning", "short_retrieval", "long_retrieval", "filter", "selection"],
+        )
+        self.assertEqual(small.steps[-1].output_count, small.selected_k)
 
     async def test_exact_recent_field_stays_in_stm(self):
         retriever = TrackingRetriever(Settings())

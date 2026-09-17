@@ -259,6 +259,7 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(requests[0].url), "https://example.invalid/v1/chat/completions")
         self.assertEqual(requests[0].headers["Authorization"], "Bearer mock-key")
         self.assertEqual(json.loads(requests[0].content)["model"], "configured-model")
+        self.assertEqual(json.loads(requests[0].content)["max_tokens"], 4096)
 
     async def test_mock_http_status_error_propagates_without_retry(self):
         requests = []
@@ -292,6 +293,18 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
         ):
             model = build_model(Settings())
             self.assertIsInstance(model, OpenAICompatibleModel)
+            await model.aclose()
+
+    async def test_process_environment_overrides_dotenv_configuration(self):
+        configured = {
+            "MEMORY_MODEL_BASE_URL": "https://example.invalid/v4",
+            "MEMORY_MODEL_NAME": "configured-model",
+            "MEMORY_MODEL_API_KEY": "local-secret",
+        }
+        with patch.dict(os.environ, configured):
+            model = build_model(Settings())
+            self.assertEqual(model.endpoint, "https://example.invalid/v4/chat/completions")
+            self.assertEqual(model.model, "configured-model")
             await model.aclose()
 
 

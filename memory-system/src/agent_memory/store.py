@@ -212,12 +212,25 @@ class SQLiteStore:
         # Summaries are disposable organizational views, never canonical facts.
         self._db.execute("DELETE FROM summaries WHERE tenant=? AND owner=?", self._who(scope))
 
-    def _add_candidate(self, scope: Scope, session: Session, item: Candidate, new_ids=None) -> Memory:
+    def _add_candidate(
+        self,
+        scope: Scope,
+        session: Session,
+        item: Candidate,
+        new_ids=None,
+        direct_long_term: bool = False,
+    ) -> Memory:
         self._check_evidence(scope, session, item, new_ids)
         scope_id = {"user": scope.owner_id, "project": session.project_id, "session": session.session_id}[
             item.scope_type
         ]
-        for existing in self.memories(scope, session.session_id, "short"):
+        tier = "long" if (
+            direct_long_term
+            and item.durable
+            and item.scope_type in {"user", "project"}
+            and item.assertion not in {"inferred", "hypothetical"}
+        ) else "short"
+        for existing in self.memories(scope, session.session_id, tier):
             if (
                 existing.status == "active"
                 and existing.content == item.content
@@ -240,7 +253,11 @@ class SQLiteStore:
                 self._record(scope, "merge_evidence", updated, existing)
                 return updated
         memory = Memory(
-            **item.model_dump(), memory_id=new_id("mem"), session_id=session.session_id, scope_id=scope_id
+            **item.model_dump(),
+            memory_id=new_id("mem"),
+            session_id=session.session_id,
+            scope_id=scope_id,
+            tier=tier,
         )
         self._save_memory(scope, memory)
         self._record(scope, "extract", memory)
@@ -259,7 +276,7 @@ class SQLiteStore:
             if latest.revision != session.revision:
                 raise ConflictError("Session changed during extraction; retry from the saved watermark")
             items = [
-                self._add_candidate(scope, latest, c, {t.turn_id for t in new_turns})
+                self._add_candidate(scope, latest, c, {t.turn_id for t in new_turns}, direct_long_term=True)
                 for c in result.candidates
             ]
             latest.summary = result.summary
@@ -434,3 +451,65 @@ class SQLiteStore:
                     "SELECT body FROM summaries WHERE tenant=? AND owner=?", self._who(scope)
                 ).fetchall()
             ]
+
+    def hierarchy(self, scope: Scope) -> dict:
+        """Build an H-MEM reference tree from actual long-memory versions.
+
+        Domain/category/trace labels come from extraction hints or deterministic
+        fallbacks. Episode leaves remain the canonical versioned memories.
+        """
+        kind_names = {"fact": "事实", "preference": "偏好", "event": "事件", "procedure": "经验"}
+        tree: dict[str, dict] = {}
+        versions = self.memories(scope, tier="long")
+        for memory in versions:
+            path = [item.strip() for item in memory.hierarchy_path if item.strip()]
+            domain = path[0] if path else kind_names.get(memory.kind, memory.kind)
+            category = path[1] if len(path) > 1 else memory.subject
+            trace = path[2] if len(path) > 2 else memory.predicate
+            domain_node = tree.setdefault(domain, {"name": domain, "categories": {}})
+            category_node = domain_node["categories"].setdefault(category, {"name": category, "traces": {}})
+            trace_node = category_node["traces"].setdefault(trace, {"name": trace, "episodes": []})
+            trace_node["episodes"].append(
+                {
+                    "memory_id": memory.memory_id,
+                    "version": memory.version,
+                    "content": memory.content,
+                    "kind": memory.kind,
+                    "status": memory.status,
+                    "scope_type": memory.scope_type,
+                    "scope_id": memory.scope_id,
+                    "valid_from": memory.valid_from.isoformat() if memory.valid_from else None,
+                    "valid_to": memory.valid_to.isoformat() if memory.valid_to else None,
+                    "recorded_at": memory.recorded_at.isoformat(),
+                    "evidence_count": len(memory.evidence),
+                    "source_session_id": memory.session_id,
+                }
+            )
+
+        domains = []
+        for domain in tree.values():
+            categories = []
+            for category in domain["categories"].values():
+                traces = []
+                for trace in category["traces"].values():
+                    trace["episodes"].sort(key=lambda item: (item["memory_id"], item["version"]))
+                    trace["episode_count"] = len(trace["episodes"])
+                    trace["active_count"] = sum(e["status"] == "active" for e in trace["episodes"])
+                    traces.append(trace)
+                traces.sort(key=lambda item: item["name"])
+                category["traces"] = traces
+                category["episode_count"] = sum(t["episode_count"] for t in traces)
+                categories.append(category)
+            categories.sort(key=lambda item: item["name"])
+            domain["categories"] = categories
+            domain["episode_count"] = sum(c["episode_count"] for c in categories)
+            domains.append(domain)
+        domains.sort(key=lambda item: item["name"])
+        return {
+            "schema": "hmem-reference/v1",
+            "organization_mode": "domain_category_trace_episode",
+            "summary_mode": "labels_from_memory_extraction",
+            "domain_count": len(domains),
+            "episode_count": len(versions),
+            "domains": domains,
+        }

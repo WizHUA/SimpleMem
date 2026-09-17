@@ -189,8 +189,13 @@ class CallableModel:
 valid_from/valid_to 是事实成立的半开时间区间，不是入库时间或事件参数；时间没有证据则 null。
 相对日期以对应来源 Event.occurred_at（UTC）为参照，不使用机器当前日期，不补造缺失日期。
 scope_type 默认 session；只有用户明确表达跨会话长期偏好/规则或项目范围时才建议 user/project。
-durable 默认 false，只标记有明确跨会话复用价值的内容。身份、租户、owner、实际作用域绑定和长期
-晋升均由服务端裁决，禁止输出或修改身份字段。hierarchy_path 仅为最多三级组织建议，不控制权限。
+durable 默认 false；只有用户明确要求“存入长期记忆”、跨会话复用或作为长期规则保存时，才将明确支持
+的事实标记为 true，并将 scope_type 设为 user/project。满足这两个条件的候选会由服务端直接写入长期层，
+不需要再次点击晋升；普通事实仍写入短期层。身份、租户、owner、实际作用域绑定和长期写入均由服务端
+裁决，禁止输出或修改身份字段。hierarchy_path 仅为最多三级组织建议，不控制权限。
+如果用户在 new_turns 中明确说“请将以下内容存入长期记忆”“作为长期规则保存”或同义表达，必须从该
+条消息中归纳被要求保存的具体事实、方案或规则；不要因为消息包含“请记住/保存”而返回空 candidates。
+此时每条被明确要求保存且有原文证据的候选应设 durable=true，并使用 user 或 project 作用域。
 summary 用简洁中文更新当前话题摘要；state_patch 只更新被新证据支持的 goal、plan、pending_tasks，
 没有变化时留空；不得让 LLM 的计划自动成为已确认事实。宁可返回空 candidates 也不能虚构。
 输入数据：
@@ -231,6 +236,7 @@ class OpenAICompatibleModel(CallableModel):
         model: str,
         api_key: str | None = None,
         timeout: float = 30.0,
+        max_tokens: int = 4096,
         client: httpx.AsyncClient | None = None,
     ) -> None:
         parsed = urlsplit(base_url)
@@ -240,10 +246,13 @@ class OpenAICompatibleModel(CallableModel):
             raise ValueError("Supply model credentials through API_KEY, not in the base URL")
         if not model.strip():
             raise ValueError("Model name is required")
+        if max_tokens <= 0:
+            raise ValueError("Model max_tokens must be positive")
         super().__init__(self._request, timeout=timeout)
         self.endpoint = base_url.rstrip("/") + "/chat/completions"
         self.model = model
         self.api_key = api_key
+        self.max_tokens = max_tokens
         self._owns_client = client is None
         self.client = client if client is not None else httpx.AsyncClient(timeout=timeout)
 
@@ -256,6 +265,7 @@ class OpenAICompatibleModel(CallableModel):
                 "model": self.model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0,
+                "max_tokens": self.max_tokens,
             },
         )
         response.raise_for_status()
@@ -282,5 +292,9 @@ def build_model(settings: Settings) -> MemoryModel | None:
     if not base_url or not name:
         raise ValueError("Model configuration requires both MEMORY_MODEL_BASE_URL and MEMORY_MODEL_NAME")
     return OpenAICompatibleModel(
-        base_url=base_url, model=name, api_key=api_key or None, timeout=settings.model_timeout
+        base_url=base_url,
+        model=name,
+        api_key=api_key or None,
+        timeout=settings.model_timeout,
+        max_tokens=settings.model_max_tokens,
     )

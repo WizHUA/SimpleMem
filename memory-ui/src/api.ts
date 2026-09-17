@@ -49,7 +49,7 @@ export const api = {
   answer: (sessionId: string, query: string, topK: number) =>
     request<AnswerResult>("/api/v1/answer", {
       method: "POST",
-      body: JSON.stringify({ session_id: sessionId, query, top_k: topK, timeout: 120 }),
+      body: JSON.stringify({ session_id: sessionId, query, top_k: topK, timeout: 180 }),
     }),
   memories: () => request<Memory[]>("/api/v1/memories"),
   hierarchy: () => request<Hierarchy>("/api/v1/hierarchy"),

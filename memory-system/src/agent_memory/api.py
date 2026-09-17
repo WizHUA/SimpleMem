@@ -25,7 +25,7 @@ class Query(Contract):
     session_id: str
     query: str = Field(min_length=1, max_length=3000)
     top_k: int = Field(default=10, ge=0, le=100)
-    timeout: float = Field(default=30.0, gt=0, le=120)
+    timeout: float = Field(default=180.0, gt=0, le=180)
 
 
 def get_runtime(request: Request) -> MemoryRuntime:
@@ -143,5 +143,9 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
     @app.get("/api/v1/groups")
     async def groups(scope: ScopeDep, service: RuntimeDep):
         return await asyncio.to_thread(service.store.groups, scope)
+
+    @app.get("/api/v1/hierarchy")
+    async def hierarchy(scope: ScopeDep, service: RuntimeDep):
+        return await asyncio.to_thread(service.store.hierarchy, scope)
 
     return app

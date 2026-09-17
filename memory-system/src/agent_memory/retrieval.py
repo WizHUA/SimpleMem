@@ -11,8 +11,9 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from .models import Hit, Memory, QueryPlan, SearchResponse, Session, utcnow
+from .models import Hit, Memory, QueryPlan, QueryStep, SearchResponse, Session, utcnow
 from .ports import Embedder, MemoryModel
+from .providers import ModelOutputError
 from .settings import Settings
 
 
@@ -88,6 +89,7 @@ class Retriever:
                 candidate_count=0,
                 selected_k=0,
                 context_tokens=0,
+                steps=[],
             )
         if timeout <= 0:
             raise TimeoutError("query deadline expired")
@@ -127,25 +129,42 @@ class Retriever:
         plan: QueryPlan,
     ) -> SearchResponse:
         warnings: list[str] = []
+        steps: list[QueryStep] = []
         now = utcnow()
         if self.model:
-            plan = await self.model.plan(
-                query,
-                {
-                    "session_id": session.session_id,
-                    "project_id": session.project_id,
-                    "topic": session.topic,
-                    "goal": session.goal,
-                    "summary": session.summary[:2000],
-                    "query_time": now.isoformat(),
-                    "short_memory": [
-                        m.content for m in short if self._eligible(m, session, QueryPlan(), now)
-                    ][-8:],
-                },
-            )
-            plan = QueryPlan.model_validate(plan)
+            try:
+                plan = await self.model.plan(
+                    query,
+                    {
+                        "session_id": session.session_id,
+                        "project_id": session.project_id,
+                        "topic": session.topic,
+                        "goal": session.goal,
+                        "summary": session.summary[:2000],
+                        "query_time": now.isoformat(),
+                        "short_memory": [
+                            m.content for m in short if self._eligible(m, session, QueryPlan(), now)
+                        ][-8:],
+                    },
+                )
+                plan = QueryPlan.model_validate(plan)
+            except ModelOutputError:
+                # A malformed planner response must not prevent a normal answer;
+                # the deterministic planner remains bounded and auditable.
+                plan = self._rule_plan(query, short)
+                warnings.append("model_planner_schema_error: fell back to rule planner")
         else:
             warnings.append("rule_planner: semantic intent and evidence sufficiency are not verified")
+        steps.append(
+            QueryStep(
+                order=1,
+                phase="planning",
+                action="intent_plan",
+                input_count=1,
+                output_count=len(plan.required_info),
+                detail=f"route={plan.route}; depth={plan.depth}; mode={plan.temporal_mode}",
+            )
+        )
 
         if plan.route == "none":
             return SearchResponse(
@@ -155,6 +174,7 @@ class Retriever:
                 candidate_count=0,
                 selected_k=0,
                 context_tokens=0,
+                steps=steps,
                 warnings=warnings,
             )
         cap = min(top_k, self.settings.max_top_k)
@@ -165,6 +185,16 @@ class Retriever:
         # Preserve an actual long-term quota until STM sufficiency is established.
         stm_limit = min(candidate_cap, max(1, candidate_cap // 3))
         stm, semantic_stm = await self._recall(query, plan, session, short, stm_limit, now, warnings)
+        steps.append(
+            QueryStep(
+                order=len(steps) + 1,
+                phase="short_retrieval",
+                action="semantic_lexical_symbolic_recall",
+                input_count=len(short),
+                output_count=len(stm),
+                detail=f"candidate_limit={stm_limit}",
+            )
+        )
         pool = stm
         short_is_exact = self._exact_short_answer(query, plan, stm, short, session, now)
         need_long = plan.route in ("long", "both") or not short_is_exact
@@ -173,6 +203,16 @@ class Retriever:
             remaining = max(0, candidate_cap - len(stm))
             ltm, semantic_long = await self._recall(query, plan, session, long, remaining, now, warnings)
             pool = self._merge(stm + ltm)
+            steps.append(
+                QueryStep(
+                    order=len(steps) + 1,
+                    phase="long_retrieval",
+                    action="semantic_lexical_symbolic_recall",
+                    input_count=len(long),
+                    output_count=len(ltm),
+                    detail=f"candidate_limit={remaining}",
+                )
+            )
             warnings.append("long_term_searched")
             if plan.route == "short":
                 warnings.append("short_evidence_uncertain: one long-term supplement performed")
@@ -192,7 +232,27 @@ class Retriever:
                 -hit.memory.version,
             ),
         )
+        steps.append(
+            QueryStep(
+                order=len(steps) + 1,
+                phase="filter",
+                action="deduplicate_scope_time_version",
+                input_count=len(stm) + (len(ltm) if need_long else 0),
+                output_count=len(ranked),
+                detail=f"local_overrides={len(overrides)}",
+            )
+        )
         selected, used = self._select(ranked, plan, target)
+        steps.append(
+            QueryStep(
+                order=len(steps) + 1,
+                phase="selection",
+                action="dynamic_k_and_token_budget",
+                input_count=len(ranked),
+                output_count=len(selected),
+                detail=f"target={target}; context_tokens={used}",
+            )
+        )
         if plan.required_info:
             warnings.append("required_info_coverage_unverified: retrieval similarity is not entailment")
         if not selected:
@@ -210,6 +270,7 @@ class Retriever:
             candidate_count=len(pool),
             selected_k=len(selected),
             context_tokens=used,
+            steps=steps,
             warnings=list(dict.fromkeys(warnings)),
         )
 

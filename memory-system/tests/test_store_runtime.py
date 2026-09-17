@@ -6,7 +6,16 @@ import unittest
 from datetime import timedelta
 from pathlib import Path
 
-from agent_memory.models import Candidate, Event, Evidence, EvolutionInput, Scope, TurnInput, utcnow
+from agent_memory.models import (
+    Candidate,
+    Event,
+    Evidence,
+    EvolutionInput,
+    ExtractionResult,
+    Scope,
+    TurnInput,
+    utcnow,
+)
 from agent_memory.ports import ConflictError, ModelNotConfigured, NotFoundError
 from agent_memory.runtime import MemoryRuntime
 from agent_memory.settings import Settings
@@ -158,6 +167,31 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(any(h.metadata["version"] == 1 for h in old_search.results))
 
+    async def test_explicit_durable_extraction_writes_long_term_directly(self):
+        turn = await self.append("direct-long", "请将队伍默认使用中文沟通作为长期规则保存。")
+        current_session = await asyncio.to_thread(
+            self.runtime.store.get_session, self.alice, self.session.session_id
+        )
+        candidate = Candidate(
+            content="队伍默认使用中文沟通。",
+            kind="procedure",
+            subject="队伍",
+            predicate="默认沟通语言",
+            value="中文",
+            scope_type="project",
+            durable=True,
+            evidence=[Evidence(turn_id=turn.turn_id, event_index=0, quote="默认使用中文沟通")],
+        )
+        memories = await asyncio.to_thread(
+            self.runtime.store.commit_extraction,
+            self.alice,
+            current_session,
+            [turn],
+            ExtractionResult(candidates=[candidate]),
+        )
+        self.assertEqual(memories[0].tier, "long")
+        self.assertEqual(memories[0].scope_type, "project")
+
     async def test_hmem_group_is_disposable_reference_view(self):
         turn = await self.append("durable", "用户以后默认使用中文。")
         candidate = Candidate(
@@ -183,6 +217,14 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["mode"], "reference_group")
         self.assertEqual(report["semantic_synthesis"], "not_implemented")
         self.assertEqual(report["groups"][0]["path"], ["个人", "偏好", "语言"])
+        hierarchy = await asyncio.to_thread(self.runtime.store.hierarchy, self.alice)
+        self.assertEqual(hierarchy["organization_mode"], "domain_category_trace_episode")
+        self.assertEqual(hierarchy["domain_count"], 1)
+        domain = hierarchy["domains"][0]
+        self.assertEqual(domain["name"], "个人")
+        episode = domain["categories"][0]["traces"][0]["episodes"][0]
+        self.assertEqual(episode["memory_id"], memory.memory_id)
+        self.assertEqual(episode["content"], "用户默认使用中文。")
 
 
 if __name__ == "__main__":
