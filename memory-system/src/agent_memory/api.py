@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import Field
 
 from .models import Contract, EvolutionInput, Scope, TurnInput
-from .ports import ConflictError, ModelNotConfigured, NotFoundError
+from .ports import ConflictError, ModelNotConfigured, ModelRequestError, NotFoundError
 from .runtime import MemoryRuntime
 from .settings import Settings
 
@@ -69,13 +69,22 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
             status = 409
         elif isinstance(exc, ModelNotConfigured):
             status = 503
+        elif isinstance(exc, ModelRequestError):
+            status = 502
         elif isinstance(exc, TimeoutError):
             status = 504
         elif isinstance(exc, ValueError):
             status = 400
         return JSONResponse(status_code=status, content={"error": type(exc).__name__, "detail": str(exc)})
 
-    for error_type in (NotFoundError, ConflictError, ModelNotConfigured, TimeoutError, ValueError):
+    for error_type in (
+        NotFoundError,
+        ConflictError,
+        ModelNotConfigured,
+        ModelRequestError,
+        TimeoutError,
+        ValueError,
+    ):
         app.add_exception_handler(error_type, error_response)
 
     @app.get("/health")

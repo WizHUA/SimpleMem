@@ -12,6 +12,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { ApiError, api } from "./api";
 import type { AnswerResult, Health, Hierarchy, Memory, SessionSnapshot } from "./types";
@@ -352,8 +354,11 @@ export default function App() {
     setBusy("整理短期记忆");
     setError("");
     try {
-      await api.extract(snapshot.session.session_id);
+      const result = await api.extract(snapshot.session.session_id);
       await refresh(snapshot.session.session_id);
+      if (!result.summary && result.candidate_count === 0) {
+        setError("整理已完成，但模型没有提取到可确认的事实；请使用包含明确事实、规则或偏好的完整消息重试。");
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "整理失败");
     } finally {
@@ -411,8 +416,14 @@ export default function App() {
             {messages.length === 0 && <div className="chat-empty"><MessageSquareText size={28} aria-hidden="true" /><p>开始一次对话</p></div>}
             {messages.map((message) => (
               <article className={`message message-${message.role}`} key={message.id}>
-                <div><strong>{roleName(message.role)}</strong><time>{formatTime(message.occurred_at)}</time></div>
-                <p>{message.content}</p>
+                <div className="message-meta"><strong>{roleName(message.role)}</strong><time>{formatTime(message.occurred_at)}</time></div>
+                {message.role === "assistant" ? (
+                  <div className="message-markdown">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p>{message.content}</p>
+                )}
               </article>
             ))}
             {busy === "GLM 正在回答" && <div className="thinking"><LoaderCircle size={16} className="spin" aria-hidden="true" />GLM 正在回答</div>}

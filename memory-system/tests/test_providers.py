@@ -10,7 +10,7 @@ from unittest.mock import patch
 import httpx
 
 from agent_memory.models import Event, ExtractionWindow, Session, Turn
-from agent_memory.ports import ModelNotConfigured
+from agent_memory.ports import ModelNotConfigured, ModelRequestError
 from agent_memory.providers import (
     CallableModel,
     ModelOutputError,
@@ -270,7 +270,7 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
 
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             model = OpenAICompatibleModel(base_url="https://example.invalid", model="test", client=client)
-            with self.assertRaises(httpx.HTTPStatusError):
+            with self.assertRaisesRegex(ModelRequestError, "HTTP 503"):
                 await model.plan("query", {})
         self.assertEqual(len(requests), 1)
 

@@ -18,7 +18,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new ApiError(response.status, data?.detail || `请求失败 (${response.status})`);
+    const detail = String(data?.detail || "");
+    const message = response.status === 502 && detail.includes("HTTP 401")
+      ? "GLM API Key 无效或已过期，请更新 memory-system/.env 后重启后端"
+      : response.status === 502 && detail.includes("HTTP 429")
+        ? "GLM 请求被限流或额度不足，请稍后重试或更换有额度的 API Key"
+        : response.status === 502 && detail.includes("model_access_denied")
+          ? "当前 API Key 没有所选模型的调用权限，请更换模型名称或使用有权限的 Key"
+        : detail || `请求失败 (${response.status})`;
+    throw new ApiError(response.status, message);
   }
   return response.json() as Promise<T>;
 }
@@ -43,7 +51,7 @@ export const api = {
       },
     ),
   extract: (sessionId: string) =>
-    request<{ status: string; memories: Memory[] }>(`/api/v1/sessions/${sessionId}/extract`, {
+    request<{ status: string; processed_sequence: number; summary: string; candidate_count: number; memories: Memory[] }>(`/api/v1/sessions/${sessionId}/extract`, {
       method: "POST",
     }),
   answer: (sessionId: string, query: string, topK: number) =>

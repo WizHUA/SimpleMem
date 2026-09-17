@@ -229,6 +229,7 @@ class SQLiteStore:
             and item.durable
             and item.scope_type in {"user", "project"}
             and item.assertion not in {"inferred", "hypothetical"}
+            and not self._has_unresolved_long_conflict(scope, item, scope_id)
         ) else "short"
         for existing in self.memories(scope, session.session_id, tier):
             if (
@@ -263,6 +264,19 @@ class SQLiteStore:
         self._record(scope, "extract", memory)
         return memory
 
+    def _has_unresolved_long_conflict(self, scope: Scope, item: Candidate, scope_id: str) -> bool:
+        for existing in self.memories(scope, tier="long"):
+            if (
+                existing.status == "active"
+                and existing.scope_type == item.scope_type
+                and existing.scope_id == scope_id
+                and existing.subject == item.subject
+                and existing.predicate == item.predicate
+                and existing.value != item.value
+            ):
+                return True
+        return False
+
     def add_candidates(self, scope: Scope, session_id: str, candidates: list[Candidate]) -> list[Memory]:
         with self.transaction():
             session = self.get_session(scope, session_id)
@@ -275,8 +289,23 @@ class SQLiteStore:
             latest = self.get_session(scope, session.session_id)
             if latest.revision != session.revision:
                 raise ConflictError("Session changed during extraction; retry from the saved watermark")
+            explicit_long_term_request = any(
+                event.role == "user"
+                and any(
+                    marker in event.content
+                    for marker in ("长期记忆", "长期规则", "跨会话记住", "长期保存", "存入长期")
+                )
+                for turn in new_turns
+                for event in turn.events
+            )
             items = [
-                self._add_candidate(scope, latest, c, {t.turn_id for t in new_turns}, direct_long_term=True)
+                self._add_candidate(
+                    scope,
+                    latest,
+                    c,
+                    {t.turn_id for t in new_turns},
+                    direct_long_term=explicit_long_term_request,
+                )
                 for c in result.candidates
             ]
             latest.summary = result.summary
@@ -460,7 +489,13 @@ class SQLiteStore:
         """
         kind_names = {"fact": "事实", "preference": "偏好", "event": "事件", "procedure": "经验"}
         tree: dict[str, dict] = {}
-        versions = self.memories(scope, tier="long")
+        # The hierarchy is the active long-term view; retracted and superseded
+        # versions remain available through history/audit, not as live memory.
+        versions = [
+            memory
+            for memory in self.memories(scope, tier="long")
+            if memory.status == "active"
+        ]
         for memory in versions:
             path = [item.strip() for item in memory.hierarchy_path if item.strip()]
             domain = path[0] if path else kind_names.get(memory.kind, memory.kind)

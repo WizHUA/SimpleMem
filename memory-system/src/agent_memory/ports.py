@@ -9,6 +9,10 @@ class ModelNotConfigured(RuntimeError):
     pass
 
 
+class ModelRequestError(RuntimeError):
+    pass
+
+
 class ConflictError(ValueError):
     pass
 

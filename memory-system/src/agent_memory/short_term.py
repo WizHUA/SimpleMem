@@ -54,5 +54,7 @@ class ShortTermMemory:
         return {
             "status": "processed",
             "processed_sequence": window.new_turns[-1].sequence,
+            "summary": result.summary,
+            "candidate_count": len(result.candidates),
             "memories": memories,
         }

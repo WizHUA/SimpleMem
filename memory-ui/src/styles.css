@@ -49,8 +49,28 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: 0; }
 .message-user { margin-left: auto; border-color: #b8d4f2; background: #edf6ff; }
 .message-assistant { margin-right: auto; border-color: #b9ddcf; background: #f1faf6; }
 .message-tool { margin-right: auto; border-color: #ead59b; background: #fff9e8; }
-.message > div { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 8px; font-size: 12px; color: #667585; }
+.message-meta { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 8px; font-size: 12px; color: #667585; }
 .message p { white-space: pre-wrap; font-size: clamp(14px, 0.9vw, 16px); line-height: 1.7; }
+.message-markdown { font-size: clamp(14px, 0.9vw, 16px); line-height: 1.7; overflow-wrap: anywhere; }
+.message-markdown > :first-child { margin-top: 0; }
+.message-markdown > :last-child { margin-bottom: 0; }
+.message-markdown p { margin: 0 0 12px; white-space: normal; }
+.message-markdown h1, .message-markdown h2, .message-markdown h3, .message-markdown h4 {
+  margin: 18px 0 8px; color: #17375e; line-height: 1.35;
+}
+.message-markdown h1 { font-size: 1.35em; }
+.message-markdown h2 { font-size: 1.2em; }
+.message-markdown h3, .message-markdown h4 { font-size: 1.05em; }
+.message-markdown ul, .message-markdown ol { margin: 8px 0 14px; padding-left: 1.5em; }
+.message-markdown li + li { margin-top: 4px; }
+.message-markdown blockquote { margin: 12px 0; padding: 7px 12px; border-left: 3px solid #8aa8c5; background: rgba(255, 255, 255, .55); color: #536273; }
+.message-markdown pre { margin: 12px 0; padding: 12px; overflow-x: auto; border-radius: 6px; background: #1f2d3d; color: #f4f7fa; }
+.message-markdown code { padding: 2px 5px; border-radius: 4px; background: rgba(38, 103, 159, .1); color: #245b86; font: .9em ui-monospace, SFMono-Regular, Consolas, monospace; }
+.message-markdown pre code { padding: 0; background: transparent; color: inherit; font-size: .88em; }
+.message-markdown a { color: #216b9b; text-decoration: underline; }
+.message-markdown table { display: block; max-width: 100%; margin: 12px 0; overflow-x: auto; border-collapse: collapse; }
+.message-markdown th, .message-markdown td { padding: 7px 10px; border: 1px solid #cbd6df; text-align: left; white-space: normal; }
+.message-markdown th { background: rgba(216, 230, 242, .7); font-weight: 600; }
 .thinking { gap: 7px; color: #58718b; font-size: 13px; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
