@@ -1,5 +1,7 @@
 # Development Roadmap
 
+本页是初始分阶段路线，部分条目已经完成。`full-forward` 已补齐展示前端、版本演化操作、服务认证、备份恢复、推理加速、可配置 embedding 和分层测试；以 [DELIVERY.md](../DELIVERY.md) 与 [验收矩阵](docs/ACCEPTANCE.md) 为当前交付状态。保留以下长期研究任务，不把尚未验证的规模、语义质量和宿主能力视为完成。
+
 ## Phase 0：当前骨架
 
 完成标准：本地 API 可启动；模型未配置时仍能记录与查近期原文；所有单元测试通过；SDK shape test 通过但明确不等于宿主官方验证。
@@ -51,4 +53,3 @@
 | P1 | 关系分类 Proposal | `LongTermMemory` | 不确定时 defer，不自动覆盖 |
 | P2 | H-MEM 层级摘要 | `reference_group` 投影 | 与 flat 检索做规模曲线 |
 | P2 | 前端 | OpenAPI | 不直接耦合存储内部结构 |
-

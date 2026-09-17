@@ -11,6 +11,7 @@ CancelledError without yielding further events.
 """
 
 import asyncio
+import math
 from collections.abc import AsyncGenerator, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -20,6 +21,7 @@ from typing import Protocol
 
 from server.engines.memory_plugin_api import EngineCapabilities, MemoryEnginePlugin
 
+from .. import __version__
 from ..models import AnswerResponse, Scope, SearchResponse
 
 
@@ -47,12 +49,12 @@ _request_context: ContextVar[RequestContext | None] = ContextVar("agent_memory_r
 @contextmanager
 def bind_request(scope: Scope, session_id: str) -> Iterator[RequestContext]:
     """Bind host-verified identity; establish this before creating child tasks."""
-    if not session_id.strip():
+    if not isinstance(session_id, str) or not session_id.strip():
         raise ValueError("An authorized session_id is required")
     context = RequestContext(scope=scope.model_copy(deep=True), session_id=session_id)
     token = _request_context.set(context)
     try:
-        yield context
+        yield RequestContext(scope=context.scope.model_copy(deep=True), session_id=context.session_id)
     finally:
         _request_context.reset(token)
 
@@ -61,14 +63,28 @@ def require_context() -> RequestContext:
     context = _request_context.get()
     if context is None:
         raise PermissionError("Bind an authenticated memory request context before invoking the SDK")
-    return context
+    # ContextVars copy references into child tasks. Never expose the stored mutable
+    # Pydantic scope, otherwise one child can change the identity of its siblings.
+    return RequestContext(scope=context.scope.model_copy(deep=True), session_id=context.session_id)
+
+
+def _validate_request(query: str, top_k: int, timeout: float) -> None:
+    """Match the HTTP boundary for direct SDK calls (which bypass FastAPI)."""
+    if not isinstance(query, str) or not query.strip() or len(query) > 3000:
+        raise ValueError("query must contain 1 to 3000 characters")
+    if isinstance(top_k, bool) or not isinstance(top_k, int) or not 0 <= top_k <= 100:
+        raise ValueError("top_k must be an integer between 0 and 100")
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
+        raise ValueError("timeout must be finite and positive")  # noqa: TRY004 - stable SDK validation error
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("timeout must be finite and positive")
 
 
 class SimpleMemoryEngine(MemoryEnginePlugin):
     name = "simple_memory"
     engine_label = "长短期记忆"
     engine_color = "#2563eb"
-    version = "0.1.0"
+    version = __version__
     description = "Independent short and long-term memory with intent-aware retrieval"
     contract_version = "1.0.0"
 
@@ -110,8 +126,7 @@ class SimpleMemoryEngine(MemoryEnginePlugin):
     async def search(self, query: str, top_k: int = 10, timeout: float = 30.0) -> list[dict]:
         context = require_context()
         runtime = self._require_runtime()
-        if timeout <= 0:
-            raise ValueError("timeout must be positive")
+        _validate_request(query, top_k, timeout)
         async with asyncio.timeout(timeout):
             response = await runtime.search(
                 context.scope, context.session_id, query, top_k=top_k, timeout=timeout
@@ -121,8 +136,7 @@ class SimpleMemoryEngine(MemoryEnginePlugin):
     async def generate(self, query: str, top_k: int = 10, timeout: float = 30.0) -> dict:
         context = require_context()
         runtime = self._require_runtime()
-        if timeout <= 0:
-            raise ValueError("timeout must be positive")
+        _validate_request(query, top_k, timeout)
         async with asyncio.timeout(timeout):
             answer = await runtime.answer(
                 context.scope, context.session_id, query, top_k=top_k, timeout=timeout
@@ -141,6 +155,7 @@ class SimpleMemoryEngine(MemoryEnginePlugin):
         yield "engine_start", dict(identity)
         yield "engine_status", {"engine": self.name, "phase": "buffered_generation"}
         try:
+            _validate_request(query, top_k, timeout)
             remaining = timeout - (perf_counter() - started)
             if remaining <= 0:
                 raise TimeoutError("Generation timeout exhausted")

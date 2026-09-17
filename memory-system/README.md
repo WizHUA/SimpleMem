@@ -1,6 +1,13 @@
 # Agent Memory Service
 
-这是一个独立的长短期记忆后端骨架
+独立的长短期记忆后端与课程 Engine 适配器，配套相邻 `memory-ui` 展示前端。开发交付分支：`full-forward`。
+
+交付入口见 [DELIVERY.md](../DELIVERY.md)。包含来源可追溯的短期抽取、跨会话长期记忆、版本与有效期、可选真实 embedding、精确上下文推理复用、并发安全和身份边界。当前定位为单节点交付候选版本，真实课程宿主与目标部署环境仍需验收。
+
+- [课程需求矩阵](docs/COURSE_REQUIREMENTS.md) · [验收矩阵](docs/ACCEPTANCE.md)
+- [技术报告](docs/技术报告.md) · [20分钟答辩与演示脚本](docs/答辩演示脚本.md)
+- [可复现评测](docs/EVALUATION.md) · [真实模型冒烟](docs/LIVE_SMOKE.md) · [真实模型质量小集](docs/LIVE_QUALITY.md) · [HTTP并发与持久化](docs/HTTP_LOAD.md)
+- [SDK接入](docs/SDK_INTEGRATION.md) · [部署、备份与数据治理](OPERATIONS.md)
 
 当前目标是给后续开发提供稳定边界：
 
@@ -26,29 +33,28 @@ MemoryRuntime
 ## 安装与运行
 
 ```powershell
-cd "C:\Users\zhangjinhan\Desktop\Agent Mem\memory-system"
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-python -m agent_memory
+# 从 SimpleMem 目录执行；使用仓库指定的 Conda 环境，不创建 .venv。
+cd memory-system
+conda run --no-capture-output -n simplemem-agentmemory python -m pip install -e ".[dev]"
+conda run --no-capture-output -n simplemem-agentmemory python -m agent_memory
 ```
 
 本地地址：`http://127.0.0.1:8088`，接口文档：`http://127.0.0.1:8088/docs`。
 
-默认身份固定为环境变量中的本地 principal。不要把服务绑定到公网；生产嵌入时必须替换 `api.get_scope`，从宿主认证结果创建 `Scope`。任意客户端 Header 不是认证。
+默认身份固定为环境变量中的本地 principal，开发服务绑定回环地址。独立部署可使用 `MEMORY_DEPLOYMENT_MODE=production` 与至少32字符的 `MEMORY_API_KEY`，数据接口验证 Bearer。多用户嵌入必须替换 `api.get_scope`，从宿主认证结果创建 `Scope`；共用服务密钥不是多用户身份系统。
 
-模型是可选依赖。项目启动时会读取根目录 `.env`，已有进程环境变量优先。使用智谱 GLM 时配置：
+模型是可选依赖。项目启动时会读取 `memory-system/.env`，已有进程环境变量优先。使用 DeepSeek 官方 Chat Completions API 时配置：
 
 ```powershell
-$env:MEMORY_MODEL_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
-$env:MEMORY_MODEL_NAME="glm-5.3"
+$env:MEMORY_MODEL_BASE_URL="https://api.deepseek.com"
+$env:MEMORY_MODEL_NAME="deepseek-flash"
 $env:MEMORY_MODEL_API_KEY="<仅保存在后端的密钥>"
 $env:MEMORY_MODEL_TIMEOUT="90"
 $env:MEMORY_MODEL_MAX_TOKENS="4096"
 python -m agent_memory
 ```
 
-也可以把 `.env.example` 复制为 `.env` 后填写相同三项。`.env` 已被 Git 忽略；不要把密钥写进前端、源码、Markdown 或日志。
+也可以在已有 `.env` 中填写相同配置。DeepSeek Key 留空时后端仍可启动，但 `/health` 显示 `model_configured=false`，回答与抽取暂不可用。DeepSeek 调用会关闭默认思考模式；查询规划和记忆抽取使用 JSON 输出，回答使用普通文本。已有 GLM 配置仍受支持，两者使用相同的 `MEMORY_MODEL_*` 变量，一次运行只选择一个模型。修改 `.env` 后需重启后端，`GET /health` 可确认实际模型名和提供商。`.env` 已被 Git 忽略；不要把密钥写进前端、源码、Markdown 或日志。
 
 未配置模型也可以创建会话、记录轮次、查询近期原文和检查健康状态。
 
@@ -101,12 +107,20 @@ python -m ruff check src tests
 
 测试不访问真实模型、网络或 Qdrant。
 
-## 下一步
+## 加速与语义检索
+
+`POST /api/v1/answer` 接受 `accelerate: true/false`，返回 `acceleration`：新鲜检索耗时、生成或复用耗时、完整上下文与实际上下文的字符估计、缓存状态及避免的生成调用数。每次先做授权和检索；完整提示、来源版本、会话状态与主体一致时，才复用生成结果。TTL/LRU限制缓存，重复并发合并为一次生成，最后等待者取消时终止共享调用。记忆修改、删除和有效期跨界会阻止旧快照返回。
+
+前端“运行观测”可做不增加对话事件的基线/加速重跑。正常聊天每轮修改状态，通常不会命中；不要将重复问题命中率宣称为所有任务加速收益。计数是生成调用节省，规划仍重新执行；字符估计不是供应商计费 token。
+
+真实向量服务使用独立的 `MEMORY_EMBEDDING_BASE_URL/NAME/API_KEY`。未配置则明确返回 `lexical_baseline`；配置后使用批量向量、余弦召回及有界嵌入缓存。当前仍扫描授权候选，不是分布式向量索引。
+
+## 后续部署验收
 
 1. 将 `api.get_scope` 替换为宿主身份依赖，并增加 session 授权。
 2. 用代表性中文开发集校准窗口、语义阈值和动态 K；参数仍集中在 `Settings`。
 3. 接入宿主 `LLMInterface` 的 `CallableModel`，先验证抽取 Schema 与来源准确率。
-4. 增加 Qdrant/Embedding 候选适配器；关系状态和历史仍由权威库判断。
+4. 大规模部署接入 Qdrant 等候选索引；已提供真实 Embedding 接口，关系状态和历史仍由权威库判断。
 5. 实现候选关系分类器，只输出建议动作，继续由 `SQLiteStore.evolve` 做版本检查。
 6. 在长期数据规模足够后，再将 `reference_group` 升级为 H-MEM 层级摘要；查询主线仍保持 SimpleMem 意图规划和动态 K。
 7. 最后接入真实 RAG SDK，运行官方 validation、HTTP 冒烟和报告中的组件/端到端实验。

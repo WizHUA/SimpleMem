@@ -1,6 +1,22 @@
-import type { AnswerResult, Health, Hierarchy, Memory, Session, SessionSnapshot } from "./types";
+import type {
+  AnswerResult,
+  EvolutionInput,
+  Health,
+  Hierarchy,
+  HistoryEntry,
+  Memory,
+  Session,
+  SessionSnapshot,
+} from "./types";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8088").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+export const apiBase = API_BASE || "同源记忆服务";
+export const getServiceToken = () =>
+  sessionStorage.getItem("memory-service-token") || "";
+export const setServiceToken = (token: string) =>
+  token
+    ? sessionStorage.setItem("memory-service-token", token.trim())
+    : sessionStorage.removeItem("memory-service-token");
 
 export class ApiError extends Error {
   status: number;
@@ -13,19 +29,27 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
+    signal: AbortSignal.timeout(190_000),
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(getServiceToken()
+        ? { Authorization: `Bearer ${getServiceToken()}` }
+        : {}),
+      ...(init?.headers || {}),
+    },
   });
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    const detail = String(data?.detail || "");
-    const message = response.status === 502 && detail.includes("HTTP 401")
-      ? "GLM API Key 无效或已过期，请更新 memory-system/.env 后重启后端"
-      : response.status === 502 && detail.includes("HTTP 429")
-        ? "GLM 请求被限流或额度不足，请稍后重试或更换有额度的 API Key"
-        : response.status === 502 && detail.includes("model_access_denied")
-          ? "当前 API Key 没有所选模型的调用权限，请更换模型名称或使用有权限的 Key"
-        : detail || `请求失败 (${response.status})`;
+    const detail = data?.detail;
+    const message =
+      typeof detail === "string"
+        ? detail
+        : Array.isArray(detail)
+          ? detail
+              .map((item: { msg?: string }) => item.msg || "输入格式不正确")
+              .join("；")
+          : `请求失败 (${response.status})`;
     throw new ApiError(response.status, message);
   }
   return response.json() as Promise<T>;
@@ -39,31 +63,52 @@ export const api = {
       body: JSON.stringify({ topic, project_id: projectId }),
     }),
   session: (id: string) => request<SessionSnapshot>(`/api/v1/sessions/${id}`),
-  append: (sessionId: string, role: "user" | "assistant" | "tool", content: string) =>
-    request<{ extraction_due: boolean; extraction_reasons: string[]; pending_turns: number }>(
-      `/api/v1/sessions/${sessionId}/turns`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          request_id: crypto.randomUUID(),
-          events: [{ role, content, occurred_at: new Date().toISOString() }],
-        }),
-      },
-    ),
+  append: (
+    sessionId: string,
+    role: "user" | "assistant" | "tool",
+    content: string,
+    requestId: string = crypto.randomUUID(),
+  ) =>
+    request<{
+      extraction_due: boolean;
+      extraction_reasons: string[];
+      pending_turns: number;
+    }>(`/api/v1/sessions/${sessionId}/turns`, {
+      method: "POST",
+      body: JSON.stringify({
+        request_id: requestId,
+        // Let the server timestamp the event so retries retain an identical payload.
+        events: [{ role, content }],
+      }),
+    }),
   extract: (sessionId: string) =>
-    request<{ status: string; processed_sequence: number; summary: string; candidate_count: number; memories: Memory[] }>(`/api/v1/sessions/${sessionId}/extract`, {
+    request<{
+      status: string;
+      processed_sequence: number;
+      summary: string;
+      candidate_count: number;
+      memories: Memory[];
+    }>(`/api/v1/sessions/${sessionId}/extract`, {
       method: "POST",
     }),
-  answer: (sessionId: string, query: string, topK: number) =>
+  answer: (sessionId: string, query: string, topK: number, accelerate = true) =>
     request<AnswerResult>("/api/v1/answer", {
       method: "POST",
-      body: JSON.stringify({ session_id: sessionId, query, top_k: topK, timeout: 180 }),
+      body: JSON.stringify({
+        session_id: sessionId,
+        query,
+        top_k: topK,
+        timeout: 180,
+        accelerate,
+      }),
     }),
   memories: () => request<Memory[]>("/api/v1/memories"),
   hierarchy: () => request<Hierarchy>("/api/v1/hierarchy"),
-  promote: (memory: Memory) =>
+  history: (id: string) =>
+    request<HistoryEntry[]>(`/api/v1/memories/${id}/history`),
+  evolve: (memory: Memory, input: EvolutionInput) =>
     request<Memory>(`/api/v1/memories/${memory.memory_id}/evolve`, {
       method: "POST",
-      body: JSON.stringify({ action: "promote", expected_version: memory.version }),
+      body: JSON.stringify({ expected_version: memory.version, ...input }),
     }),
 };

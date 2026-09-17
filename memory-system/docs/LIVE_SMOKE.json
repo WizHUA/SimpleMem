@@ -1,0 +1,100 @@
+{
+  "generated_at": "2026-09-17T03:28:41.321249+00:00",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "data": "synthetic temporary database",
+  "extraction_status": "processed",
+  "durable_count": 2,
+  "durable_contents": [
+    "用户明确要求将“我的回答偏好是中文”存入长期记忆，即用户偏好以中文回答。",
+    "用户明确要求将“星河项目默认使用 PostgreSQL 数据库”存入长期记忆，即星河项目默认数据库为 PostgreSQL。"
+  ],
+  "measurements": [
+    {
+      "mode": "baseline",
+      "answer": "你长期的回答偏好是：**用中文回答**。【来源1】",
+      "citations": [
+        1
+      ],
+      "source_count": 2,
+      "acceleration": {
+        "enabled": false,
+        "cache_hit": false,
+        "cache_status": "disabled",
+        "strategy": "exact_context_generation_reuse",
+        "retrieval_ms": 1057.479000010062,
+        "generation_ms": 1067.741200036835,
+        "total_ms": 2127.050600014627,
+        "context_tokens_before": 917,
+        "context_tokens_after": 917,
+        "avoided_model_calls": 0,
+        "original_generation_ms": null,
+        "token_measurement": "conservative_character_estimate"
+      },
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ]
+    },
+    {
+      "mode": "cold",
+      "answer": "你长期的回答偏好是：使用中文回答【来源1】。",
+      "citations": [
+        1
+      ],
+      "source_count": 2,
+      "acceleration": {
+        "enabled": true,
+        "cache_hit": false,
+        "cache_status": "miss",
+        "strategy": "exact_context_generation_reuse",
+        "retrieval_ms": 1086.3196999998763,
+        "generation_ms": 472.0013000187464,
+        "total_ms": 1559.4531999668106,
+        "context_tokens_before": 917,
+        "context_tokens_after": 917,
+        "avoided_model_calls": 0,
+        "original_generation_ms": null,
+        "token_measurement": "conservative_character_estimate"
+      },
+      "warnings": [
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ]
+    },
+    {
+      "mode": "warm",
+      "answer": "你长期的回答偏好是：使用中文回答【来源1】。",
+      "citations": [
+        1
+      ],
+      "source_count": 2,
+      "acceleration": {
+        "enabled": true,
+        "cache_hit": true,
+        "cache_status": "hit",
+        "strategy": "exact_context_generation_reuse",
+        "retrieval_ms": 745.0246000080369,
+        "generation_ms": 0.012700038496404886,
+        "total_ms": 745.7964000059292,
+        "context_tokens_before": 917,
+        "context_tokens_after": 917,
+        "avoided_model_calls": 1,
+        "original_generation_ms": 471.90730000147596,
+        "token_measurement": "conservative_character_estimate"
+      },
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ]
+    }
+  ],
+  "checks": {
+    "durable_memory_created": true,
+    "cross_session_recalled": true,
+    "chinese_preference_answered": true,
+    "warm_cache_hit": true
+  }
+}

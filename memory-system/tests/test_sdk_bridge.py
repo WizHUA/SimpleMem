@@ -2,6 +2,7 @@
 
 import asyncio
 import importlib.util
+import json
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -258,5 +259,93 @@ def test_search_timeout_bounds_runtime_call(bridge):
             pytest.raises(TimeoutError),
         ):
             await bridge.engine_plugin.search("query", timeout=0.001)
+
+    asyncio.run(scenario())
+
+
+def test_context_cannot_be_mutated_through_public_views(bridge):
+    async def scenario():
+        with bridge.bind_request(Scope(tenant_id="t", owner_id="a"), "s") as bound:
+            bound.scope.owner_id = "injected"
+            bridge.require_context().scope.owner_id = "also-injected"
+
+            async def child():
+                bridge.require_context().scope.owner_id = "child"
+                await asyncio.sleep(0)
+                assert bridge.require_context().scope.owner_id == "a"
+
+            await asyncio.gather(child(), child())
+            assert bridge.require_context().scope.owner_id == "a"
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"query": " "},
+        {"query": "x" * 3001},
+        {"top_k": -1},
+        {"top_k": 101},
+        {"top_k": True},
+        {"top_k": 1.5},
+        {"timeout": float("nan")},
+        {"timeout": float("inf")},
+        {"timeout": 0},
+        {"timeout": True},
+    ],
+)
+def test_direct_sdk_parameters_cannot_bypass_http_limits(bridge, overrides):
+    runtime = FakeRuntime()
+    bridge.configure(runtime)
+
+    async def scenario():
+        kwargs = {"query": "query", **overrides}
+        with bridge.bind_request(Scope(tenant_id="t", owner_id="a"), "s"):
+            for method in [bridge.engine_plugin.search, bridge.engine_plugin.generate]:
+                with pytest.raises(ValueError):
+                    await method(**kwargs)
+            events = [event async for event in bridge.engine_plugin.generate_stream(**kwargs)]
+            assert sum(name == "engine_done" for name, _ in events) == 1
+            assert events[-1][1]["status"] == "error"
+        assert not runtime.calls
+
+    asyncio.run(scenario())
+
+
+def test_generate_timeout_and_single_line_sse_payload(bridge):
+    class SlowRuntime(FakeRuntime):
+        async def answer(self, *args, **kwargs):
+            await asyncio.sleep(1)
+
+    bridge.configure(SlowRuntime())
+
+    async def scenario():
+        with bridge.bind_request(Scope(tenant_id="t", owner_id="a"), "s"):
+            with pytest.raises(TimeoutError):
+                await bridge.engine_plugin.generate("query", timeout=0.001)
+            events = [event async for event in bridge.engine_plugin.generate_stream("query", timeout=0.001)]
+            assert [name for name, _ in events].count("engine_done") == 1
+            assert events[-1][1]["status"] == "error"
+            bridge.configure(FakeRuntime())
+            events = [event async for event in bridge.engine_plugin.generate_stream("含换行\n的查询")]
+            for _, payload in events:
+                assert "\n" not in json.dumps(payload, ensure_ascii=False)
+
+    asyncio.run(scenario())
+
+
+def test_zero_results_and_scope_reset_after_exception(bridge):
+    bridge.configure(FakeRuntime())
+
+    async def scenario():
+        with (
+            pytest.raises(RuntimeError),
+            bridge.bind_request(Scope(tenant_id="t", owner_id="a"), "s"),
+        ):
+            assert await bridge.engine_plugin.search("query", top_k=0) == []
+            raise RuntimeError("request failed")
+        with pytest.raises(PermissionError):
+            bridge.require_context()
 
     asyncio.run(scenario())

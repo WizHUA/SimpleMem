@@ -1,0 +1,160 @@
+{
+  "generated_at": "2026-09-17T03:26:46.376584+00:00",
+  "python": "3.12.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "quality": {
+    "positive_cases": 6,
+    "metrics": {
+      "Hit@3": 0.6666666666666666,
+      "Recall@3": 0.6666666666666666,
+      "MRR@3": 0.6666666666666666,
+      "NDCG@3": 0.6666666666666666
+    },
+    "cases": [
+      {
+        "case": "语言偏好",
+        "query": "用户偏好使用什么语言回复",
+        "expected": [
+          "language"
+        ],
+        "actual": [
+          "language",
+          "diet",
+          "tool"
+        ]
+      },
+      {
+        "case": "日期事实",
+        "query": "星河项目截止日期",
+        "expected": [
+          "deadline"
+        ],
+        "actual": [
+          "deadline",
+          "tool"
+        ]
+      },
+      {
+        "case": "技术事实",
+        "query": "项目数据库",
+        "expected": [
+          "tool"
+        ],
+        "actual": [
+          "tool",
+          "deadline"
+        ]
+      },
+      {
+        "case": "否定约束",
+        "query": "用户花生过敏",
+        "expected": [
+          "diet"
+        ],
+        "actual": [
+          "diet",
+          "language"
+        ]
+      },
+      {
+        "case": "同义改写挑战",
+        "query": "我的答复应采用哪种母语",
+        "expected": [
+          "language"
+        ],
+        "actual": []
+      },
+      {
+        "case": "英文改写挑战",
+        "query": "When is the Galaxy project due",
+        "expected": [
+          "deadline"
+        ],
+        "actual": []
+      },
+      {
+        "case": "未知问题",
+        "query": "月球天气预报",
+        "expected": [],
+        "actual": []
+      },
+      {
+        "case": "项目隔离",
+        "query": "火星项目秘密口令",
+        "expected": [],
+        "actual": [
+          "deadline",
+          "tool"
+        ]
+      }
+    ]
+  },
+  "scale": [
+    {
+      "memories": 100,
+      "runs": 10,
+      "p50_ms": 9.856949967797846,
+      "p95_ms": 10.578199988231063,
+      "peak_mib": 0.08639812469482422,
+      "selected_k": 3
+    },
+    {
+      "memories": 1000,
+      "runs": 10,
+      "p50_ms": 79.28335000178777,
+      "p95_ms": 91.6764999856241,
+      "peak_mib": 0.5039043426513672,
+      "selected_k": 3
+    },
+    {
+      "memories": 10000,
+      "runs": 10,
+      "p50_ms": 892.0044999977108,
+      "p95_ms": 933.301700046286,
+      "peak_mib": 4.976375579833984,
+      "selected_k": 3
+    }
+  ],
+  "acceleration": {
+    "fixture_model_delay_ms": 25,
+    "rows": [
+      {
+        "mode": "baseline",
+        "runs": 10,
+        "p50_ms": 45.65520002506673,
+        "p95_ms": 47.22760000731796,
+        "answer_model_calls": 10,
+        "avoided_calls": 0,
+        "context_before": 15373,
+        "context_after": 4128
+      },
+      {
+        "mode": "accelerated",
+        "runs": 10,
+        "p50_ms": 5.904799996642396,
+        "p95_ms": 46.637099992949516,
+        "answer_model_calls": 1,
+        "avoided_calls": 9,
+        "context_before": 15373,
+        "context_after": 4128
+      }
+    ],
+    "identical_answers": true,
+    "concurrent": {
+      "requests": 8,
+      "answer_model_calls": 1,
+      "statuses": [
+        "miss",
+        "shared",
+        "shared",
+        "shared",
+        "shared",
+        "shared",
+        "shared",
+        "shared"
+      ]
+    },
+    "write_p50_ms": 1.808750006603077,
+    "write_p95_ms": 2.574399986770004
+  }
+}

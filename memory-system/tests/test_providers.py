@@ -105,16 +105,28 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_schema_repair_keeps_original_deadline(self):
         calls = 0
+        deadlines = []
+        real_timeout = asyncio.timeout
+
+        def deadline(delay):
+            timer = real_timeout(delay)
+            deadlines.append(timer)
+            return timer
 
         async def chat(prompt):
             nonlocal calls
             calls += 1
-            await asyncio.sleep(0.08)
+            if calls == 2:
+                await asyncio.sleep(1)
             return "bad JSON" if calls == 1 else '{"route":"short","depth":3}'
 
-        with self.assertRaises(TimeoutError):
-            await CallableModel(chat, timeout=0.12).plan("query", {})
+        with (
+            patch("agent_memory.providers.asyncio.timeout", side_effect=deadline),
+            self.assertRaises(TimeoutError),
+        ):
+            await CallableModel(chat, timeout=0.2).plan("query", {})
         self.assertEqual(calls, 2)
+        self.assertEqual(len(deadlines), 1, "Schema repair must not restart the request timeout")
 
     async def test_network_or_host_error_is_not_repaired(self):
         calls = 0
@@ -274,6 +286,55 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
                 await model.plan("query", {})
         self.assertEqual(len(requests), 1)
 
+    async def test_deepseek_answer_plan_and_extract_request_contract(self):
+        requests = []
+        replies = [
+            '{"route":"short","semantic_queries":["报告语言"],"depth":1}',
+            json.dumps(sample_extraction(), ensure_ascii=False),
+            "这次使用中文回答。",
+        ]
+
+        def handler(request):
+            requests.append(request)
+            return httpx.Response(200, json={"choices": [{"message": {"content": replies.pop(0)}}]})
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            model = OpenAICompatibleModel(
+                base_url="https://api.deepseek.com",
+                model="deepseek-flash",
+                api_key="mock-key",
+                client=client,
+            )
+            self.assertEqual(model.provider, "deepseek")
+            self.assertEqual((await model.plan("报告使用什么语言", {})).route, "short")
+            self.assertEqual((await model.extract(sample_window())).candidates[0].value, "中文")
+            self.assertEqual(await model.answer("请回答"), "这次使用中文回答。")
+
+        self.assertEqual(len(requests), 3)
+        for index, request in enumerate(requests):
+            self.assertEqual(str(request.url), "https://api.deepseek.com/chat/completions")
+            self.assertEqual(request.headers["Authorization"], "Bearer mock-key")
+            body = json.loads(request.content)
+            self.assertEqual(body["model"], "deepseek-flash")
+            self.assertEqual(body["thinking"], {"type": "disabled"})
+            self.assertNotIn("temperature", body)
+            if index < 2:
+                self.assertEqual(body["response_format"], {"type": "json_object"})
+            else:
+                self.assertNotIn("response_format", body)
+
+    async def test_empty_model_answer_is_rejected(self):
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(
+                lambda request: httpx.Response(200, json={"choices": [{"message": {"content": ""}}]})
+            )
+        ) as client:
+            model = OpenAICompatibleModel(
+                base_url="https://api.deepseek.com", model="deepseek-flash", client=client
+            )
+            with self.assertRaisesRegex(ModelOutputError, "empty content"):
+                await model.answer("prompt")
+
     async def test_factory_unconfigured_partial_and_local_endpoint(self):
         empty = {"MEMORY_MODEL_BASE_URL": "", "MEMORY_MODEL_NAME": "", "MEMORY_MODEL_API_KEY": ""}
         with patch.dict(os.environ, empty):
@@ -283,6 +344,15 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
             self.assertRaises(ValueError),
         ):
             build_model(Settings())
+        with patch.dict(
+            os.environ,
+            empty
+            | {
+                "MEMORY_MODEL_BASE_URL": "https://api.deepseek.com",
+                "MEMORY_MODEL_NAME": "deepseek-flash",
+            },
+        ):
+            self.assertIsNone(build_model(Settings()))
         with patch.dict(
             os.environ,
             empty

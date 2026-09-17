@@ -89,6 +89,30 @@ class SQLiteStore:
         with self._lock:
             return self._db.execute("SELECT 1").fetchone()[0] == 1
 
+    def backup_to(self, destination: Path) -> None:
+        """Create a consistent online SQLite backup without overwriting existing files.
+
+        Run through asyncio.to_thread; keep backup paths in trusted operator code,
+        never expose arbitrary destination paths as an HTTP endpoint.
+        """
+        destination = Path(destination)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        # Exclusive creation also prevents overwriting the live database.
+        with destination.open("xb"):
+            pass
+        try:
+            with self._lock:
+                target = sqlite3.connect(str(destination))
+                try:
+                    self._db.backup(target)
+                    if target.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                        raise RuntimeError("Backup failed SQLite integrity check")
+                finally:
+                    target.close()
+        except BaseException:
+            destination.unlink(missing_ok=True)
+            raise
+
     def create_session(self, scope: Scope, topic: str = "", project_id: str | None = None) -> Session:
         session = Session(session_id=new_id("session"), topic=topic, project_id=project_id)
         with self.transaction():
@@ -160,6 +184,31 @@ class SQLiteStore:
             ).fetchall()
             return [Turn.model_validate_json(r["body"]) for r in rows]
 
+    def session_snapshot(self, scope: Scope, session_id: str) -> tuple[Session, list[Turn]]:
+        """Read watermark and turns in one SQLite snapshot, including across workers."""
+        with self.transaction():
+            return self.get_session(scope, session_id), self.turns(scope, session_id)
+
+    def generation_version(self, scope: Scope, session_id: str) -> tuple[int, int]:
+        """Revision fence for responses generated outside the database transaction."""
+        with self.transaction():
+            session = self.get_session(scope, session_id)
+            audit_version = self._db.execute(
+                "SELECT COALESCE(MAX(id), 0) FROM audit WHERE tenant=? AND owner=?",
+                self._who(scope),
+            ).fetchone()[0]
+            return session.revision, audit_version
+
+    def delete_owner(self, scope: Scope) -> dict[str, int]:
+        """Erase canonical data and all derived/audit copies for one authenticated owner."""
+        with self.transaction():
+            return {
+                table: self._db.execute(
+                    f"DELETE FROM {table} WHERE tenant=? AND owner=?", self._who(scope)
+                ).rowcount
+                for table in ("summaries", "audit", "memories", "turns", "sessions")
+            }
+
     def _check_evidence(self, scope: Scope, session: Session, item: Candidate, new_ids: set[str] | None):
         if item.scope_type == "project" and not session.project_id:
             raise ValueError("Project memory requires a project session")
@@ -224,14 +273,18 @@ class SQLiteStore:
         scope_id = {"user": scope.owner_id, "project": session.project_id, "session": session.session_id}[
             item.scope_type
         ]
-        tier = "long" if (
-            direct_long_term
-            and item.durable
-            and item.scope_type in {"user", "project"}
-            and item.assertion not in {"inferred", "hypothetical"}
-            and not self._has_unresolved_long_conflict(scope, item, scope_id)
-        ) else "short"
-        for existing in self.memories(scope, session.session_id, tier):
+        tier = (
+            "long"
+            if (
+                direct_long_term
+                and item.durable
+                and item.scope_type in {"user", "project"}
+                and item.assertion not in {"inferred", "hypothetical"}
+                and not self._has_unresolved_long_conflict(scope, item, scope_id)
+            )
+            else "short"
+        )
+        for existing in self.memories(scope, None if tier == "long" else session.session_id, tier):
             if (
                 existing.status == "active"
                 and existing.content == item.content
@@ -243,6 +296,8 @@ class SQLiteStore:
                 and existing.valid_from == item.valid_from
                 and existing.valid_to == item.valid_to
                 and existing.kind == item.kind
+                and existing.assertion == item.assertion
+                and existing.durable == item.durable
             ):
                 merged = list(
                     {
@@ -289,6 +344,13 @@ class SQLiteStore:
             latest = self.get_session(scope, session.session_id)
             if latest.revision != session.revision:
                 raise ConflictError("Session changed during extraction; retry from the saved watermark")
+            pending = [
+                turn
+                for turn in self.turns(scope, session.session_id)
+                if turn.sequence > latest.processed_sequence
+            ]
+            if not new_turns or new_turns != pending[: len(new_turns)]:
+                raise ValueError("Extraction must commit a non-empty contiguous prefix of pending turns")
             explicit_long_term_request = any(
                 event.role == "user"
                 and any(
@@ -346,7 +408,9 @@ class SQLiteStore:
     def evolve(self, scope: Scope, memory_id: str, data: EvolutionInput) -> Memory:
         with self.transaction():
             source = self.get_memory(scope, memory_id)
-            if source.version != data.expected_version or source.status != "active":
+            before_result = source
+            allowed_status = {"active", "pending"} if data.action == "retract" else {"active"}
+            if source.version != data.expected_version or source.status not in allowed_status:
                 raise ConflictError("Memory version/status changed")
             if data.action == "defer":
                 result = source.model_copy(update={"status": "pending"})
@@ -382,6 +446,7 @@ class SQLiteStore:
                         raise ConflictError("Target version/status changed")
                     if self._fact_key(target) != self._fact_key(source):
                         raise ValueError("Cannot replace a different fact or scope")
+                    before_result = target
                     if data.action == "merge":
                         if (
                             target.value != source.value
@@ -423,7 +488,7 @@ class SQLiteStore:
                     self._save_memory(scope, consumed)
                     self._record(scope, "consume_candidate", consumed, source)
             self._save_memory(scope, result)
-            self._record(scope, data.action, result, source)
+            self._record(scope, data.action, result, before_result)
             return result
 
     def history(self, scope: Scope, memory_id: str) -> list[dict]:
@@ -491,10 +556,13 @@ class SQLiteStore:
         tree: dict[str, dict] = {}
         # The hierarchy is the active long-term view; retracted and superseded
         # versions remain available through history/audit, not as live memory.
+        now = utcnow()
         versions = [
             memory
             for memory in self.memories(scope, tier="long")
             if memory.status == "active"
+            and (memory.valid_from is None or memory.valid_from <= now)
+            and (memory.valid_to is None or now < memory.valid_to)
         ]
         for memory in versions:
             path = [item.strip() for item in memory.hierarchy_path if item.strip()]

@@ -178,7 +178,7 @@ class Retriever:
                 warnings=warnings,
             )
         cap = min(top_k, self.settings.max_top_k)
-        depth = max(3, min(20, plan.depth))
+        depth = max(3, min(20, max(plan.depth, len(plan.required_info))))
         target = min(cap, depth)
         candidate_cap = min(self.settings.max_candidates, 6 * depth)
         # STM is inspected first even for long-only plans to expose local exceptions.
@@ -312,7 +312,27 @@ class Retriever:
     ) -> tuple[list[_Match], bool]:
         if limit <= 0:
             return [], False
-        eligible = [m for m in memories if self._eligible(m, session, plan, now)]
+        # A single symbolic label is only one recall view for multi-slot queries.
+        # Using it as a global gate can hide every other requested fact, even
+        # though the planner supplied separate semantic queries/requirements.
+        multi_slot = len(plan.required_info) > 1 or len(plan.semantic_queries) > 1
+        eligibility_plan = (
+            plan.model_copy(update={"subject": None, "predicate": None}) if multi_slot else plan
+        )
+        if multi_slot and (plan.subject or plan.predicate):
+            warnings.append("multi_slot_recall: symbolic labels do not restrict other required fields")
+        eligible = await asyncio.to_thread(
+            lambda: [m for m in memories if self._eligible(m, session, eligibility_plan, now)]
+        )
+        if not eligible and (plan.subject or plan.predicate):
+            # Planner labels are guesses, not canonical store keys. A synonym must
+            # not hide scoped and time-valid memories from lexical/semantic recall.
+            broad_plan = plan.model_copy(update={"subject": None, "predicate": None})
+            eligible = await asyncio.to_thread(
+                lambda: [m for m in memories if self._eligible(m, session, broad_plan, now)]
+            )
+            if eligible:
+                warnings.append("symbolic_field_miss: fell back to scoped recall")
         if not eligible:
             return [], False
         terms = _terms(" ".join([query, *plan.keywords]))
@@ -326,27 +346,43 @@ class Retriever:
             else:
                 matches[key] = _Match(memory, score, {view})
 
-        for memory in eligible:
-            score = _overlap(
-                terms,
-                " ".join([memory.content, memory.subject, memory.predicate, memory.value, *memory.keywords]),
-            )
-            if score > 0:
-                add(memory, score, "lexical")
-            # Time alone is an eligibility filter, not a relevance signal.
-            if plan.subject and plan.predicate:
-                add(memory, 1.0, "symbolic")
+        def lexical_recall():
+            # Scans can be CPU-heavy on larger owner libraries. Keep them off
+            # the host SDK event loop; the outer request still owns the deadline.
+            for memory in eligible:
+                score = _overlap(
+                    terms,
+                    " ".join(
+                        [memory.content, memory.subject, memory.predicate, memory.value, *memory.keywords]
+                    ),
+                )
+                if score > 0:
+                    add(memory, score, "lexical")
+                if (
+                    plan.subject
+                    and plan.predicate
+                    and memory.subject.casefold() == plan.subject.casefold()
+                    and memory.predicate.casefold() == plan.predicate.casefold()
+                ):
+                    add(memory, 1.0, "symbolic")
+
+        await asyncio.to_thread(lexical_recall)
         semantic_used = False
         if self.embedder:
-            queries = plan.semantic_queries or [query]
+            queries = [text.strip() for text in plan.semantic_queries if text.strip()] or [query]
             vectors = await self.embedder.encode(queries + [m.content for m in eligible])
             if len(vectors) != len(queries) + len(eligible):
                 raise ValueError("embedding count mismatch")
-            semantic = []
-            for memory, vector in zip(eligible, vectors[len(queries) :]):
-                cosine = max(_cosine(qv, vector) for qv in vectors[: len(queries)])
-                if cosine >= 0.35:  # Initial recall threshold, not truth/confidence.
-                    semantic.append((memory, (cosine + 1.0) / 2.0))
+
+            def semantic_recall():
+                semantic = []
+                for memory, vector in zip(eligible, vectors[len(queries) :]):
+                    cosine = max(_cosine(qv, vector) for qv in vectors[: len(queries)])
+                    if cosine >= 0.35:  # Initial recall threshold, not truth/confidence.
+                        semantic.append((memory, (cosine + 1.0) / 2.0))
+                return semantic
+
+            semantic = await asyncio.to_thread(semantic_recall)
             for memory, score in semantic:
                 add(memory, score, "semantic")
             semantic_used = True
@@ -431,8 +467,10 @@ class Retriever:
         for slot in plan.required_info:
             terms = _terms(slot)
             possible = [hit for hit in ranked if _overlap(terms, hit.memory.content) > 0]
-            if possible and possible[0] not in ordered:
-                ordered.append(possible[0])
+            if possible:
+                best = max(possible, key=lambda hit: (_overlap(terms, hit.memory.content), hit.score))
+                if best not in ordered:
+                    ordered.append(best)
         ordered.extend(hit for hit in ranked if hit not in ordered)
         selected: list[_Match] = []
         used = 0
@@ -466,6 +504,12 @@ class Retriever:
                 "memory_id": memory.memory_id,
                 "version": memory.version,
                 "tier": memory.tier,
+                "assertion": memory.assertion,
+                "kind": memory.kind,
+                "subject": memory.subject,
+                "predicate": memory.predicate,
+                "value": memory.value,
+                "durable": memory.durable,
                 "scope_type": memory.scope_type,
                 "scope_id": memory.scope_id,
                 "status": memory.status,

@@ -65,6 +65,47 @@ class TrackingRetriever(Retriever):
 
 
 class RetrievalTests(unittest.IsolatedAsyncioTestCase):
+    async def test_multi_fact_request_does_not_narrow_to_one_symbolic_subject(self):
+        items = [
+            memory(
+                "database",
+                subject="项目",
+                predicate="数据库",
+                value="PostgreSQL",
+                content="项目数据库是PostgreSQL",
+            ),
+            memory("deadline", subject="项目报告", predicate="截止日期", content="项目报告截止日期是9月12日"),
+            memory(
+                "format",
+                subject="项目报告",
+                predicate="导出格式",
+                value="PDF",
+                content="项目报告导出格式是PDF",
+            ),
+            memory(
+                "language", subject="项目报告", predicate="语言", value="中文", content="项目报告语言是中文"
+            ),
+        ]
+        result = await Retriever(
+            Settings(),
+            Planner(subject="项目", predicate="数据库", required_info=["截止日期", "数据库", "导出格式"]),
+        ).search("项目报告截止日期、数据库和导出格式", SESSION, items, [], top_k=3)
+        self.assertEqual(
+            {hit.metadata["memory_id"] for hit in result.results}, {"database", "deadline", "format"}
+        )
+        self.assertTrue(any("multi_slot_recall" in warning for warning in result.warnings))
+
+    async def test_blank_model_semantic_queries_use_original_query(self):
+        class StrictEmbedder:
+            async def encode(self, texts):
+                assert all(text.strip() for text in texts)
+                return [[1.0, 0.0] for _ in texts]
+
+        result = await Retriever(Settings(), Planner(semantic_queries=[" ", ""]), StrictEmbedder()).search(
+            "项目P 截止日期", SESSION, [memory("a")], []
+        )
+        self.assertEqual(result.selected_k, 1)
+
     async def test_malformed_model_plan_falls_back_to_rule_planner(self):
         result = await Retriever(Settings(), MalformedPlanner()).search(
             "项目P 截止日期", SESSION, [memory("recent")], []
@@ -175,6 +216,24 @@ class RetrievalTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.results[0].metadata["matched_views"], ["lexical", "semantic", "symbolic"])
         self.assertGreaterEqual(result.results[0].score, 0)
         self.assertLessEqual(result.results[0].score, 1)
+
+    async def test_planner_field_synonym_falls_back_to_scoped_recall(self):
+        item = memory(
+            "language",
+            subject="用户",
+            predicate="偏好语言",
+            value="中文",
+            content="用户偏好使用中文回答",
+            tier="long",
+            scope_type="user",
+            scope_id="owner",
+        )
+        result = await Retriever(
+            Settings(), Planner(route="long", subject="用户", predicate="偏好回答语言")
+        ).search("我偏好用什么语言回答", SESSION, [], [item])
+        self.assertEqual([hit.metadata["memory_id"] for hit in result.results], ["language"])
+        self.assertIn("symbolic_field_miss: fell back to scoped recall", result.warnings)
+        self.assertNotIn("symbolic", result.results[0].metadata["matched_views"])
 
     async def test_current_local_override_is_visible_without_mutation(self):
         local = memory("local", predicate="输出语言", value="英文", content="项目P这次输出语言使用英文")

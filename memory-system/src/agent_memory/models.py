@@ -1,7 +1,7 @@
 """Shared contracts. Changes here should be reviewed by all module owners."""
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -108,10 +108,20 @@ class StatePatch(Contract):
     pending_tasks: list[str] | None = None
 
 
+class ReferenceFact(Contract):
+    """Canonical field hints only; these records cannot serve as extraction evidence."""
+
+    subject: str = Field(min_length=1, max_length=200)
+    predicate: str = Field(min_length=1, max_length=100)
+    value: str = Field(min_length=1, max_length=2000)
+    scope_type: Literal["project", "user"]
+
+
 class ExtractionWindow(Contract):
     session: Session
     new_turns: list[Turn]
     context_turns: list[Turn]
+    reference_fields: list[ReferenceFact] = Field(default_factory=list, max_length=8)
 
 
 class ExtractionResult(Contract):
@@ -122,9 +132,9 @@ class ExtractionResult(Contract):
 
 class QueryPlan(Contract):
     route: Literal["none", "short", "long", "both"] = "both"
-    semantic_queries: list[str] = Field(default_factory=list, max_length=3)
-    keywords: list[str] = Field(default_factory=list, max_length=30)
-    required_info: list[str] = Field(default_factory=list, max_length=20)
+    semantic_queries: list[Annotated[str, Field(max_length=1000)]] = Field(default_factory=list, max_length=3)
+    keywords: list[Annotated[str, Field(max_length=200)]] = Field(default_factory=list, max_length=30)
+    required_info: list[Annotated[str, Field(max_length=500)]] = Field(default_factory=list, max_length=20)
     depth: int = Field(default=3, ge=1, le=20)
     subject: str | None = None
     predicate: str | None = None
@@ -166,6 +176,22 @@ class SearchResponse(Contract):
     context_tokens: int
     steps: list[QueryStep] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+    snapshot_valid_until: datetime | None = None
+
+
+class AccelerationTrace(Contract):
+    enabled: bool
+    cache_hit: bool
+    cache_status: Literal["disabled", "miss", "hit", "shared"]
+    strategy: str = "exact_context_generation_reuse"
+    retrieval_ms: float = Field(ge=0)
+    generation_ms: float = Field(ge=0)
+    total_ms: float = Field(ge=0)
+    context_tokens_before: int = Field(ge=0)
+    context_tokens_after: int = Field(ge=0)
+    avoided_model_calls: int = Field(ge=0)
+    original_generation_ms: float | None = None
+    token_measurement: str = "conservative_character_estimate"
 
 
 class AnswerResponse(Contract):
@@ -181,6 +207,7 @@ class AnswerResponse(Contract):
     selected_k: int = 0
     context_tokens: int = 0
     warnings: list[str] = Field(default_factory=list)
+    acceleration: AccelerationTrace | None = None
 
 
 class EvolutionInput(Contract):

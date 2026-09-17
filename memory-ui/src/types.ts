@@ -1,4 +1,16 @@
 export type Role = "user" | "assistant" | "tool";
+export interface EvolutionInput {
+  action: "promote" | "merge" | "supersede" | "retract" | "defer";
+  target_id?: string;
+  target_version?: number;
+  effective_at?: string;
+}
+export interface HistoryEntry {
+  action: string;
+  recorded_at: string;
+  before_json: string | null;
+  after_json: string;
+}
 
 export interface Health {
   status: string;
@@ -117,6 +129,21 @@ export interface AnswerResult {
   selected_k: number;
   context_tokens: number;
   warnings: string[];
+  acceleration?: Acceleration;
+}
+
+export interface Acceleration {
+  enabled: boolean;
+  cache_hit: boolean;
+  cache_status: "disabled" | "miss" | "hit" | "shared";
+  strategy: string;
+  retrieval_ms: number;
+  generation_ms: number;
+  total_ms: number;
+  context_tokens_before: number;
+  context_tokens_after: number;
+  avoided_model_calls: number;
+  original_generation_ms: number | null;
 }
 
 export interface TraceNode {

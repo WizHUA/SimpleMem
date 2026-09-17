@@ -10,7 +10,9 @@ class ModelNotConfigured(RuntimeError):
 
 
 class ModelRequestError(RuntimeError):
-    pass
+    def __init__(self, status_code: int):
+        self.status_code = status_code
+        super().__init__(f"Model provider request failed with HTTP {status_code}")
 
 
 class ConflictError(ValueError):

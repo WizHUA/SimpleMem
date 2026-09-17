@@ -1,4 +1,6 @@
-> 本 README 由项目原英文版翻译而来，英文原版见 [README_en.md](README_en.md)。
+> 本工作区长短期记忆系统交付入口：[DELIVERY.md](DELIVERY.md)（`full-forward` 分支，后端 `memory-system/`，前端 `memory-ui/`）。
+>
+> 以下 README 由上游项目原英文版翻译而来，英文原版见 [README_en.md](README_en.md)。
 
 <div align="center">
 

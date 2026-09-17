@@ -1,0 +1,1357 @@
+{
+  "recorded_at": "2026-09-17T03:34:45.683519+00:00",
+  "seed": "请把以下四条已确认事实作为项目级长期记忆保存，仅适用于星桥项目，不是全局用户偏好：星桥项目报告的默认输出语言是中文；星桥项目报告截止日期是2026年11月20日；星桥项目默认数据库是PostgreSQL；星桥项目报告导出格式是PDF。",
+  "planned_questions": 10,
+  "cases": [
+    {
+      "name": "语言直接查询",
+      "query": "星桥项目报告默认使用什么语言？",
+      "expected": [
+        "中文"
+      ],
+      "forbidden": [],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": true,
+      "answer": "星桥项目报告的默认输出语言是中文。【来源1】",
+      "elapsed_ms": 1505,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目报告的默认输出语言是中文。",
+          "score": 0.6363636363636364,
+          "source_file": "[memory:mem_d1f3caf74b34427f80fa3e2064cb8927]",
+          "chunk_id": "mem_d1f3caf74b34427f80fa3e2064cb8927:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_d1f3caf74b34427f80fa3e2064cb8927",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "默认输出语言",
+            "value": "中文",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告的默认输出语言是中文"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 0.45454545454545453,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告导出格式是PDF。",
+          "score": 0.45454545454545453,
+          "source_file": "[memory:mem_7295e8ba0c6c4f608d7df741d12471cb]",
+          "chunk_id": "mem_7295e8ba0c6c4f608d7df741d12471cb:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_7295e8ba0c6c4f608d7df741d12471cb",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "导出格式",
+            "value": "PDF",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告导出格式是PDF"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目默认数据库是PostgreSQL。",
+          "score": 0.36363636363636365,
+          "source_file": "[memory:mem_abd5d9f533fb416281e288438be867b8]",
+          "chunk_id": "mem_abd5d9f533fb416281e288438be867b8:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目",
+            "predicate": "默认数据库",
+            "value": "PostgreSQL",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目默认数据库是PostgreSQL"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "日期回忆",
+      "query": "星桥项目报告的截止日期是哪一天？",
+      "expected": [
+        "2026-11-20"
+      ],
+      "forbidden": [],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": true,
+      "answer": "星桥项目报告的截止日期是 **2026年11月20日**。【来源1】",
+      "elapsed_ms": 1342,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 1.0,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical",
+              "symbolic"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "数据库回忆",
+      "query": "星桥项目默认使用什么数据库？",
+      "expected": [
+        "PostgreSQL"
+      ],
+      "forbidden": [],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": true,
+      "answer": "星桥项目默认使用 PostgreSQL。【来源1】",
+      "elapsed_ms": 1887,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目默认数据库是PostgreSQL。",
+          "score": 0.7777777777777778,
+          "source_file": "[memory:mem_abd5d9f533fb416281e288438be867b8]",
+          "chunk_id": "mem_abd5d9f533fb416281e288438be867b8:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目",
+            "predicate": "默认数据库",
+            "value": "PostgreSQL",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目默认数据库是PostgreSQL"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告的默认输出语言是中文。",
+          "score": 0.4444444444444444,
+          "source_file": "[memory:mem_d1f3caf74b34427f80fa3e2064cb8927]",
+          "chunk_id": "mem_d1f3caf74b34427f80fa3e2064cb8927:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_d1f3caf74b34427f80fa3e2064cb8927",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "默认输出语言",
+            "value": "中文",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告的默认输出语言是中文"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 0.3333333333333333,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "中文改写",
+      "query": "给星桥团队写报告时，文字应该采用哪种语言？",
+      "expected": [
+        "中文"
+      ],
+      "forbidden": [],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": true,
+      "answer": "根据检索证据，星桥项目报告的默认输出语言是中文，所以给星桥团队写报告时，文字应采用中文【来源1】。",
+      "elapsed_ms": 2741,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目报告的默认输出语言是中文。",
+          "score": 0.17391304347826086,
+          "source_file": "[memory:mem_d1f3caf74b34427f80fa3e2064cb8927]",
+          "chunk_id": "mem_d1f3caf74b34427f80fa3e2064cb8927:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_d1f3caf74b34427f80fa3e2064cb8927",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "默认输出语言",
+            "value": "中文",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告的默认输出语言是中文"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 0.08695652173913043,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告导出格式是PDF。",
+          "score": 0.08695652173913043,
+          "source_file": "[memory:mem_7295e8ba0c6c4f608d7df741d12471cb]",
+          "chunk_id": "mem_7295e8ba0c6c4f608d7df741d12471cb:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_7295e8ba0c6c4f608d7df741d12471cb",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "导出格式",
+            "value": "PDF",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告导出格式是PDF"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目默认数据库是PostgreSQL。",
+          "score": 0.043478260869565216,
+          "source_file": "[memory:mem_abd5d9f533fb416281e288438be867b8]",
+          "chunk_id": "mem_abd5d9f533fb416281e288438be867b8:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目",
+            "predicate": "默认数据库",
+            "value": "PostgreSQL",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目默认数据库是PostgreSQL"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "多事实组合",
+      "query": "请同时列出星桥项目报告截止日期、默认数据库和导出格式。",
+      "expected": [
+        "2026-11-20",
+        "PostgreSQL",
+        "PDF"
+      ],
+      "forbidden": [],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": false,
+        "forbidden_terms_absent": true,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": false,
+      "answer": "根据现有证据，只能确认一项：\n\n- 星桥项目默认数据库：PostgreSQL【来源1】\n\n其他两项证据不足，无法确认：\n- 报告截止日期：未提供相关信息\n- 导出格式：未提供相关信息\n\n因此目前无法同时列出这三项内容。",
+      "elapsed_ms": 2301,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目默认数据库是PostgreSQL。",
+          "score": 0.30434782608695654,
+          "source_file": "[memory:mem_abd5d9f533fb416281e288438be867b8]",
+          "chunk_id": "mem_abd5d9f533fb416281e288438be867b8:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目",
+            "predicate": "默认数据库",
+            "value": "PostgreSQL",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目默认数据库是PostgreSQL"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "未知预算拒猜",
+      "query": "星桥项目预算具体是多少元？没有记录就明确说明。",
+      "expected": [],
+      "forbidden": [],
+      "require_empty_sources": false,
+      "require_refusal_marker": true,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "refusal_marker": true
+      },
+      "passed": true,
+      "answer": "检索证据中没有关于星桥项目预算金额的记录，无法回答具体是多少元。",
+      "elapsed_ms": 3379,
+      "citations": [],
+      "sources": [
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 0.17647058823529413,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告导出格式是PDF。",
+          "score": 0.17647058823529413,
+          "source_file": "[memory:mem_7295e8ba0c6c4f608d7df741d12471cb]",
+          "chunk_id": "mem_7295e8ba0c6c4f608d7df741d12471cb:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_7295e8ba0c6c4f608d7df741d12471cb",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "导出格式",
+            "value": "PDF",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告导出格式是PDF"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目默认数据库是PostgreSQL。",
+          "score": 0.17647058823529413,
+          "source_file": "[memory:mem_abd5d9f533fb416281e288438be867b8]",
+          "chunk_id": "mem_abd5d9f533fb416281e288438be867b8:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目",
+            "predicate": "默认数据库",
+            "value": "PostgreSQL",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目默认数据库是PostgreSQL"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告的默认输出语言是中文。",
+          "score": 0.17647058823529413,
+          "source_file": "[memory:mem_d1f3caf74b34427f80fa3e2064cb8927]",
+          "chunk_id": "mem_d1f3caf74b34427f80fa3e2064cb8927:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_d1f3caf74b34427f80fa3e2064cb8927",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "默认输出语言",
+            "value": "中文",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告的默认输出语言是中文"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "项目隔离",
+      "query": "云帆项目默认使用什么数据库？没有记录就明确说明。",
+      "expected": [],
+      "forbidden": [
+        "PostgreSQL"
+      ],
+      "require_empty_sources": true,
+      "require_refusal_marker": true,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "sources_empty": true,
+        "refusal_marker": true
+      },
+      "passed": true,
+      "answer": "目前没有关于云帆项目默认数据库的记录，无法确认它使用什么数据库。",
+      "elapsed_ms": 3922,
+      "citations": [],
+      "sources": [],
+      "warnings": [
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment",
+        "no_supported_result_within_budget"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "用户隔离",
+      "query": "星桥项目默认使用什么数据库？没有记录就明确说明。",
+      "expected": [],
+      "forbidden": [
+        "PostgreSQL"
+      ],
+      "require_empty_sources": true,
+      "require_refusal_marker": true,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": true,
+        "sources_empty": true,
+        "refusal_marker": true
+      },
+      "passed": true,
+      "answer": "现有记录中没有关于“星桥”项目默认使用什么数据库的信息，因此无法确定，不能猜测。",
+      "elapsed_ms": 2594,
+      "citations": [],
+      "sources": [],
+      "warnings": [
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment",
+        "no_supported_result_within_budget"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "更正后回忆",
+      "query": "星桥项目报告的当前截止日期是什么？",
+      "expected": [],
+      "forbidden": [
+        "2026-11-20"
+      ],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": false,
+        "corrected_date": false,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": false,
+      "answer": "星桥项目报告的当前截止日期是 **2026年11月20日**。【来源1】",
+      "elapsed_ms": 1477,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 1.0,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical",
+              "symbolic"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    },
+    {
+      "name": "更正后中文改写",
+      "query": "星桥报告现在最晚应当在哪一天交付？",
+      "expected": [],
+      "forbidden": [
+        "2026-11-20"
+      ],
+      "require_empty_sources": false,
+      "require_refusal_marker": false,
+      "status": "completed",
+      "checks": {
+        "expected_terms": true,
+        "forbidden_terms_absent": false,
+        "corrected_date": false,
+        "retrieved_source_present": true,
+        "valid_citation_present": true
+      },
+      "passed": false,
+      "answer": "星桥项目报告的最晚交付日期是 **2026年11月20日**。【来源1】\n\n这是项目设定的截止日期。当前状态和计划中未显示有其他变更，因此以该截止日期为准。",
+      "elapsed_ms": 1872,
+      "citations": [
+        1
+      ],
+      "sources": [
+        {
+          "content": "星桥项目报告截止日期是2026年11月20日。",
+          "score": 0.3125,
+          "source_file": "[memory:mem_63e8b091588a411d8a1be86010dea9e0]",
+          "chunk_id": "mem_63e8b091588a411d8a1be86010dea9e0:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "截止日期",
+            "value": "2026-11-20",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告截止日期是2026年11月20日"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告导出格式是PDF。",
+          "score": 0.125,
+          "source_file": "[memory:mem_7295e8ba0c6c4f608d7df741d12471cb]",
+          "chunk_id": "mem_7295e8ba0c6c4f608d7df741d12471cb:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_7295e8ba0c6c4f608d7df741d12471cb",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "导出格式",
+            "value": "PDF",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告导出格式是PDF"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目报告的默认输出语言是中文。",
+          "score": 0.125,
+          "source_file": "[memory:mem_d1f3caf74b34427f80fa3e2064cb8927]",
+          "chunk_id": "mem_d1f3caf74b34427f80fa3e2064cb8927:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_d1f3caf74b34427f80fa3e2064cb8927",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目报告",
+            "predicate": "默认输出语言",
+            "value": "中文",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目报告的默认输出语言是中文"
+              }
+            ]
+          }
+        },
+        {
+          "content": "星桥项目默认数据库是PostgreSQL。",
+          "score": 0.0625,
+          "source_file": "[memory:mem_abd5d9f533fb416281e288438be867b8]",
+          "chunk_id": "mem_abd5d9f533fb416281e288438be867b8:1",
+          "engine": "simple_memory",
+          "metadata": {
+            "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+            "version": 1,
+            "tier": "long",
+            "assertion": "stated",
+            "kind": "fact",
+            "subject": "星桥项目",
+            "predicate": "默认数据库",
+            "value": "PostgreSQL",
+            "durable": true,
+            "scope_type": "project",
+            "scope_id": "星桥",
+            "status": "active",
+            "valid_from": null,
+            "valid_to": null,
+            "matched_views": [
+              "lexical"
+            ],
+            "hierarchy_path": [
+              "星桥"
+            ],
+            "local_override": false,
+            "score_kind": "max_query_term_coverage_or_normalized_cosine_or_exact_field_match",
+            "evidence": [
+              {
+                "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+                "event_index": 0,
+                "quote": "星桥项目默认数据库是PostgreSQL"
+              }
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "symbolic_field_miss: fell back to scoped recall",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ],
+      "retrieval_mode": "lexical_baseline"
+    }
+  ],
+  "stages": [
+    {
+      "stage": "initial_extraction",
+      "status": "processed",
+      "explicitly_promoted": []
+    },
+    {
+      "stage": "correction",
+      "input": "请记录正式更正：星桥项目报告截止日期由2026年11月20日改为2026年12月5日，以12月5日为准。仅适用于星桥项目。",
+      "extraction_status": "processed",
+      "candidates": [
+        {
+          "content": "星桥项目报告截止日期由2026年11月20日正式更正为2026年12月5日，以2026年12月5日为准，仅适用于星桥项目。",
+          "kind": "fact",
+          "subject": "星桥项目报告截止日期",
+          "predicate": "截止日期",
+          "value": "2026-12-05",
+          "keywords": [
+            "星桥项目",
+            "报告截止日期",
+            "更正",
+            "2026-12-05"
+          ],
+          "evidence": [
+            {
+              "turn_id": "turn_9e0e37161e534ab796d5af4536893544",
+              "event_index": 0,
+              "quote": "请记录正式更正：星桥项目报告截止日期由2026年11月20日改为2026年12月5日，以12月5日为准。仅适用于星桥项目。"
+            }
+          ],
+          "assertion": "stated",
+          "durable": true,
+          "scope_type": "project",
+          "hierarchy_path": [
+            "星桥"
+          ],
+          "valid_from": "2026-12-05T00:00:00Z",
+          "valid_to": null,
+          "memory_id": "mem_0162131bdaa84d1d946ec012ecd806f4",
+          "version": 1,
+          "session_id": "session_f3decc1224bc4f8697b3334857cb15ad",
+          "scope_id": "星桥",
+          "tier": "short",
+          "status": "active",
+          "supersedes": null,
+          "recorded_at": "2026-09-17T03:35:09.948170Z"
+        }
+      ],
+      "status": "failed",
+      "reason": "Expected one exact subject/predicate match",
+      "matches": 0
+    }
+  ],
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "embedding_configured": false,
+  "initial_memories": [
+    {
+      "content": "星桥项目报告的默认输出语言是中文。",
+      "kind": "fact",
+      "subject": "星桥项目报告",
+      "predicate": "默认输出语言",
+      "value": "中文",
+      "keywords": [
+        "星桥",
+        "报告",
+        "输出语言",
+        "中文",
+        "长期记忆"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+          "event_index": 0,
+          "quote": "星桥项目报告的默认输出语言是中文"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "星桥"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_d1f3caf74b34427f80fa3e2064cb8927",
+      "version": 1,
+      "session_id": "session_f3decc1224bc4f8697b3334857cb15ad",
+      "scope_id": "星桥",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T03:34:48.577483Z"
+    },
+    {
+      "content": "星桥项目报告截止日期是2026年11月20日。",
+      "kind": "fact",
+      "subject": "星桥项目报告",
+      "predicate": "截止日期",
+      "value": "2026-11-20",
+      "keywords": [
+        "星桥",
+        "报告",
+        "截止日期",
+        "2026-11-20",
+        "长期记忆"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+          "event_index": 0,
+          "quote": "星桥项目报告截止日期是2026年11月20日"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "星桥"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_63e8b091588a411d8a1be86010dea9e0",
+      "version": 1,
+      "session_id": "session_f3decc1224bc4f8697b3334857cb15ad",
+      "scope_id": "星桥",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T03:34:48.577483Z"
+    },
+    {
+      "content": "星桥项目默认数据库是PostgreSQL。",
+      "kind": "fact",
+      "subject": "星桥项目",
+      "predicate": "默认数据库",
+      "value": "PostgreSQL",
+      "keywords": [
+        "星桥",
+        "数据库",
+        "PostgreSQL",
+        "长期记忆"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+          "event_index": 0,
+          "quote": "星桥项目默认数据库是PostgreSQL"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "星桥"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_abd5d9f533fb416281e288438be867b8",
+      "version": 1,
+      "session_id": "session_f3decc1224bc4f8697b3334857cb15ad",
+      "scope_id": "星桥",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T03:34:48.578479Z"
+    },
+    {
+      "content": "星桥项目报告导出格式是PDF。",
+      "kind": "fact",
+      "subject": "星桥项目报告",
+      "predicate": "导出格式",
+      "value": "PDF",
+      "keywords": [
+        "星桥",
+        "报告",
+        "导出格式",
+        "PDF",
+        "长期记忆"
+      ],
+      "evidence": [
+        {
+          "turn_id": "turn_ea71872950e04093aac6e1755cd31433",
+          "event_index": 0,
+          "quote": "星桥项目报告导出格式是PDF"
+        }
+      ],
+      "assertion": "stated",
+      "durable": true,
+      "scope_type": "project",
+      "hierarchy_path": [
+        "星桥"
+      ],
+      "valid_from": null,
+      "valid_to": null,
+      "memory_id": "mem_7295e8ba0c6c4f608d7df741d12471cb",
+      "version": 1,
+      "session_id": "session_f3decc1224bc4f8697b3334857cb15ad",
+      "scope_id": "星桥",
+      "tier": "long",
+      "status": "active",
+      "supersedes": null,
+      "recorded_at": "2026-09-17T03:34:48.578479Z"
+    }
+  ],
+  "summary": {
+    "planned": 10,
+    "attempted": 10,
+    "completed": 10,
+    "lexical_rule_passed": 7,
+    "errors": 0
+  }
+}

@@ -1,5 +1,7 @@
 # Architecture
 
+当前交付状态、实验和宿主验收入口见 [README.md](README.md) 与 [交付说明](../DELIVERY.md)。本页保留原有分层与主线。
+
 ## 分层
 
 ```text
@@ -12,8 +14,8 @@ Application: runtime.py | short_term.py | long_term.py | retrieval.py
 Domain: models.py | ports.py
     跨模块数据契约与外部能力接口
 
-Infrastructure: store.py | providers.py
-    SQLite 和模型适配
+Infrastructure: store.py | providers.py | embeddings.py | acceleration.py
+    SQLite、模型与嵌入适配、按精确上下文复用推理
 ```
 
 依赖只向下：核心领域不导入 FastAPI、宿主 SDK 或 SimpleMem。`api.py` 和 `rag_sdk.py` 调用同一个 `MemoryRuntime`。
@@ -29,6 +31,12 @@ append turn -> recent raw STM -> search/answer
 ```
 
 查询使用 `QueryPlan(route, semantic_queries, keywords, subject, predicate, depth)`。`depth` 决定目标结果数和候选预算，调用者 `top_k` 是最终上限。H-MEM 的 `hierarchy_path` 只用于组织，当前不会取代 SimpleMem 式规划或强制逐层 beam。
+
+多信息需求查询保留各字段的召回空间，不允许一个模型猜测的 subject/predicate 排除其他必需事实。动态深度至少覆盖规划中的需求数，仍受 top_k 与上下文预算限制。词法和向量扫描在线程中执行，外层截止时间约束等待，但 Python 无法强制终止已运行的工作线程。
+
+回答生成前保留数据库版本快照，返回前复验会话和主体审计版本。当前事实查询还记录下一个有效期边界，避免模型运行期间事实自然到期后继续返回旧结果；历史/as_of 查询保持其时间语义。删除、撤回或并发修改造成的不一致返回可重试冲突。
+
+加速只缓存生成阶段。完整提示、来源身份与版本、数据库状态、会话、模型实例和主体共同形成缓存键；每次请求仍执行授权与新鲜检索。TTL/LRU限制结果，重复在途请求共享调用，最后等待者取消时终止任务。向量缓存只复用相同文本的嵌入，不缓存最终候选的授权结果。
 
 ## 数据真实性
 
@@ -59,4 +67,3 @@ append turn -> recent raw STM -> search/answer
 | 前端 | 未来独立目录/仓库 | 只依赖 OpenAPI，不读取 SQLite |
 
 共享 `models.py` 或 API Schema 变更时，要同步更新测试和前端契约。模型提示词版本、Embedding 版本和阈值都应进入实验配置记录。
-
