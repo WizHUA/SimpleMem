@@ -130,6 +130,20 @@ export interface Hit {
   metadata: Record<string, unknown>;
 }
 
+export interface ChannelCandidate {
+  memory_id: string;
+  version: number;
+  revision: number;
+  subject: string;
+  predicate: string;
+  value: string;
+  content: string;
+  content_truncated?: boolean;
+  matched: boolean;
+  selected: boolean;
+  score: number | null;
+  reason: string;
+}
 export interface RetrievalChannel {
   view: "semantic" | "lexical" | "symbolic";
   tier: "short" | "long";
@@ -138,6 +152,11 @@ export interface RetrievalChannel {
   matched_count: number;
   selected_count: number;
   detail: string;
+  query_conditions?: Record<string, unknown>;
+  candidates?: ChannelCandidate[];
+  candidate_total?: number;
+  candidate_limit?: number;
+  candidates_truncated?: boolean;
 }
 export interface DynamicK {
   planned_depth: number;
@@ -297,4 +316,16 @@ export interface Hierarchy {
   domain_count: number;
   episode_count: number;
   domains: DomainNode[];
+}
+
+export interface EntityMemory {
+  entity_id: string;
+  subject: string;
+  scope_type: string;
+  scope_id: string;
+  summary: string;
+  facts: Memory[];
+  pending_facts: Memory[];
+  conflict_predicates: string[];
+  updated_at: string;
 }

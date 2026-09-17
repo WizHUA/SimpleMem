@@ -1,17 +1,10 @@
 import { useId, useState } from "react";
 import { ArrowDown, ArrowRight, Braces, Database, Fingerprint, Layers3, ScanText, Search, SlidersHorizontal } from "lucide-react";
-import type { DynamicK, Hit, QueryPlan, QueryStep } from "./types";
+import type { DynamicK, Hit, QueryPlan, QueryStep, RetrievalChannel } from "./types";
 import "./RetrievalRoutes.css";
+import { ChannelContents, LibraryEvidence } from "./ChannelContents";
 
-export interface RetrievalChannel {
-  view: "semantic" | "lexical" | "symbolic";
-  tier: "short" | "long";
-  status: "complete" | "disabled" | "skipped";
-  input_count: number;
-  matched_count: number;
-  selected_count: number;
-  detail: string;
-}
+export type { RetrievalChannel } from "./types";
 type View = RetrievalChannel["view"];
 const VIEWS = [
   { id: "semantic" as View, name: "语义检索", method: "向量相似度", icon: Fingerprint, description: "对查询与合格记忆的向量计算余弦相似度，复用已有记忆向量；当前召回阈值为 0.35，相似度不代表事实可信度。" },
@@ -37,6 +30,8 @@ export function RetrievalRoutes({ sources, steps, channels = [], plan, phase, li
 }) {
   const id = useId().replace(/:/g, "");
   const [focused, setFocused] = useState<View | null>(null);
+  const [focusedLibrary, setFocusedLibrary] = useState<"short" | "long" | null>(null);
+  const selectLibrary = (tier: "short" | "long") => { setFocused(null); setFocusedLibrary(focusedLibrary === tier ? null : tier); };
   const completed = ["generation", "completed"].includes(phase || "");
   const skipped = plan?.route === "none" && !steps.some((step) => /^(short|long)_retrieval$/.test(step.phase));
   const fusion = steps.find((step) => step.action === "deduplicate_scope_time_version");
@@ -86,17 +81,18 @@ export function RetrievalRoutes({ sources, steps, channels = [], plan, phase, li
         })}
       </svg>
       <div className="route-query"><div><Search size={18} /></div><strong>查询计划</strong><span>{plan ? `${plan.required_info.length || 1} 个信息项` : "等待规划"}</span></div>
-      <div className="route-channels">{VIEWS.map((view) => <button key={view.id} type="button" className={`route-channel ${view.id} ${state(view.id)} ${focused === view.id ? "selected" : ""}`} aria-expanded={focused === view.id} onClick={() => setFocused(focused === view.id ? null : view.id)}>
+      <div className="route-channels">{VIEWS.map((view) => <button key={view.id} type="button" className={`route-channel ${view.id} ${state(view.id)} ${focused === view.id ? "selected" : ""}`} aria-expanded={focused === view.id} onClick={() => { setFocusedLibrary(null); setFocused(focused === view.id ? null : view.id); }}>
         <view.icon size={18} /><span className="route-channel-copy"><strong>{view.name}</strong><small>{view.method}</small></span><span className="route-channel-status">{status(view.id)}</span>
       </button>)}</div>
       <div className="route-libraries">{TIERS.map((tier) => {
         const step = forTier(tier.id);
         const sourceCount = sources.filter((source) => source.metadata.tier === tier.id).length;
-        return <div key={tier.id} className={`route-library ${step || sourceCount ? "visited" : ""}`}><div><Database size={17} /><strong>{tier.name}</strong></div><span>{step ? `${step.input_count} 条输入 · ${step.output_count} 条召回` : sourceCount ? `${sourceCount} 条入选来源` : completed ? "本轮未查" : tier.note}</span></div>;
+        return <button type="button" key={tier.id} aria-expanded={focusedLibrary === tier.id} aria-label={`查看${tier.name}本轮来源`} onClick={() => selectLibrary(tier.id)} className={`route-library ${step || sourceCount ? "visited" : ""} ${focusedLibrary === tier.id ? "selected" : ""}`}><div><Database size={17} /><strong>{tier.name}</strong></div><span>{step ? `${step.input_count} 条输入 · ${step.output_count} 条召回` : sourceCount ? `${sourceCount} 条入选来源` : completed ? "本轮未查" : tier.note}</span></button>;
       })}</div>
     </div>
-    <div className="routes-mobile-ledger" aria-label="分库检索记录">{TIERS.map((tier) => <div key={tier.id}><Database size={14} /><strong>{tier.name}</strong><span>{forTier(tier.id) ? `${forTier(tier.id)!.output_count} 条召回` : completed ? "本轮未查" : "等待记录"}</span></div>)}</div>
-    {detail && <div className={`route-detail ${detail.id}`}><div><detail.icon size={17} /><strong>{detail.name}</strong><span>{status(detail.id)}</span></div><p>{detail.description}</p>{forView(detail.id).length ? <dl>{forView(detail.id).map((channel) => <div key={channel.tier}><dt>{channel.tier === "short" ? "短期库" : "长期库"}</dt><dd>{channel.status === "disabled" ? "未配置" : channel.status === "skipped" ? "已跳过" : `${channel.input_count} 条检查 / ${channel.matched_count} 条命中${completed ? ` / ${channel.selected_count} 条最终入选` : ""}`}</dd></div>)}</dl> : <p className="route-detail-empty">本次记录未提供该通道的完整统计，不从最终证据反推候选数量。</p>}</div>}
+    <div className="routes-mobile-ledger" aria-label="分库检索记录">{TIERS.map((tier) => <button type="button" key={tier.id} aria-expanded={focusedLibrary === tier.id} aria-label={`查看${tier.name}本轮来源`} onClick={() => selectLibrary(tier.id)}><Database size={14} /><strong>{tier.name}</strong><span>{forTier(tier.id) ? `${forTier(tier.id)!.output_count} 条召回` : completed ? "本轮未查" : "等待记录"}</span></button>)}</div>
+    {detail && <div className={`route-detail ${detail.id}`}><div><detail.icon size={17} /><strong>{detail.name}</strong><span>{status(detail.id)}</span></div><details className="channel-method"><summary>这一路的匹配方法</summary><p>{detail.description}</p></details>{forView(detail.id).length ? <dl>{forView(detail.id).map((channel) => <div key={channel.tier}><dt>{channel.tier === "short" ? "短期库" : "长期库"}</dt><dd>{channel.status === "disabled" ? "未配置" : channel.status === "skipped" ? "已跳过" : `${channel.input_count} 条检查 / ${channel.matched_count} 条命中${completed ? ` / ${channel.selected_count} 条最终入选` : ""}`}</dd></div>)}</dl> : <p className="route-detail-empty">本次记录未提供该通道的完整统计，不从最终证据反推候选数量。</p>}<ChannelContents key={detail.id} channels={forView(detail.id)} view={detail.id} sources={sources} completed={completed} onSource={onSource} /></div>}
+    {focusedLibrary && <LibraryEvidence sources={sources} tier={focusedLibrary} onSource={onSource} />}
     <div className="route-return"><ArrowDown size={13} /><span>召回结果返回并汇合</span></div>
     <div className="route-finish">
       <div className={fusion ? "done" : ""}><Layers3 size={18} /><strong>融合与去重</strong><span>{fusion ? `${fusion.input_count} → ${fusion.output_count} 条` : "按 ID 与版本合并"}</span></div>

@@ -18,6 +18,7 @@ from uuid import uuid4
 from weakref import WeakValueDictionary
 
 from .models import (
+    ChannelCandidate,
     Hit,
     Memory,
     QueryPlan,
@@ -373,6 +374,17 @@ class Retriever:
             channel.selected_count = sum(
                 channel.view in hit.views and hit.memory.tier == channel.tier for hit in selected
             )
+            selected_ids = {
+                (hit.memory.memory_id, hit.memory.version, hit.memory.revision)
+                for hit in selected
+                if hit.memory.tier == channel.tier and channel.view in hit.views
+            }
+            for candidate in channel.candidates:
+                candidate.selected = (
+                    candidate.memory_id,
+                    candidate.version,
+                    candidate.revision,
+                ) in selected_ids
         conflicts = self._pending_conflicts(selected, short + long, session, plan, now)
         if conflicts:
             warnings.append(
@@ -457,8 +469,30 @@ class Retriever:
         now: datetime,
         warnings: list[str],
     ) -> tuple[list[_Match], bool, list[RetrievalChannel]]:
+        conditions = {
+            "query": query,
+            "subject": plan.subject,
+            "predicate": plan.predicate,
+            "semantic_queries": plan.semantic_queries or [query],
+            "keywords": plan.keywords,
+            "required_info": plan.required_info,
+            "temporal_mode": plan.temporal_mode,
+            "as_of": plan.as_of.isoformat() if plan.as_of else None,
+            "evaluated_at": now.isoformat(),
+            "session_id": session.session_id,
+            "project_id": session.project_id,
+            "scope_policy": "authorized_owner_session_project_user",
+            "excluded_statuses": ["retracted", "pending", "archived"],
+        }
+
+        def idle(reason):
+            channels = self._idle_channels(reason)
+            for channel in channels:
+                channel.query_conditions = dict(conditions)
+            return [], False, channels
+
         if limit <= 0:
-            return [], False, self._idle_channels("candidate_budget_exhausted")
+            return idle("candidate_budget_exhausted")
         # A single symbolic label is only one recall view for multi-slot queries.
         # Using it as a global gate can hide every other requested fact, even
         # though the planner supplied separate semantic queries/requirements.
@@ -481,7 +515,7 @@ class Retriever:
             if eligible:
                 warnings.append("symbolic_field_miss: fell back to scoped recall")
         if not eligible:
-            return [], False, self._idle_channels("no_eligible_memories")
+            return idle("no_eligible_memories")
         terms = _terms(" ".join([query, *plan.keywords, *plan.required_info, *plan.semantic_queries]))
         namespace, generation = self._projection_context.get()
         lexical_keys = set(
@@ -497,9 +531,14 @@ class Retriever:
         lexical_eligible = [m for m in eligible if self.projection.key(m) in lexical_keys]
         warnings.append(f"fts5_projection: reranked={len(lexical_eligible)}; eligible={len(eligible)}")
         matches: dict[tuple[str, int], _Match] = {}
+        view_scores: dict[str, dict[tuple[str, int], float]] = {
+            view: {} for view in ("lexical", "semantic", "symbolic")
+        }
 
         def add(memory: Memory, score: float, view: str) -> None:
             key = (memory.memory_id, memory.version)
+            if view in view_scores:
+                view_scores[view][key] = score
             if key in matches:
                 matches[key].score = max(matches[key].score, score)
                 matches[key].views.add(view)
@@ -540,6 +579,7 @@ class Retriever:
                 semantic = []
                 for memory, vector in zip(eligible, vectors[len(queries) :]):
                     cosine = max(_cosine(qv, vector) for qv in vectors[: len(queries)])
+                    view_scores["semantic"][(memory.memory_id, memory.version)] = (cosine + 1.0) / 2.0
                     if cosine >= 0.35:  # Initial recall threshold, not truth/confidence.
                         semantic.append((memory, (cosine + 1.0) / 2.0))
                 return semantic
@@ -574,6 +614,53 @@ class Retriever:
                 detail="cosine_threshold_0.35" if semantic_used else "embedding_not_configured",
             ),
         ]
+        for channel in channels:
+            channel.query_conditions = dict(conditions)
+            if channel.view == "lexical":
+                channel.query_conditions["lexical_terms"] = sorted(terms)
+            if channel.view == "semantic":
+                channel.query_conditions["cosine_threshold"] = 0.35
+            inspected = (
+                (lexical_eligible if channel.view == "lexical" else eligible)
+                if channel.status == "complete"
+                else []
+            )
+            channel.candidate_total = len(inspected)
+            channel.candidates_truncated = len(inspected) > channel.candidate_limit
+
+            def matched(memory, view=channel.view):
+                hit = matches.get((memory.memory_id, memory.version))
+                return bool(hit and view in hit.views)
+
+            previews = sorted(inspected, key=lambda memory: (not matched(memory), memory.memory_id))[
+                : channel.candidate_limit
+            ]
+            for memory in previews:
+                is_match = matched(memory)
+                reason = (
+                    "满足本通道召回条件"
+                    if is_match
+                    else {
+                        "symbolic": "主体或属性与查询条件不一致",
+                        "semantic": "余弦相似度低于召回阈值",
+                        "lexical": "BM25未产生正相关分数",
+                    }[channel.view]
+                )
+                channel.candidates.append(
+                    ChannelCandidate(
+                        memory_id=memory.memory_id,
+                        version=memory.version,
+                        revision=memory.revision,
+                        subject=memory.subject,
+                        predicate=memory.predicate,
+                        value=memory.value[:500],
+                        content=memory.content[:500],
+                        content_truncated=len(memory.content) > 500,
+                        matched=is_match,
+                        score=view_scores[channel.view].get((memory.memory_id, memory.version), 0.0),
+                        reason=reason,
+                    )
+                )
         return result, semantic_used, channels
 
     async def _projected_vectors(self, queries, memories, namespace, generation):
@@ -888,6 +975,7 @@ class Retriever:
             metadata={
                 "memory_id": memory.memory_id,
                 "version": memory.version,
+                "revision": memory.revision,
                 "tier": memory.tier,
                 "assertion": memory.assertion,
                 "kind": memory.kind,

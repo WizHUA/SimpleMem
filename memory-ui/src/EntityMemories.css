@@ -1,0 +1,10 @@
+.entity-memories { margin-top: 20px; display: grid; gap: 16px; }
+.entity-memory { padding: 18px; border: 1px solid #dce7e9; border-left: 3px solid #5a939a; border-radius: 10px; background: white; }
+.entity-memory > header, .entity-memory > header > div { display: flex; align-items: center; gap: 9px; }
+.entity-memory > header { justify-content: space-between; color: #397c80; }.entity-memory h3 { margin: 0; font-size: 17px; color: #233748; overflow-wrap: anywhere; }
+.entity-memory > header > span { color: #66727e; font-size: 12px; flex-shrink: 0; }
+.entity-summary { font-size: 15px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; margin: 14px 0; color: #344d59; }
+.entity-attributes, .entity-pending { font-size: 13px; color: #546f7b; }.entity-attributes > summary, .entity-pending > summary { cursor: pointer; padding: 8px 0; }
+.entity-fact { border-top: 1px solid #e6eef0; padding: 14px 0; }.entity-fact-heading { display: flex; gap: 10px; align-items: center; }.entity-fact-heading span { color: #74818c; font-size: 12px; }.entity-fact p { margin: 8px 0; line-height: 1.8; overflow-wrap: anywhere; }
+.entity-fact details { color: #66727e; font-size: 12px; }.entity-fact details summary { cursor: pointer; }.entity-fact blockquote { margin: 9px 0; padding: 10px; border-left: 2px solid #8db7ba; background: #f4f8f9; line-height: 1.8; }.entity-fact small { display: block; overflow-wrap: anywhere; }
+.entity-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; }.entity-conflict { color: #8b661f; background: #faf5e9; padding: 10px; font-size: 13px; line-height: 1.8; }.entity-pending { margin-top: 10px; color: #8b661f; }.entity-originals { margin-top: 22px; font-size: 13px; }.entity-originals > summary { cursor: pointer; padding: 12px 0; color: #66727e; border-top: 1px solid #e0e8eb; }

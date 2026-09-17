@@ -118,6 +118,7 @@ async function memoryBackend(
     };
     if (path.endsWith("/answer/stream") && !options.stageStream)
       return json({ detail: "Endpoint unavailable" }, 404);
+    if (path === "/api/v1/entities") return json({ detail: "legacy fixture" }, 404);
     if (path === "/health") {
       state.healthCalls++;
       if (options.failFirstHealth && state.healthCalls === 1)
@@ -926,4 +927,37 @@ test("三路检索显示真实通道状态、分库数量与动态预算", async
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   await expect(page.locator(".route-channel.lexical")).toBeVisible();
   await page.screenshot({ path: "test-results/routes-mobile.png", fullPage: true });
+});
+
+test("长期对象整合卡保留不同属性和各自原文", async ({ page }) => {
+  await memoryBackend(page);
+  const fact = (id: string, predicate: string, value: string, quote: string) => ({ memory_id: id, version: 1, revision: 1, session_id: "session-demo-123456", tier: "long", status: "active", kind: "fact", content: quote, subject: "zfc", predicate, value, keywords: [], evidence: [{ turn_id: "turn-"+id, event_index: 0, quote }], assertion: "stated", durable: true, scope_type: "user", scope_id: "local-user", hierarchy_path: [], valid_from: null, valid_to: null, recorded_at: "2026-09-17T09:00:00Z" });
+  await page.route("**/api/v1/entities", (route) => route.fulfill({ json: [{ entity_id: "zfc-user", subject: "zfc", scope_type: "user", scope_id: "local-user", summary: "zfc：别名是飞猪；特性是狂暴。", facts: [fact("alias", "别名", "飞猪", "zfc就是飞猪"), fact("trait", "特性", "狂暴", "记住zfc非常狂暴")], pending_facts: [], conflict_predicates: [], updated_at: "2026-09-17T09:00:00Z" }] }));
+  await page.goto("/"); await page.getByRole("button", { name: "长期", exact: true }).click();
+  await expect(page.locator(".entity-memory")).toHaveCount(1);
+  await expect(page.locator(".entity-summary")).toContainText("别名是飞猪；特性是狂暴");
+  await page.getByText("2 条属性 · 查看来源与演化", { exact: true }).click();
+  await expect(page.locator(".entity-fact")).toHaveCount(2);
+  await page.locator(".entity-fact").first().getByText("1 条原始证据").click();
+  await expect(page.locator(".entity-fact").first().locator("blockquote")).toHaveText("zfc就是飞猪");
+  await page.locator(".entity-fact").last().getByText("1 条原始证据").click();
+  await expect(page.locator(".entity-fact").last().locator("blockquote")).toHaveText("记住zfc非常狂暴");
+  await expect(page.locator(".entity-originals")).not.toHaveAttribute("open", "");
+});
+
+test("检索通道展示实际条件和未命中内容，保存上限明确", async ({ page }) => {
+  const state = await memoryBackend(page, { stageStream: true });
+  await page.goto("/"); await send(page); await expect(page.locator(".message-assistant")).toHaveCount(1);
+  const receipt = state.receipts["answer-1"];
+  receipt.channels = [{ view: "symbolic", tier: "short", status: "complete", input_count: 25, matched_count: 0, selected_count: 0, detail: "exact_subject_predicate", query_conditions: { subject: "zfc", predicate: "性格", lexical_terms: ["zfc", "狂暴"] }, candidates: [{ memory_id: "m1", version: 1, revision: 1, subject: "zfc", predicate: "特性", value: "狂暴", content: "zfc非常狂暴", matched: false, selected: false, score: null, reason: "属性不匹配：性格与特性不同" }], candidate_total: 25, candidate_limit: 20, candidates_truncated: true }];
+  await page.reload(); await page.locator(".process-toggle").click(); await page.locator(".route-channel.symbolic").click();
+  await expect(page.locator(".channel-conditions")).toContainText("匹配属性");
+  await expect(page.locator(".channel-conditions")).toContainText("性格");
+  await expect(page.locator(".candidate-fact")).toHaveText("zfc非常狂暴");
+  await expect(page.locator(".candidate-reason")).toContainText("属性不匹配");
+  await expect(page.locator(".channel-truncated")).toContainText("1 / 25");
+  await page.locator(".candidate-filters").getByRole("button", { name: "最终入选", exact: true }).click();
+  await expect(page.locator(".channel-empty")).toContainText("没有符合");
+  await page.locator(".candidate-filters").getByRole("button", { name: "未命中", exact: true }).click();
+  await expect(page.locator(".candidate-fact")).toHaveCount(1);
 });

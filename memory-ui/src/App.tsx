@@ -27,6 +27,7 @@ import {
   type RunMode,
 } from "./RunCircuit";
 import { SessionPicker, ResizeHandle } from "./WorkspaceControls";
+import { EntityMemories } from "./EntityMemories";
 import { AnswerMessage } from "./AnswerMessage";
 import { ProcessDisclosure } from "./ProcessDisclosure";
 import { LongTermInsights, MemoryChanges } from "./MemoryInsights";
@@ -51,6 +52,7 @@ import {
 } from "./MemoryDialogs";
 import type {
   AnswerResult,
+  EntityMemory,
   EvolutionInput,
   Health,
   Hierarchy,
@@ -271,6 +273,7 @@ function ShortMemoryPanel({
 }
 
 function HierarchyPanel({
+  entities,
   hierarchy,
   memories,
   busy,
@@ -280,6 +283,7 @@ function HierarchyPanel({
   maintenance,
   onMaintain,
 }: {
+  entities: EntityMemory[] | null;
   hierarchy: Hierarchy;
   memories: Memory[];
   busy: boolean;
@@ -295,13 +299,12 @@ function HierarchyPanel({
         <div>
           <h2>H-MEM 长期组织</h2>
           <span>
-            {hierarchy.domain_count} 个领域 · {hierarchy.episode_count} 个版本
+            {entities ? `${entities.length} 个对象 · ${entities.reduce((n, item) => n + item.facts.length, 0)} 条属性事实` : `${hierarchy.domain_count} 个领域 · ${hierarchy.episode_count} 个版本`}
           </span>
         </div>
       </div>
       <p className="panel-intro">
-        领域 → 类别 → 线索 →
-        记忆版本。相同事实保留演化历史，检索按作用域与有效时间选择版本。此处展示当前用户可见的长期目录。
+        同一对象、同一作用域的补充信息整合为一条对象记忆。属性保留独立来源和版本，便于纠错；存在冲突的属性会单独标明。
       </p>
       <LongTermInsights
         groups={groups}
@@ -355,6 +358,9 @@ function HierarchyPanel({
             ))}
         </details>
       )}
+      {entities && <EntityMemories entities={entities} busy={busy} onHistory={onHistory} onEvolve={onEvolve} />}
+      <details className="entity-originals" open={entities === null}>
+      <summary>原始版本目录</summary>
       <div className="tree">
         {hierarchy.domains.map((domain) => (
           <details open key={domain.name}>
@@ -450,6 +456,7 @@ function HierarchyPanel({
           </details>
         ))}
       </div>
+      </details>
     </div>
   );
 }
@@ -822,6 +829,7 @@ function ObservePanel({
 export default function App() {
   const [health, setHealth] = useState<Health | null>(null);
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
+  const [entities, setEntities] = useState<EntityMemory[] | null>(null);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [hierarchy, setHierarchy] = useState<Hierarchy>(EMPTY_HIERARCHY);
   const [groups, setGroups] = useState<SummaryGroup[]>([]);
@@ -876,17 +884,19 @@ export default function App() {
 
   async function refresh(sessionId = snapshot?.session.session_id) {
     if (!sessionId) return;
-    const [nextSnapshot, nextMemories, nextHierarchy, nextGroups] =
+    const [nextSnapshot, nextMemories, nextHierarchy, nextGroups, nextEntities] =
       await Promise.all([
         api.session(sessionId),
         api.memories(),
         api.hierarchy(),
         api.groups(),
+        api.entities(),
       ]);
     setSnapshot(nextSnapshot);
     setMemories(nextMemories);
     setHierarchy(nextHierarchy);
     setGroups(nextGroups);
+    setEntities(nextEntities);
   }
   async function createSession() {
     const session = await api.createSession(
@@ -1368,6 +1378,7 @@ export default function App() {
           )}
           {tab === "long" && (
             <HierarchyPanel
+              entities={entities}
               hierarchy={hierarchy}
               memories={memories}
               busy={!!busy}

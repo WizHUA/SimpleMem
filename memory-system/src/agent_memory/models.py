@@ -119,6 +119,18 @@ class Memory(Candidate):
     recorded_at: datetime = Field(default_factory=utcnow)
 
 
+class EntityMemory(Contract):
+    entity_id: str
+    subject: str
+    scope_type: Literal["session", "project", "user"]
+    scope_id: str
+    summary: str
+    facts: list[Memory]
+    pending_facts: list[Memory] = Field(default_factory=list)
+    conflict_predicates: list[str] = Field(default_factory=list)
+    updated_at: datetime
+
+
 class StatePatch(Contract):
     goal: str | None = None
     plan: list[str] | None = None
@@ -184,6 +196,21 @@ class QueryStep(Contract):
     detail: str = ""
 
 
+class ChannelCandidate(Contract):
+    memory_id: str
+    version: int
+    revision: int
+    subject: str
+    predicate: str
+    value: str
+    content: str
+    content_truncated: bool = False
+    matched: bool
+    selected: bool = False
+    score: float | None = None
+    reason: str = ""
+
+
 class RetrievalChannel(Contract):
     view: Literal["semantic", "lexical", "symbolic"]
     tier: Literal["short", "long"] = "short"
@@ -192,6 +219,11 @@ class RetrievalChannel(Contract):
     matched_count: int = Field(default=0, ge=0)
     selected_count: int = Field(default=0, ge=0)
     detail: str = ""
+    query_conditions: dict = Field(default_factory=dict)
+    candidates: list[ChannelCandidate] = Field(default_factory=list, max_length=20)
+    candidate_total: int = 0
+    candidate_limit: int = 20
+    candidates_truncated: bool = False
 
 
 class RetrievalBudget(Contract):

@@ -257,6 +257,10 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
     async def memories(scope: ScopeDep, service: RuntimeDep):
         return await asyncio.to_thread(service.store.memories, scope)
 
+    @app.get("/api/v1/entities")
+    async def entities(scope: ScopeDep, service: RuntimeDep):
+        return await asyncio.to_thread(service.store.entities, scope)
+
     @app.post("/api/v1/memories/{memory_id}/evolve")
     async def evolve(
         memory_id: str,

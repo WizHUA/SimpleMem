@@ -17,6 +17,7 @@ from .models import (
     AnswerContext,
     AnswerResponse,
     Candidate,
+    EntityMemory,
     EvolutionInput,
     ExtractionResult,
     Memory,
@@ -159,7 +160,8 @@ class SQLiteStore:
             sessions = [
                 Session.model_validate_json(row["body"])
                 for row in self._db.execute(
-                    "SELECT body FROM sessions WHERE tenant=? AND owner=? ORDER BY rowid", self._who(scope)
+                    "SELECT body FROM sessions WHERE tenant=? AND owner=? ORDER BY rowid DESC",
+                    self._who(scope),
                 ).fetchall()
             ]
             return sorted(sessions, key=lambda session: session.updated_at, reverse=True)
@@ -529,6 +531,58 @@ class SQLiteStore:
                 args.append(tier)
             rows = self._db.execute(sql + " ORDER BY rowid", args).fetchall()
             return [Memory.model_validate_json(r["body"]) for r in rows]
+
+    def entities(self, scope: Scope) -> list[EntityMemory]:
+        """Read-time entity projection; never overwrites independently versioned facts."""
+        with self.transaction():
+            now = utcnow()
+            groups: dict[tuple[str, str, str], list[Memory]] = {}
+            for memory in self.memories(scope, tier="long"):
+                if memory.status in {"retracted", "archived"}:
+                    continue
+                if memory.valid_from and memory.valid_from > now:
+                    continue
+                if memory.valid_to and memory.valid_to <= now:
+                    continue
+                if memory.status == "superseded" and memory.valid_to is None:
+                    continue
+                key = (memory.scope_type, memory.scope_id, memory.subject.strip().casefold())
+                groups.setdefault(key, []).append(memory)
+            result = []
+            for key, items in groups.items():
+                facts = [item for item in items if item.status != "pending"]
+                pending = [item for item in items if item.status == "pending"]
+                predicates: dict[str, list[Memory]] = {}
+                for fact in facts + pending:
+                    predicates.setdefault(fact.predicate.strip().casefold(), []).append(fact)
+                conflicts, fragments = [], []
+                for values in predicates.values():
+                    predicate = values[0].predicate
+                    if any(v.status == "pending" for v in values) or len({v.value for v in values}) > 1:
+                        conflicts.append(predicate)
+                        fragments.append(f"{predicate}：待核对")
+                    else:
+                        qualifier = {
+                            "planned": "（计划）",
+                            "hypothetical": "（假设）",
+                            "inferred": "（推断）",
+                        }.get(values[0].assertion, "")
+                        fragments.append(f"{predicate}{qualifier}：{values[0].value}")
+                identity = json.dumps((*self._who(scope), *key), ensure_ascii=False)
+                result.append(
+                    EntityMemory(
+                        entity_id="entity_" + hashlib.sha256(identity.encode()).hexdigest()[:24],
+                        subject=items[0].subject,
+                        scope_type=key[0],
+                        scope_id=key[1],
+                        summary="；".join(fragments),
+                        facts=facts,
+                        pending_facts=pending,
+                        conflict_predicates=conflicts,
+                        updated_at=max(item.recorded_at for item in items),
+                    )
+                )
+            return sorted(result, key=lambda entity: entity.updated_at, reverse=True)
 
     def get_memory(self, scope: Scope, memory_id: str) -> Memory:
         with self._lock:

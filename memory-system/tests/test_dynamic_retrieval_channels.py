@@ -100,3 +100,46 @@ def test_empty_corpus_never_claims_embedding_execution():
     result, _ = run_search({"depth": 3}, count=0, embedder=Embedder())
     assert all(channel.status == "skipped" for channel in result.channels)
     assert all(channel.input_count == 0 for channel in result.channels)
+
+
+def test_symbolic_miss_explains_actual_conditions_and_checked_candidates():
+    result, _ = run_search({"depth": 3, "subject": "不存在的主体", "predicate": "不存在的属性"}, count=4)
+    symbolic = next(c for c in result.channels if c.tier == "short" and c.view == "symbolic")
+    assert symbolic.status == "complete" and symbolic.matched_count == 0
+    assert symbolic.query_conditions["subject"] == "不存在的主体"
+    assert symbolic.candidate_total == len(symbolic.candidates) == 4
+    assert all(c.subject == "项目" and c.predicate == "信息" for c in symbolic.candidates)
+    assert all(not c.matched and not c.selected and "不一致" in c.reason for c in symbolic.candidates)
+
+
+def test_channel_previews_are_bounded_and_selected_identity_matches_sources():
+    result, _ = run_search({"depth": 12}, count=50)
+    lexical = next(c for c in result.channels if c.tier == "short" and c.view == "lexical")
+    assert lexical.candidate_total == 50
+    assert lexical.candidates_truncated and len(lexical.candidates) == 20
+    selected = {(hit.metadata["memory_id"], hit.metadata["version"]) for hit in result.results}
+    for candidate in lexical.candidates:
+        assert candidate.selected == ((candidate.memory_id, candidate.version) in selected)
+
+
+def test_inspected_previews_never_include_ineligible_records():
+    from datetime import timedelta
+
+    from agent_memory.models import utcnow
+
+    async def run():
+        retriever = Retriever(Settings(), Planner(depth=3))
+        records = memories(5)
+        records[1].status = "retracted"
+        records[2].scope_id = "other-session"
+        records[3].valid_to = utcnow() - timedelta(seconds=1)
+        records[4].status = "pending"
+        try:
+            result = await retriever.search("项目信息", Session(session_id="s"), records, [])
+            assert {
+                candidate.memory_id for channel in result.channels for candidate in channel.candidates
+            } == {"m0"}
+        finally:
+            retriever.close()
+
+    asyncio.run(run())

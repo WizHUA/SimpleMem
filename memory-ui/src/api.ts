@@ -1,5 +1,6 @@
 import type {
   AnswerResult,
+  EntityMemory,
   EvolutionInput,
   Health,
   Hierarchy,
@@ -188,6 +189,10 @@ export const api = {
       throw new Error("阶段连接已结束，但未收到完整回答。请重试已保存的问题。");
     return result;
   },
+  entities: () => request<EntityMemory[]>("/api/v1/entities").catch((error) => {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }),
   memories: () => request<Memory[]>("/api/v1/memories"),
   hierarchy: () => request<Hierarchy>("/api/v1/hierarchy"),
   groups: () =>

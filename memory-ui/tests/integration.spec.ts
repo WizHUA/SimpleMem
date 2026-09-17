@@ -41,6 +41,8 @@ test("真实后端：同源代理、Bearer、幂等写入、版本替代、审�
     .click();
   await expect(page.locator(".episode")).toContainText("用户偏好英文说明");
   await expect(page.locator(".episode")).toContainText("v2");
+  await expect(page.locator(".entity-memory")).toHaveCount(1);
+  await page.getByText("原始版本目录", { exact: true }).click();
   await page
     .locator(".episode")
     .getByRole("button", { name: "查看演化历史" })
