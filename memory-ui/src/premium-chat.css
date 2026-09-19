@@ -3,7 +3,9 @@
 .app-header { height: 62px; flex-basis: 62px; background: #fff; color: #233748; border-bottom: 1px solid #e5e9ed; padding: 0 24px; }
 .brand { color: #233748; gap: 10px; }
 .brand > svg { color: #297e83; }
-.brand strong { font-size: 19px; }
+.brand strong { font-size: 19px; white-space: nowrap; }
+.brand strong em { font-size: 15px; font-style: normal; font-weight: 600; letter-spacing: -0.3px; color: #297e83; margin-left: 4px; }
+.brand-mark { display: block; flex-shrink: 0; }
 .brand span { color: #7b8790; font-size: 10px; }
 .model-status, .model-status em { color: #75818d; }
 .app-header .command-button, .app-header .icon-button { background: transparent; border-color: #dfe5e9; color: #536471; }

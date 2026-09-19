@@ -1136,9 +1136,9 @@ export default function App() {
       </a>
       <header className="app-header">
         <div className="brand">
-          <BrainCircuit size={27} aria-hidden="true" />
+          <img className="brand-mark" src="/memnexus.svg" width="36" height="36" alt="" />
           <div>
-            <strong>SimpleMem</strong>
+            <strong>忆枢 <em>MemNexus</em></strong>
             <span>长短期记忆工作台</span>
           </div>
         </div>
@@ -1441,16 +1441,7 @@ export default function App() {
           }}
         />
       )}
-      <footer className="workspace-footer">
-        <span>
-          <ShieldCheck size={13} />
-          {health?.scope_mode || "等待作用域信息"}
-        </span>
-        <span>
-          {health?.semantic_retrieval ? "语义检索已接入" : "语义检索未启用"}
-        </span>
-        <span>数据来自后端 · 模型密钥仅在服务端配置</span>
-      </footer>
+      <footer className="workspace-footer" aria-hidden="true" />
       <dialog
         ref={sessionDialogRef}
         className="session-dialog"
