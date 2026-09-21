@@ -1,0 +1,95 @@
+{
+  "documents": 500,
+  "repeats": 7,
+  "synthetic_embedding_ms": 40,
+  "cases": {
+    "项目截止日期是什么": {
+      "serial_semantic_control": {
+        "median_ms": 76.584,
+        "samples_ms": [
+          78.203,
+          62.472,
+          77.201,
+          76.028,
+          78.209,
+          64.468,
+          76.584
+        ],
+        "embedding_calls": 7
+      },
+      "parallel_all": {
+        "median_ms": 62.042,
+        "samples_ms": [
+          61.393,
+          67.581,
+          61.479,
+          68.132,
+          62.042,
+          64.196,
+          61.785
+        ],
+        "embedding_calls": 7
+      },
+      "conditional": {
+        "median_ms": 12.914,
+        "samples_ms": [
+          12.133,
+          12.602,
+          12.914,
+          12.549,
+          13.617,
+          13.722,
+          14.552
+        ],
+        "embedding_calls": 0
+      }
+    },
+    "项目截止日期有哪些影响": {
+      "serial_semantic_control": {
+        "median_ms": 62.112,
+        "samples_ms": [
+          74.422,
+          61.023,
+          62.094,
+          62.112,
+          62.118,
+          61.356,
+          78.397
+        ],
+        "embedding_calls": 7
+      },
+      "parallel_all": {
+        "median_ms": 62.7,
+        "samples_ms": [
+          62.259,
+          61.971,
+          62.7,
+          62.916,
+          61.535,
+          66.979,
+          76.719
+        ],
+        "embedding_calls": 7
+      },
+      "conditional": {
+        "median_ms": 62.444,
+        "samples_ms": [
+          76.254,
+          76.001,
+          62.444,
+          60.402,
+          61.882,
+          72.587,
+          61.295
+        ],
+        "embedding_calls": 7
+      }
+    }
+  },
+  "limitations": [
+    "Synthetic constant embeddings and latency; no external model or network.",
+    "Warm single-request searches, in-memory SQLite, authorized snapshot still scanned.",
+    "Serial control gates semantic on both local routes, not a historical release benchmark.",
+    "Matching selected IDs and scores verifies this fixture only, not general recall quality."
+  ]
+}

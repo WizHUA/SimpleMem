@@ -113,6 +113,43 @@ class RetrievalTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.plan.route, "both")
         self.assertIn("model_planner_schema_error: fell back to rule planner", result.warnings)
 
+    async def test_rule_planner_builds_action_plan_template(self):
+        result = await Retriever(Settings()).search(
+            "请生成蓝港演练的完整方案与任务指令卡",
+            SESSION,
+            [
+                memory(
+                    "goal",
+                    subject="蓝港演练",
+                    predicate="目标",
+                    value="测试记忆平台",
+                    content="蓝港演练目标是测试记忆平台能否跟踪计划限制变更",
+                )
+            ],
+            [],
+        )
+        self.assertEqual(result.plan.response_intent, "action_plan")
+        self.assertEqual(result.plan.action_template, "ops_plan_task_cards")
+        self.assertIn("作战概述", result.plan.action_elements)
+        self.assertIn("兵力编成与位置", result.plan.action_elements)
+        self.assertIn("任务指令卡", result.plan.action_elements)
+        self.assertIn("交战规则/约束", result.plan.action_elements)
+        self.assertIn("资源/编组", result.plan.action_elements)
+        self.assertTrue(any("目标" in item for item in result.plan.required_info))
+        self.assertTrue(any("地形" in item or "分案" in item for item in result.plan.required_info))
+        self.assertTrue(any("证据" in item or "记忆" in item for item in result.plan.information_gathering))
+        self.assertTrue(
+            any("情景假设" in item or "需确认" in item for item in result.plan.information_gathering)
+        )
+        self.assertGreaterEqual(result.plan.depth, 10)
+        general = await Retriever(Settings()).search("请生成资料整理实施计划", SESSION, [], [])
+        self.assertEqual(general.plan.response_intent, "action_plan")
+        self.assertEqual(general.plan.action_template, "general_action_plan")
+        self.assertIn("验收标准", general.plan.action_elements)
+        incident = await Retriever(Settings()).search("请生成 Harbor Glass 应急处置行动计划", SESSION, [], [])
+        self.assertEqual(incident.plan.action_template, "incident_action_plan")
+        self.assertIn("规划周期", incident.plan.action_elements)
+
     async def test_dynamic_depth_controls_candidates_and_final_count(self):
         items = [memory(f"m{i:02}", tier="long", scope_type="user", scope_id="owner") for i in range(60)]
         settings = Settings(retrieval_token_limit=20000)
@@ -209,7 +246,7 @@ class RetrievalTests(unittest.IsolatedAsyncioTestCase):
         item = memory("same")
         result = await Retriever(
             Settings(), Planner(route="both", subject="项目P", predicate="截止日期"), Embedder()
-        ).search("项目P 截止日期", SESSION, [item, item], [item])
+        ).search("项目P 截止日期有什么影响", SESSION, [item, item], [item])
         self.assertEqual(result.candidate_count, 1)
         self.assertEqual(result.selected_k, 1)
         self.assertEqual(result.mode, "hybrid")
@@ -273,7 +310,7 @@ class RetrievalTests(unittest.IsolatedAsyncioTestCase):
             await Retriever(Settings(), provider).search("项目P 截止日期", SESSION, [memory("a")], [])
         with self.assertRaisesRegex(RuntimeError, "provider unavailable"):
             await Retriever(Settings(), embedder=provider).search(
-                "项目P 截止日期", SESSION, [memory("a")], []
+                "项目P 截止日期有什么影响", SESSION, [memory("a")], []
             )
 
     async def test_total_deadline_cancels_upstream_work(self):

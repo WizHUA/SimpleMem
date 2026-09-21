@@ -151,6 +151,7 @@ export interface RetrievalChannel {
   input_count: number;
   matched_count: number;
   selected_count: number;
+  elapsed_ms?: number;
   detail: string;
   query_conditions?: Record<string, unknown>;
   candidates?: ChannelCandidate[];

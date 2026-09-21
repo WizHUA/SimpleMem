@@ -157,6 +157,81 @@ class ApiTests(unittest.TestCase):
         state = self.client.get(f"/api/v1/sessions/{session_id}").json()
         self.assertEqual(state["recent_turns"][-1]["events"][0]["content"], generated)
 
+    def test_action_plan_answer_uses_expected_markdown_shape(self):
+        def chat(prompt):
+            if "用户意图感知查询规划" in prompt:
+                return (
+                    '{"route":"both","response_intent":"action_plan",'
+                    '"semantic_queries":["蓝港演练方案"],'
+                    '"problem_breakdown":["明确目标和边界","盘点资源与协同"],'
+                    '"required_info":["行动目标","兵力编成与位置","任务指令卡"],'
+                    '"information_gathering":["从短期记忆读取本轮目标和资源状态"],'
+                    '"integration_steps":["先确定目标，再形成任务卡"],'
+                    '"action_template":"ops_plan_task_cards",'
+                    '"action_elements":["方案名称","作战概述","兵力部署","任务指令卡"],'
+                    '"depth":10}'
+                )
+            self.assertIn("# 【方案名称】", prompt)
+            self.assertIn("## 作战概述", prompt)
+            self.assertIn("## 情景假设与分案", prompt)
+            self.assertIn("| 单位 | 平台类型 | 位置 | 任务角色 |", prompt)
+            self.assertIn("- **交战规则/约束**:", prompt)
+            self.assertIn("不要把整份方案大量写成“待补充”", prompt)
+            self.assertIn("不得虚构兵力", prompt)
+            self.assertIn("需确认", prompt)
+            return (
+                "# 蓝港演练方案\n\n"
+                "## 作战概述\n\n"
+                "本方案基于已知演练目标组织，未知地形不阻塞生成，按情景假设分案处理。\n\n"
+                "## 兵力部署\n\n"
+                "作战区域：未指定，按情景假设推演\n"
+                "中心坐标：未指定\n"
+                "作战边界：依据任务方向和情景假设设置原则性边界\n"
+                "兵力编成与位置：\n"
+                "| 单位 | 平台类型 | 位置 | 任务角色 |\n"
+                "|---|---|---|---|\n"
+                "| 记录组 | 抽象资源类别 | 需确认 | 态势记录 |\n"
+                "| 检索组 | 抽象资源类别 | 需确认 | 信息检索 |\n"
+                "部署阵型：按山地/城镇/海岛/开阔地分案调整\n"
+                "总体概述：记录组、检索组按任务链路协同，缺少位置需确认。\n\n"
+                "## 情景假设与分案\n"
+                "- 山地/丘陵：优先建立观察与通信接力。\n"
+                "- 海岛/滨海：优先考虑机动与补给受限。\n\n"
+                "---\n\n"
+                "## 任务指令卡\n\n"
+                "---\n\n"
+                "### 记录组 - 态势记录\n"
+                "- **任务**: 建立态势记录并同步检索组\n"
+                "- **任务类型**: 协同演练\n"
+                "- **任务目标**: 保持方案事实和假设可追踪\n"
+                "- **时间要求**: 需确认\n"
+                "- **装备清单**: 只使用已知抽象资源\n"
+                "- **目标分配**: 按信息类型分配，不指定真实目标坐标\n"
+                "- **协同关系**: 与检索组双向校核\n"
+                "- **交战规则/约束**: 不虚构兵力装备；未知关键事实列入需确认\n"
+                "- **执行要点**:\n"
+                "  - 若地形为山地，则优先补充观察点与通信链路假设\n"
+            )
+
+        model = CallableModel(chat)
+        self.runtime.model = model
+        self.runtime.short_term.model = model
+        self.runtime.retriever.model = model
+        session_id = self.client.post("/api/v1/sessions", json={}).json()["session_id"]
+        answer = self.client.post(
+            "/api/v1/answer",
+            json={"session_id": session_id, "query": "请生成蓝港演练的完整方案与任务指令卡"},
+        )
+        self.assertEqual(answer.status_code, 200)
+        generated = answer.json()["generated_text"]
+        self.assertIn("## 作战概述", generated)
+        self.assertIn("## 兵力部署", generated)
+        self.assertIn("## 情景假设与分案", generated)
+        self.assertIn("| 单位 | 平台类型 | 位置 | 任务角色 |", generated)
+        self.assertIn("## 任务指令卡", generated)
+        self.assertIn("- **交战规则/约束**:", generated)
+        self.assertIn("需确认", generated)
+
     def test_hierarchy_is_derived_from_backend_and_starts_empty(self):
         response = self.client.get("/api/v1/hierarchy")
         self.assertEqual(response.status_code, 200)

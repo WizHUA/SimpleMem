@@ -107,6 +107,10 @@ export const api = {
         accelerate,
       }),
     }),
+  answerReceipt: (sessionId: string, answerId: string) =>
+    request<AnswerResult>(
+      `/api/v1/sessions/${sessionId}/answers/${answerId}`,
+    ),
   answerStream: async (
     sessionId: string,
     query: string,
@@ -128,7 +132,7 @@ export const api = {
         body: JSON.stringify({
           session_id: sessionId,
           query,
-            timeout: 180,
+          timeout: 180,
           accelerate,
         }),
       },
@@ -151,6 +155,7 @@ export const api = {
     const decoder = new TextDecoder();
     let buffer = "";
     let result: AnswerResult | null = null;
+    let receiptId = "";
     const consume = (line: string) => {
       if (!line.trim()) return;
       const event = JSON.parse(line);
@@ -161,6 +166,8 @@ export const api = {
         Number.isFinite(event.elapsed_ms)
       )
         onStage(event);
+      else if (event.type === "receipt" && typeof event.answer_id === "string")
+        receiptId = event.answer_id;
       else if (event.type === "result" && event.answer) result = event.answer;
       else if (event.type === "error")
         throw new Error(
@@ -169,6 +176,7 @@ export const api = {
             : "本次运行失败，请查看服务日志",
         );
     };
+    let streamError: unknown = null;
     try {
       while (true) {
         const { value, done } = await reader.read();
@@ -181,10 +189,14 @@ export const api = {
           break;
         }
       }
+    } catch (cause) {
+      streamError = cause;
     } finally {
       await reader.cancel().catch(() => undefined);
       reader.releaseLock();
     }
+    if (!result && receiptId) return api.answerReceipt(sessionId, receiptId);
+    if (streamError) throw streamError;
     if (!result)
       throw new Error("阶段连接已结束，但未收到完整回答。请重试已保存的问题。");
     return result;

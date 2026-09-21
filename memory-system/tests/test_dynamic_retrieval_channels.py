@@ -87,7 +87,11 @@ def test_disabled_semantics_and_missing_symbolic_labels_are_honest():
 
 
 def test_semantic_and_symbolic_counts_are_measured_not_inferred_from_final_k():
-    result, _ = run_search({"depth": 3, "subject": "项目", "predicate": "信息"}, count=8, embedder=Embedder())
+    result, _ = run_search(
+        {"depth": 3, "subject": "项目", "predicate": "信息", "required_info": ["项目", "信息"]},
+        count=8,
+        embedder=Embedder(),
+    )
     channels = {(c.tier, c.view): c for c in result.channels}
     for view in ("semantic", "symbolic"):
         assert channels["short", view].status == "complete"

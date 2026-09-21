@@ -35,6 +35,12 @@ class Model:
         return "北斗的昵称是小熊。【来源1】"
 
 
+class LongAnswerModel(Model):
+    async def answer(self, prompt):
+        assert "小熊" in prompt
+        return "长方案段落：" + "据证据组织方案。" * 700
+
+
 def test_stream_has_real_ordered_stages_and_single_final_result(tmp_path):
     runtime = MemoryRuntime(Settings(db_path=tmp_path / "stream.db"), model=Model())
     with TestClient(create_app(runtime=runtime)) as client:
@@ -58,8 +64,14 @@ def test_stream_has_real_ordered_stages_and_single_final_result(tmp_path):
             "generation",
             "completed",
         ]
+        receipts = [e for e in events if e["type"] == "receipt"]
+        assert len(receipts) == 1
         assert len([e for e in events if e["type"] == "result"]) == 1
         answer = events[-1]["answer"]
+        assert receipts[0]["answer_id"] == answer["answer_id"]
+        fetched = client.get(f"/api/v1/sessions/{sid}/answers/{answer['answer_id']}")
+        assert fetched.status_code == 200
+        assert fetched.json()["generated_text"] == answer["generated_text"]
         assert answer["sources"][0]["metadata"]["evidence"][0]["quote"] == "北斗的昵称是小熊。"
         assert answer["memory_updates"][0]["candidate_count"] == 1
         stages = [e for e in events if e["type"] == "stage"]
@@ -84,7 +96,41 @@ def test_stream_has_real_ordered_stages_and_single_final_result(tmp_path):
         context = saved.json()["turn"]["events"][0]["answer_context"]
         assert context["sources"] == answer["sources"]
         assert [e["phase"] for e in context["run_events"]] == [e["phase"] for e in stages]
-        assert client.get(f"/api/v1/sessions/{sid}").json()["pending_turns"] == 1
+        assert client.get(f"/api/v1/sessions/{sid}").json()["pending_turns"] == 0
+    runtime.retriever.close()
+    runtime.store.close()
+
+
+def test_long_receipt_bound_assistant_answer_can_be_saved(tmp_path):
+    runtime = MemoryRuntime(Settings(db_path=tmp_path / "long-answer.db"), model=LongAnswerModel())
+    with TestClient(create_app(runtime=runtime)) as client:
+        sid = client.post("/api/v1/sessions", json={}).json()["session_id"]
+        client.post(
+            f"/api/v1/sessions/{sid}/turns",
+            json={"request_id": "r1", "events": [{"role": "user", "content": "北斗的昵称是小熊。"}]},
+        )
+        result = client.post(
+            f"/api/v1/sessions/{sid}/answer/stream", json={"session_id": sid, "query": "北斗叫什么？"}
+        )
+        answer = [json.loads(line) for line in result.text.splitlines()][-1]["answer"]
+        assert len(answer["generated_text"]) > 5000
+        saved = client.post(
+            f"/api/v1/sessions/{sid}/turns",
+            json={
+                "request_id": "long-reply",
+                "events": [
+                    {
+                        "role": "assistant",
+                        "content": answer["generated_text"],
+                        "answer_id": answer["answer_id"],
+                    }
+                ],
+            },
+        )
+        assert saved.status_code == 201, saved.text
+        state = client.get(f"/api/v1/sessions/{sid}").json()
+        assert state["recent_turns"][-1]["events"][0]["content"] == answer["generated_text"]
+        assert state["pending_turns"] == 0
     runtime.retriever.close()
     runtime.store.close()
 

@@ -112,6 +112,10 @@ class SQLiteStore:
         with self._lock:
             return self._db.execute("SELECT 1").fetchone()[0] == 1
 
+    @staticmethod
+    def _receipt_bound_assistant_turn(turn: Turn) -> bool:
+        return all(event.role == "assistant" and event.answer_context is not None for event in turn.events)
+
     def backup_to(self, destination: Path) -> None:
         """Create a consistent online SQLite backup without overwriting existing files.
 
@@ -211,6 +215,35 @@ class SQLiteStore:
             )
         return answer_id
 
+    def get_answer_receipt(self, scope: Scope, session_id: str, answer_id: str) -> AnswerResponse:
+        with self._lock:
+            self.get_session(scope, session_id)
+            row = self._db.execute(
+                "SELECT content, context FROM answers WHERE tenant=? AND owner=? AND session=? AND id=?",
+                (*self._who(scope), session_id, answer_id),
+            ).fetchone()
+            if row is None:
+                raise NotFoundError("Answer receipt not found")
+            context = AnswerContext.model_validate_json(row["context"])
+            return AnswerResponse(
+                answer_id=answer_id,
+                generated_text=row["content"],
+                citations=context.citations,
+                sources=context.sources,
+                retrieval_count=len(context.sources),
+                elapsed_ms=context.elapsed_ms,
+                plan=context.plan,
+                query_steps=context.query_steps,
+                retrieval_mode=context.retrieval_mode,
+                candidate_count=context.candidate_count,
+                selected_k=context.selected_k,
+                context_tokens=0,
+                warnings=[],
+                acceleration=context.acceleration,
+                channels=context.channels,
+                dynamic_k=context.dynamic_k,
+            )
+
     def append_turn(self, scope: Scope, session_id: str, data: TurnInput) -> Turn:
         for event in data.events:
             if event.answer_context is not None:
@@ -264,6 +297,8 @@ class SQLiteStore:
                     turn.model_dump_json(),
                 ),
             )
+            if self._receipt_bound_assistant_turn(turn) and session.processed_sequence == sequence - 1:
+                session.processed_sequence = sequence
             session.revision += 1
             self._save_session(scope, session)
         return turn
@@ -488,6 +523,10 @@ class SQLiteStore:
             for key, value in result.state_patch.model_dump(exclude_none=True).items():
                 setattr(latest, key, value)
             latest.processed_sequence = new_turns[-1].sequence
+            for turn in pending[len(new_turns) :]:
+                if not self._receipt_bound_assistant_turn(turn):
+                    break
+                latest.processed_sequence = turn.sequence
             latest.revision += 1
             self._save_session(scope, latest)
             if items:

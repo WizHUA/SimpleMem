@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowUpRight, Check, FileSearch, Filter, Search } from "lucide-react";
 import type { Hit, RetrievalChannel } from "./types";
+import { channelIdleReason } from "./retrievalStatus";
 
 const LABELS: Record<string, string> = {
   query: "原始问题", subject: "匹配主体", predicate: "匹配属性",
@@ -33,11 +34,7 @@ function Conditions({ values, view }: { values: Record<string, unknown>; view: s
   </div>;
 }
 function channelExplanation(channel: RetrievalChannel) {
-  if (channel.status === "disabled") return "当前未配置向量服务，本轮没有运行语义向量匹配。";
-  if (channel.status === "skipped") {
-    if (channel.view === "symbolic" && channel.query_conditions && (!channel.query_conditions.subject || !channel.query_conditions.predicate)) return "未提供完整的主体和属性，本轮跳过精确字段匹配。";
-    return /[\u4e00-\u9fff]/.test(channel.detail) ? channel.detail : "本轮没有执行该通道的匹配；可检查记忆或完整查询条件不足。";
-  }
+  if (channel.status !== "complete") return channelIdleReason(channel);
   if (!channel.matched_count) return `本通道检查了 ${channel.input_count} 条记忆，没有命中。已保存的比对内容与原因见下方。`;
   return `本通道命中 ${channel.matched_count} 条记忆；命中后还需经过融合、排序和上下文预算选择。`;
 }
@@ -57,7 +54,7 @@ export function ChannelContents({ channels, view, sources, completed, onSource }
   const visible = candidates.filter((candidate) => filter === "all" || filter === "matched" && candidate.matched || filter === "selected" && candidate.selected || filter === "unmatched" && !candidate.matched);
   return <div className="channel-contents">
     <div className="channel-store-tabs" aria-label="选择检索记忆库">{(["short", "long"] as const).map((item) => <button type="button" key={item} aria-pressed={tier === item} onClick={() => { setTier(item); setFilter("all"); }}>{item === "short" ? "短期库" : "长期库"}</button>)}</div>
-    {hasDetails ? <>
+    {channel && channel.status !== "complete" ? <p className={`channel-outcome ${channel.status}`}>{channelIdleReason(channel)}</p> : hasDetails ? <>
       <Conditions values={channel.query_conditions!} view={view} />
       <p className={`channel-outcome ${channel.status}`}>{channelExplanation(channel)}</p>
       {channel.status === "complete" && <div className="channel-candidates">

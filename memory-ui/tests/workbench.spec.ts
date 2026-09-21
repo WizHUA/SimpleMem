@@ -8,6 +8,7 @@ async function memoryBackend(
     failFirstAssistantAck?: boolean;
     stageStream?: boolean;
     streamError?: boolean;
+    missingResultWithReceipt?: boolean;
     readableTrace?: boolean;
     citationScenario?: boolean;
   } = {},
@@ -93,6 +94,16 @@ async function memoryBackend(
           },
           ...(options.streamError
             ? [{ type: "error", detail: "生成阶段连接失败" }]
+            : options.missingResultWithReceipt
+              ? [
+                  {
+                    type: "stage",
+                    phase: "completed",
+                    detail: "回答与来源已保存",
+                    elapsed_ms: 420,
+                  },
+                  { type: "receipt", answer_id: data.answer_id },
+                ]
             : [
                 {
                   type: "stage",
@@ -100,6 +111,7 @@ async function memoryBackend(
                   detail: "回答与来源已返回",
                   elapsed_ms: 420,
                 },
+                { type: "receipt", answer_id: data.answer_id },
                 { type: "result", answer: data },
               ]),
         ];
@@ -191,6 +203,12 @@ async function memoryBackend(
     if (path.endsWith("/evolve")) {
       state.promoted = true;
       return json({ ...memory, tier: "long", version: 2 });
+    }
+    if (path.includes("/answers/")) {
+      const answerId = path.split("/").pop() || "";
+      return state.receipts[answerId]
+        ? json(state.receipts[answerId])
+        : json({ detail: "missing receipt" }, 404);
     }
     if (path === "/api/v1/memories")
       return json(state.extracted && !state.promoted ? [memory] : []);
@@ -377,6 +395,18 @@ test("回答失败后仅重试回答，避免重复写入用户事件", async ({
   expect(state.answers).toHaveLength(2);
 });
 
+test("回答失败后再次发送同文问题不会重复写入用户事件", async ({ page }) => {
+  const state = await memoryBackend(page, { failFirstAnswer: true });
+  await page.goto("/");
+  await send(page);
+  await expect(page.getByRole("alert")).toContainText("模型服务响应超时");
+  await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  expect(state.events).toHaveLength(2);
+  expect(state.events.filter((event) => event.events[0].role === "user")).toHaveLength(1);
+  expect(state.answers).toHaveLength(2);
+});
+
 test("回答写入响应中断后复用生成结果与幂等键", async ({ page }) => {
   const state = await memoryBackend(page, { failFirstAssistantAck: true });
   await page.goto("/");
@@ -512,6 +542,21 @@ test("阶段中断保留已发生事实，不自动重发生成", async ({ page 
   await expect(page.locator(".process-events li")).toHaveCount(4);
   expect(state.answers).toHaveLength(1);
   expect(state.events).toHaveLength(1);
+});
+
+test("阶段流缺失最终结果时用 receipt 取回并保存回答", async ({ page }) => {
+  const state = await memoryBackend(page, {
+    stageStream: true,
+    missingResultWithReceipt: true,
+  });
+  await page.goto("/");
+  await send(page);
+  await expect(page.locator(".message-assistant")).toContainText(
+    "已记住你的偏好",
+  );
+  expect(state.answers).toHaveLength(1);
+  expect(state.events).toHaveLength(2);
+  expect(state.events[1].events[0].answer_id).toBe("answer-1");
 });
 
 test("阶段解析支持跨字节中文、分块行和无末尾换行", async ({ page }) => {
@@ -917,16 +962,85 @@ test("三路检索显示真实通道状态、分库数量与动态预算", async
   ]);
   receipt.dynamic_k = { planned_depth: 8, required_info_count: 4, candidate_limit: 48, safety_cap: 20, target_k: 8, selected_k: 1, token_limit: 2000, used_tokens: 80, selection_policy: "coverage", score_semantics: "relevance" };
   await page.reload(); await page.locator(".process-toggle").click();
-  await expect(page.locator(".route-channel.semantic")).toContainText("未配置向量服务");
+  await expect(page.locator(".route-channels .route-channel")).toHaveCount(1);
+  await expect(page.locator(".routes-idle")).not.toHaveAttribute("open", "");
+  await expect(page.locator(".route-idle-channel.semantic")).not.toBeVisible();
   await expect(page.locator('.route-bank-wire[data-view="semantic"].traversed')).toHaveCount(0);
   await expect(page.locator('.route-bank-wire[data-view="lexical"].traversed')).toHaveCount(2);
+  await expect(page.locator(".route-library").last()).toContainText("已检索 · 无入选来源");
+  await page.screenshot({ path: "test-results/routes-active-desktop.png", fullPage: true });
+  await page.locator(".routes-idle > summary").click();
+  await expect(page.locator(".route-idle-channel.semantic")).toContainText("可选 · 未启用");
+  await expect(page.locator(".route-idle-channel.semantic")).toContainText("未配置向量服务");
+  await expect(page.locator(".route-idle-channel.symbolic")).toContainText("未形成完整的主体与属性条件");
+  await page.locator(".route-idle-channel.symbolic").click();
+  await expect(page.locator(".channel-outcome")).toContainText("未触发精确匹配");
+  await expect(page.locator(".channel-history-note")).toHaveCount(0);
+  await page.locator(".routes-idle > summary").click();
+  await expect(page.locator(".route-detail")).toHaveCount(0);
   await page.locator(".route-channel.lexical").click();
   await expect(page.locator(".route-detail")).toContainText("8 条检查 / 3 条命中 / 1 条最终入选");
   await expect(page.locator(".route-budget")).toContainText("规划深度 8");
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   await expect(page.locator(".route-channel.lexical")).toBeVisible();
+  await expect(page.locator(".routes-mobile-ledger > button").first()).toContainText("1 条入选来源");
+  await page.locator(".routes-idle > summary").click();
+  await expect(page.locator(".route-idle-channel.semantic")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   await page.screenshot({ path: "test-results/routes-mobile.png", fullPage: true });
+});
+
+test("精确字段查询将语义检索显示为按需跳过而非未配置", async ({ page }) => {
+  const state = await memoryBackend(page, { stageStream: true });
+  await page.goto("/"); await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  const receipt = state.receipts["answer-1"];
+  receipt.retrieval_mode = "hybrid";
+  receipt.channels = ["short", "long"].flatMap((tier) => [
+    { view: "semantic", tier, status: "skipped", input_count: 0, matched_count: 0, selected_count: 0, detail: "exact_field_lookup", elapsed_ms: 0 },
+    { view: "lexical", tier, status: "complete", input_count: 1, matched_count: 1, selected_count: 1, detail: "fts5_candidates_bm25_scored", elapsed_ms: 0.5 },
+    { view: "symbolic", tier, status: "complete", input_count: 1, matched_count: 1, selected_count: 1, detail: "exact_subject_predicate", elapsed_ms: 0.1 },
+  ]);
+  await page.reload(); await page.locator(".process-toggle").click();
+  await expect(page.locator(".route-channels .route-channel")).toHaveCount(2);
+  await page.locator(".routes-idle > summary").click();
+  await expect(page.locator(".route-idle-channel.semantic")).toContainText("本次未触发");
+  await expect(page.locator(".route-idle-channel.semantic")).toContainText("省去向量检索");
+  await expect(page.locator(".route-idle-channel.semantic")).not.toContainText("未配置向量服务");
+});
+
+test("检索状态区分实际零命中、按需跳过与历史统计缺失", async ({ page }) => {
+  const state = await memoryBackend(page, { stageStream: true });
+  await page.goto("/"); await send(page);
+  await expect(page.locator(".message-assistant")).toHaveCount(1);
+  const receipt = state.receipts["answer-1"];
+  receipt.retrieval_mode = "lexical_baseline";
+  receipt.channels = ["semantic", "lexical", "symbolic"].flatMap((view) => [
+    { view, tier: "short", status: "complete", input_count: 3, matched_count: 0, selected_count: 0, detail: "checked" },
+    { view, tier: "long", status: "skipped", input_count: 0, matched_count: 0, selected_count: 0, detail: "short_evidence_sufficient" },
+  ]);
+  await page.reload(); await page.locator(".process-toggle").click();
+  await expect(page.locator(".route-channel")).toHaveCount(3);
+  await expect(page.locator(".route-channel.semantic")).toContainText("0 次命中");
+  await expect(page.locator(".routes-idle")).toHaveCount(0);
+  await page.screenshot({ path: "test-results/routes-three-desktop.png", fullPage: true });
+  await page.locator(".route-channel.semantic").click();
+  await expect(page.locator(".route-detail")).toContainText("无需补查长期库");
+  await page.getByRole("button", { name: "长期库", exact: true }).click();
+  await expect(page.locator(".channel-outcome")).toContainText("短期记忆已满足");
+  receipt.sources = [];
+  receipt.channels = receipt.channels.map((channel: any) => ({ ...channel, status: "skipped", detail: "no_eligible_memories" }));
+  await page.reload(); await page.locator(".process-toggle").click();
+  await expect(page.locator(".routes-canvas")).toHaveCount(0);
+  await expect(page.locator(".retrieval-routes")).toContainText("本次没有执行检索通道匹配");
+  await page.locator(".routes-idle > summary").click();
+  await expect(page.locator(".route-idle-channel.symbolic")).toContainText("没有可检查的记忆");
+  receipt.channels = [];
+  receipt.retrieval_mode = "hybrid";
+  await page.reload(); await page.locator(".process-toggle").click();
+  await expect(page.locator(".route-channel")).toHaveCount(3);
+  await expect(page.locator(".route-channel.symbolic")).toContainText("未记录通道统计");
 });
 
 test("长期对象整合卡保留不同属性和各自原文", async ({ page }) => {

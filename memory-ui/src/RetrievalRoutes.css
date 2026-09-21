@@ -1,7 +1,7 @@
 .retrieval-routes { --semantic: #8070ae; --lexical: #3b898e; --symbolic: #a98546; container-type: inline-size; margin: 20px 0 16px; color: #596e7a; font-size: 12px; }
 .routes-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .routes-heading strong { font-size: 13px; font-weight: 600; color: #385868; }.routes-heading > span { font-size: 12px; color: #66727e; }
-.routes-canvas { position: relative; height: 300px; }
+.routes-canvas { position: relative; height: var(--route-height, 300px); }
 .routes-wires { position: absolute; width: 100%; height: 100%; inset: 0; overflow: visible; }
 .route-query-wire, .route-bank-wire { stroke: #dfe6eb; stroke-width: 1; fill: none; vector-effect: non-scaling-stroke; }
 .route-lines { transition: opacity 160ms; }.route-lines.semantic { --channel: var(--semantic); }.route-lines.lexical { --channel: var(--lexical); }.route-lines.symbolic { --channel: var(--symbolic); }
@@ -10,20 +10,29 @@
 .route-lines.route-muted { opacity: .18; }
 .routes-live .route-bank-wire.traversed { stroke-dasharray: 5 8; animation: retrieval-return 2.4s linear infinite; }
 @keyframes retrieval-return { to { stroke-dashoffset: 26; } }
-.route-query { position: absolute; left: 0; width: 14%; top: 131px; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; }
+.route-query { position: absolute; left: 0; width: 14%; top: calc(50% - 19px); display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; }
 .route-query > div { display: grid; place-items: center; border: 1px solid #dce8ec; border-radius: 50%; background: #f3f8f9; width: 38px; height: 38px; color: #658c98; }
 .route-query strong { font-size: 12px; font-weight: 500; }.route-query > span { font-size: 12px; color: #66727e; }
-.route-channels { position: absolute; inset: 20px auto 20px 22%; width: 28%; display: flex; flex-direction: column; justify-content: space-between; }
+.route-channels { position: absolute; inset: 12px auto 12px 22%; width: 28%; display: flex; flex-direction: column; justify-content: space-around; }
 .route-channel { position: relative; height: 76px; flex: 0 0 76px; display: grid; grid-template-columns: 18px 1fr; column-gap: 9px; align-content: center; text-align: left; padding: 10px 12px; border: 1px solid #e3e9ed; border-radius: 11px; background: #fff; color: #596e7a; }
 .route-channel.semantic { --channel: var(--semantic); }.route-channel.lexical { --channel: var(--lexical); }.route-channel.symbolic { --channel: var(--symbolic); }
 .route-channel > svg { color: var(--channel); align-self: start; margin-top: 1px; }.route-channel-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }.route-channel-copy strong { font-size: 13px; font-weight: 550; color: #3e5865; }.route-channel-copy small { font-size: 11px; color: #66727e; white-space: nowrap; }
 .route-channel-status { grid-column: 2; font-size: 11px; color: var(--channel); margin-top: 4px; white-space: nowrap; }
 .route-channel.complete { border-left: 3px solid var(--channel); padding-left: 10px; }.route-channel.selected { box-shadow: 0 0 0 2px #eaf0f2; border-color: var(--channel); }.route-channel:hover { background: #f9fbfc; }.route-channel:focus-visible { outline: 2px solid var(--channel); outline-offset: 3px; }
 .route-channel.disabled, .route-channel.skipped { background: #f7f8fa; border-style: dashed; }.route-channel.disabled > svg, .route-channel.disabled .route-channel-status, .route-channel.skipped > svg, .route-channel.skipped .route-channel-status { color: #7b858d; }
-.route-libraries { position: absolute; inset: 66px 2% 50px 69%; display: flex; flex-direction: column; justify-content: space-between; }
+.route-libraries { position: absolute; inset: calc(50% - 92px) 2% calc(50% - 92px) 69%; display: flex; flex-direction: column; justify-content: space-between; }
 .route-library { height: 76px; display: flex; flex-direction: column; justify-content: center; gap: 9px; border-top: 1px solid #dce6eb; border-bottom: 1px solid #dce6eb; padding: 10px 11px; background: #f8fafb; }
 .route-library > div { display: flex; align-items: center; gap: 8px; }.route-library strong { font-size: 13px; font-weight: 500; }.route-library > span { font-size: 11px; color: #66727e; }.route-library.visited { border-color: #c3d9df; background: #f1f7f8; color: #426e7a; }
 .routes-mobile-ledger { display: none; }
+.routes-idle { border-top: 1px solid #e4ebef; margin: 10px 0 15px; padding-top: 10px; }
+.routes-idle > summary { cursor: pointer; color: #66727e; font-size: 12px; }
+.routes-idle > div { display: grid; gap: 0; margin-top: 8px; }
+.route-idle-channel { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 7px 9px; border: 0; border-bottom: 1px solid #e4ebef; background: transparent; padding: 12px 0; text-align: left; color: #66727e; }
+.route-idle-channel strong { font-size: 12px; font-weight: 500; color: #3e5865; }
+.route-idle-channel > span { font-size: 12px; }
+.route-idle-channel small { grid-column: 2 / -1; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.route-idle-channel:hover, .route-idle-channel[aria-expanded="true"] { background: #f3f8f9; }
+.route-idle-channel:focus-visible, .routes-idle > summary:focus-visible { outline: 2px solid #658c98; outline-offset: 3px; }
 .route-detail { padding: 14px 15px; margin: 10px 0 15px; border: 1px solid #e3eaf0; border-radius: 8px; background: #f9fbfc; }.route-detail > div { display: flex; align-items: center; gap: 8px; }.route-detail > div > span { margin-left: auto; font-size: 12px; }.route-detail strong { font-size: 13px; font-weight: 500; }.process-body .route-detail p { font-size: 12px; line-height: 1.85; margin: 9px 0 0; color: #66727e; }.route-detail dl { margin: 9px 0 0; }.route-detail dl > div { display: flex; gap: 10px; padding: 6px 0; border-top: 1px solid #e5edf0; line-height: 1.75; }.route-detail dt { flex-shrink: 0; }.route-detail dd { margin: 0; }.route-detail.semantic > div > svg { color: var(--semantic); }.route-detail.lexical > div > svg { color: var(--lexical); }.route-detail.symbolic > div > svg { color: var(--symbolic); }
 .route-return { display: flex; justify-content: center; align-items: center; gap: 7px; color: #718591; margin: 1px 0 13px; font-size: 12px; }
 .route-finish { display: grid; grid-template-columns: 1fr 20px 1fr 20px 1fr; gap: 9px; align-items: center; padding: 17px 0; border-top: 1px solid #e4ebef; border-bottom: 1px solid #e4ebef; }

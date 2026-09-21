@@ -26,10 +26,12 @@ from agent_memory.settings import Settings
 class ScriptedModel:
     def __init__(self):
         self.extractor = lambda window: ExtractionResult()
+        self.plan_result = QueryPlan(keywords=["zfc"], required_info=["昵称"])
         self.extract_delay = 0
         self.plan_delay = 0
         self.windows = []
         self.answer_calls = 0
+        self.answer_prompts = []
 
     async def extract(self, window):
         self.windows.append([t.sequence for t in window.new_turns])
@@ -38,10 +40,11 @@ class ScriptedModel:
 
     async def plan(self, query, context):
         await asyncio.sleep(self.plan_delay)
-        return QueryPlan(keywords=["zfc"], required_info=["昵称"])
+        return self.plan_result
 
     async def answer(self, prompt):
         self.answer_calls += 1
+        self.answer_prompts.append(prompt)
         return "依据已提供的记忆回答。"
 
 
@@ -172,6 +175,76 @@ class PracticalCoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.model.windows, [list(range(1, 6)), list(range(6, 11)), [11, 12, 13]])
         self.assertEqual(self.watermark(), 13)
         self.assertEqual(self.model.answer_calls, 1)
+
+    async def test_action_plan_prompt_contains_decomposition_and_template_contract(self):
+        await self.append("蓝港演练目标是测试记忆平台；R-22 用于检索问法复核。")
+        self.model.plan_result = QueryPlan(
+            route="both",
+            response_intent="action_plan",
+            semantic_queries=["蓝港演练方案"],
+            keywords=["蓝港演练", "R-22"],
+            problem_breakdown=["明确目标和边界", "盘点资源与协同关系"],
+            required_info=["行动目标", "资源/编组", "协同关系"],
+            information_gathering=["从短期记忆读取本轮目标和资源状态"],
+            integration_steps=["先确定目标，再把资源映射到任务卡"],
+            action_template="ops_plan_task_cards",
+            action_elements=["方案名称", "作战概述", "兵力部署", "任务指令卡", "协同关系"],
+            depth=10,
+        )
+        await self.runtime.answer(
+            self.scope,
+            self.session.session_id,
+            "请生成蓝港演练的完整方案与任务指令卡",
+            prepare=False,
+        )
+        prompt = self.model.answer_prompts[-1]
+        self.assertIn("需求拆分 -> 所需信息梳理 -> 信息整合 -> 完整方案", prompt)
+        self.assertIn("ops_plan_task_cards", prompt)
+        self.assertIn("# 【方案名称】", prompt)
+        self.assertIn("## 作战概述", prompt)
+        self.assertIn("## 兵力部署", prompt)
+        self.assertIn("## 情景假设与分案", prompt)
+        self.assertIn("山地/丘陵", prompt)
+        self.assertIn("海岛/滨海", prompt)
+        self.assertIn("| 单位 | 平台类型 | 位置 | 任务角色 |", prompt)
+        self.assertIn("任务指令卡", prompt)
+        self.assertIn("- **交战规则/约束**:", prompt)
+        self.assertIn("不要把整份方案大量写成“待补充”", prompt)
+        self.assertIn("不得虚构兵力", prompt)
+        self.assertIn("需确认", prompt)
+        self.assertIn("action_elements", prompt)
+
+    async def test_action_plan_prompt_filters_stale_assistant_constraints(self):
+        await self.append("请生成旧版演练方案。")
+        await self.append(
+            "旧助手清单式方案：本会话不分析军事行动方案，仅作高层演练框架。"
+            "地点待补充、边界待补充、位置待补充、协同待补充、任务待补充。不要保留这句。",
+            role="assistant",
+        )
+        await self.append("我方有红军约100人，配有3门迫击炮，请基于这些事实生成方案与任务指令卡。")
+        self.model.plan_result = QueryPlan(
+            route="both",
+            response_intent="action_plan",
+            semantic_queries=["红军方案"],
+            problem_breakdown=["明确目标和兵力事实"],
+            required_info=["兵力编成", "装备清单"],
+            information_gathering=["读取用户新给出的兵力事实"],
+            integration_steps=["把已知兵力映射到任务卡"],
+            action_template="ops_plan_task_cards",
+            action_elements=["方案名称", "作战概述", "任务指令卡"],
+            depth=10,
+        )
+        await self.runtime.answer(
+            self.scope,
+            self.session.session_id,
+            "请生成红军方案与任务指令卡",
+            prepare=False,
+        )
+        prompt = self.model.answer_prompts[-1]
+        self.assertIn("我方有红军约100人", prompt)
+        self.assertIn("3门迫击炮", prompt)
+        self.assertNotIn("本会话不分析军事行动方案", prompt)
+        self.assertNotIn("不要保留这句", prompt)
 
     async def test_extractor_timeout_preserves_watermark_but_planner_timeout_keeps_committed_extraction(self):
         await self.append("zfc的昵称是飞猪。")

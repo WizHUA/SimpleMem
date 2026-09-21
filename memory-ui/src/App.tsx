@@ -1022,18 +1022,22 @@ export default function App() {
     const query = input.trim();
     if (!query || !snapshot) return;
     void operation("检索记忆并生成回答", async () => {
-      if (pendingUser.current?.query !== query)
-        pendingUser.current = { query, requestId: crypto.randomUUID() };
-      await api.append(
-        snapshot.session.session_id,
-        "user",
-        query,
-        pendingUser.current.requestId,
-      );
-      pendingUser.current = null;
+      const lastMessage = messages[messages.length - 1];
+      const alreadySaved = lastMessage?.role === "user" && lastMessage.content === query;
+      if (!alreadySaved) {
+        if (pendingUser.current?.query !== query)
+          pendingUser.current = { query, requestId: crypto.randomUUID() };
+        await api.append(
+          snapshot.session.session_id,
+          "user",
+          query,
+          pendingUser.current.requestId,
+        );
+        pendingUser.current = null;
+      }
       setInput("");
       setRetryQuery(query);
-      await refresh(snapshot.session.session_id);
+      if (!alreadySaved) await refresh(snapshot.session.session_id);
       await answer(query);
     });
   }

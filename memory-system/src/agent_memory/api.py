@@ -225,6 +225,8 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
                         accelerate=body.accelerate,
                         progress=progress,
                     )
+                    if result.answer_id:
+                        await queue.put({"type": "receipt", "answer_id": result.answer_id})
                     await queue.put({"type": "result", "answer": result.model_dump(mode="json")})
                 except asyncio.CancelledError:
                     raise
@@ -252,6 +254,10 @@ def create_app(settings: Settings | None = None, runtime: MemoryRuntime | None =
             media_type="application/x-ndjson",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    @app.get("/api/v1/sessions/{session_id}/answers/{answer_id}")
+    async def answer_receipt(session_id: str, answer_id: str, scope: ScopeDep, service: RuntimeDep):
+        return await asyncio.to_thread(service.store.get_answer_receipt, scope, session_id, answer_id)
 
     @app.get("/api/v1/memories")
     async def memories(scope: ScopeDep, service: RuntimeDep):

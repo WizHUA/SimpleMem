@@ -14,6 +14,7 @@ from collections import Counter, defaultdict
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime
+from time import perf_counter
 from uuid import uuid4
 from weakref import WeakValueDictionary
 
@@ -69,6 +70,74 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return max(-1.0, min(1.0, sum(x * y for x, y in zip(a, b)) / norm)) if norm else 0.0
 
 
+ACTION_PLAN_SLOTS = [
+    "行动目标与成功标准",
+    "背景态势与已知条件",
+    "区域、边界与时间要求",
+    "可用资源、编组与角色",
+    "约束、规则与安全边界",
+    "地形环境假设与分案",
+    "任务分解与优先级",
+    "协同关系与通信机制",
+    "风险、缺口与待确认事项",
+]
+
+GENERAL_ACTION_ELEMENTS = [
+    "方案名称",
+    "目标",
+    "背景与约束",
+    "资源与角色",
+    "阶段安排",
+    "执行步骤",
+    "协同机制",
+    "风险与待补充信息",
+    "验收标准",
+]
+
+OPS_PLAN_TASK_CARD_ELEMENTS = [
+    "方案名称",
+    "作战概述",
+    "兵力部署",
+    "作战区域",
+    "中心坐标",
+    "作战边界",
+    "兵力编成与位置",
+    "单位",
+    "平台类型",
+    "位置",
+    "任务角色",
+    "部署阵型",
+    "总体概述",
+    "区域与边界",
+    "资源/编组",
+    "位置/状态",
+    "任务指令卡",
+    "编组名称",
+    "任务",
+    "任务类型",
+    "任务目标",
+    "时间要求",
+    "装备清单",
+    "目标分配",
+    "协同关系",
+    "交战规则/约束",
+    "执行要点",
+    "风险与待补充信息",
+]
+
+INCIDENT_ACTION_ELEMENTS = [
+    "事件名称",
+    "目标",
+    "规划周期",
+    "组织分工",
+    "资源状态",
+    "通信机制",
+    "安全提示",
+    "任务分配",
+    "复盘与待补充信息",
+]
+
+
 @dataclass
 class _Match:
     memory: Memory
@@ -77,6 +146,14 @@ class _Match:
     support: tuple[str, ...] = ()
     rank_score: float | None = None
     conflict_pending: list[dict] = field(default_factory=list)
+
+
+@dataclass
+class _RecallResult:
+    inspected: list[Memory]
+    matches: list[_Match]
+    scores: dict[tuple[str, int], float]
+    elapsed_ms: float = 0.0
 
 
 class Retriever:
@@ -160,6 +237,13 @@ class Retriever:
         recent = bool(re.search(r"刚才|这次|本次|当前会话|just now|this time", query, re.IGNORECASE))
         history = bool(re.search(r"历史|之前|上次|过去|previous|histor|as of", query, re.IGNORECASE))
         compare = bool(re.search(r"相比|比较|对比|区别|compare|difference", query, re.IGNORECASE))
+        action_plan = bool(
+            re.search(
+                r"方案|行动计划|任务指令卡|任务卡|部署|编组|实施计划|执行计划|规划|预案|演练方案|plan",
+                query,
+                re.IGNORECASE,
+            )
+        )
         route = "both" if compare else "short" if recent else "long" if history else "both"
         # Only literal field mentions identify a single field in the baseline.
         pairs = {
@@ -169,6 +253,57 @@ class Retriever:
         }
         subject, predicate = next(iter(pairs)) if len(pairs) == 1 else (None, None)
         depth = 8 if compare else 6 if re.search(r"总结|汇总|哪些|summari|list", query, re.IGNORECASE) else 3
+        if action_plan:
+            incident = bool(re.search(r"应急|事件|处置|incident|ICS|IAP", query, re.IGNORECASE))
+            ops = bool(re.search(r"任务指令卡|任务卡|作战|兵力|部署|编组|演练", query, re.IGNORECASE))
+            template = (
+                "incident_action_plan"
+                if incident
+                else "ops_plan_task_cards"
+                if ops
+                else "general_action_plan"
+            )
+            elements = (
+                INCIDENT_ACTION_ELEMENTS
+                if template == "incident_action_plan"
+                else OPS_PLAN_TASK_CARD_ELEMENTS
+                if template == "ops_plan_task_cards"
+                else GENERAL_ACTION_ELEMENTS
+            )
+            required_info = ACTION_PLAN_SLOTS.copy()
+            depth = max(depth, min(20, len(required_info) + 2))
+            return QueryPlan(
+                route=route,
+                response_intent="action_plan",
+                semantic_queries=[query, " ".join(required_info[:4]), " ".join(elements[:6])],
+                keywords=[item for item in elements[:10] if item in query],
+                problem_breakdown=[
+                    "明确行动目标、范围和成功标准",
+                    "梳理已有背景、当前状态、约束和安全边界",
+                    "盘点可用资源、角色、位置、时间和协同关系",
+                    "把已知事实与合理情景假设整合为阶段化任务与任务卡",
+                    "对未知地形环境给出分案，对关键缺口提出追问",
+                ],
+                required_info=required_info,
+                information_gathering=[
+                    "从短期记忆读取本轮最新目标、限制、临时覆盖和待办",
+                    "从长期记忆读取稳定偏好、项目规则、角色分工和历史模板",
+                    "按目标、资源、时间、区域、协同、约束分别归并证据",
+                    "无法确认的兵力装备和坐标标为需确认；可推演环境用显式情景假设填充",
+                ],
+                integration_steps=[
+                    "先用目标和边界确定方案适用范围",
+                    "再把已知资源、编组、位置和角色映射到任务",
+                    "随后按时间要求、优先级和地形假设形成多个方案分支",
+                    "最后补充协同关系、规则约束、风险、需确认项和追问",
+                ],
+                action_template=template,
+                action_elements=elements,
+                depth=depth,
+                subject=subject,
+                predicate=predicate,
+                temporal_mode="history" if history else "current",
+            )
         return QueryPlan(
             route=route,
             semantic_queries=[query],
@@ -496,7 +631,8 @@ class Retriever:
         # A single symbolic label is only one recall view for multi-slot queries.
         # Using it as a global gate can hide every other requested fact, even
         # though the planner supplied separate semantic queries/requirements.
-        multi_slot = len(plan.required_info) > 1 or len(plan.semantic_queries) > 1
+        query_type = self._query_type(query, plan)
+        multi_slot = query_type == "multi_info"
         eligibility_plan = (
             plan.model_copy(update={"subject": None, "predicate": None}) if multi_slot else plan
         )
@@ -518,84 +654,81 @@ class Retriever:
             return idle("no_eligible_memories")
         terms = _terms(" ".join([query, *plan.keywords, *plan.required_info, *plan.semantic_queries]))
         namespace, generation = self._projection_context.get()
-        lexical_keys = set(
-            await asyncio.to_thread(
-                self.projection.candidates,
-                namespace,
-                terms,
-                eligible,
-                max(limit * 4, 24),
-                generation,
-            )
+        exact_field = query_type == "field_lookup" and any(
+            m.subject.casefold() == plan.subject.casefold()
+            and m.predicate.casefold() == plan.predicate.casefold()
+            for m in eligible
         )
-        lexical_eligible = [m for m in eligible if self.projection.key(m) in lexical_keys]
-        warnings.append(f"fts5_projection: reranked={len(lexical_eligible)}; eligible={len(eligible)}")
-        matches: dict[tuple[str, int], _Match] = {}
-        view_scores: dict[str, dict[tuple[str, int], float]] = {
-            view: {} for view in ("lexical", "semantic", "symbolic")
-        }
+        views = ["lexical"] if terms else []
+        if plan.subject and plan.predicate:
+            views.append("symbolic")
+        if self.embedder and not exact_field:
+            views.append("semantic")
+        execution_mode = "local_batch" if views else "skipped"
+        if "semantic" in views:
+            execution_mode = "parallel" if len(views) > 1 else "single"
+        conditions.update(
+            query_type=query_type,
+            active_views=views,
+            execution_mode=execution_mode,
+        )
 
-        def add(memory: Memory, score: float, view: str) -> None:
-            key = (memory.memory_id, memory.version)
-            if view in view_scores:
-                view_scores[view][key] = score
-            if key in matches:
-                matches[key].score = max(matches[key].score, score)
-                matches[key].views.add(view)
-            else:
-                matches[key] = _Match(memory, score, {view})
+        def local_recall(view):
+            started = perf_counter()
+            result = (
+                self._lexical_recall(terms, eligible, limit, namespace, generation)
+                if view == "lexical"
+                else self._symbolic_recall(plan, eligible)
+            )
+            result.elapsed_ms = (perf_counter() - started) * 1000
+            return result
 
-        def lexical_recall():
-            # Scans can be CPU-heavy on larger owner libraries. Keep them off
-            # the host SDK event loop; the outer request still owns the deadline.
-            documents = [
-                " ".join([m.content, m.subject, m.predicate, m.value, *m.keywords]) for m in lexical_eligible
-            ]
-            scores = self._bm25(terms, documents)
-            for memory, score in zip(lexical_eligible, scores):
-                if score > 0:
-                    add(memory, score, "lexical")
-                path_score = _overlap(terms, " ".join(memory.hierarchy_path))
-                if path_score:
-                    add(memory, 0.4 * path_score, "hierarchy")
-            # Exact symbolic matches survive lexical candidate truncation.
-            for memory in eligible:
-                if (
-                    plan.subject
-                    and plan.predicate
-                    and memory.subject.casefold() == plan.subject.casefold()
-                    and memory.predicate.casefold() == plan.predicate.casefold()
-                ):
-                    add(memory, 1.0, "symbolic")
-
-        await asyncio.to_thread(lexical_recall)
-        semantic_used = False
-        if self.embedder:
-            queries = [text.strip() for text in plan.semantic_queries if text.strip()] or [query]
-            vectors, reused = await self._projected_vectors(queries, eligible, namespace, generation)
+        async def recall(view):
+            if view != "semantic":
+                return await asyncio.to_thread(local_recall, view)
+            started = perf_counter()
+            result, reused = await self._semantic_recall(query, plan, eligible, namespace, generation)
             warnings.append(f"vector_projection: reused={reused}; documents={len(eligible)}")
+            result.elapsed_ms = (perf_counter() - started) * 1000
+            return result
 
-            def semantic_recall():
-                semantic = []
-                for memory, vector in zip(eligible, vectors[len(queries) :]):
-                    cosine = max(_cosine(qv, vector) for qv in vectors[: len(queries)])
-                    view_scores["semantic"][(memory.memory_id, memory.version)] = (cosine + 1.0) / 2.0
-                    if cosine >= 0.35:  # Initial recall threshold, not truth/confidence.
-                        semantic.append((memory, (cosine + 1.0) / 2.0))
-                return semantic
-
-            semantic = await asyncio.to_thread(semantic_recall)
-            for memory, score in semantic:
-                add(memory, score, "semantic")
-            semantic_used = True
-        result = sorted(matches.values(), key=lambda hit: (-hit.score, hit.memory.memory_id))[:limit]
+        if views == ["semantic"]:
+            recalled = [await recall("semantic")]
+        elif "semantic" in views:
+            tasks = [asyncio.create_task(recall(view)) for view in views]
+            try:
+                recalled = await asyncio.gather(*tasks)
+            except BaseException:
+                # Preserve the original provider/deadline error and cancel siblings.
+                # Worker threads return private results; they never mutate fusion state.
+                for task in tasks:
+                    task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+                raise
+        elif views:
+            # Cheap local routes share one worker dispatch when no remote I/O can overlap.
+            recalled = await asyncio.to_thread(lambda: [local_recall(view) for view in views])
+        else:
+            recalled = []
+        by_view = dict(zip(views, recalled))
+        lexical_eligible = by_view["lexical"].inspected if "lexical" in by_view else []
+        if "lexical" in by_view:
+            warnings.append(f"fts5_projection: reranked={len(lexical_eligible)}; eligible={len(eligible)}")
+        matches = {
+            (hit.memory.memory_id, hit.memory.version): hit
+            for hit in self._merge([hit for result in recalled for hit in result.matches])
+        }
+        semantic_used = "semantic" in by_view
+        result = sorted(
+            matches.values(), key=lambda hit: (-hit.score, hit.memory.memory_id, -hit.memory.version)
+        )[:limit]
         channels = [
             RetrievalChannel(
                 view="lexical",
-                status="complete",
+                status="complete" if "lexical" in by_view else "skipped",
                 input_count=len(lexical_eligible),
                 matched_count=sum("lexical" in hit.views for hit in matches.values()),
-                detail="fts5_candidates_bm25_scored",
+                detail="fts5_candidates_bm25_scored" if terms else "no_lexical_terms",
             ),
             RetrievalChannel(
                 view="symbolic",
@@ -608,13 +741,18 @@ class Retriever:
             ),
             RetrievalChannel(
                 view="semantic",
-                status="complete" if semantic_used else "disabled",
+                status="complete" if semantic_used else "skipped" if self.embedder else "disabled",
                 input_count=len(eligible) if semantic_used else 0,
                 matched_count=sum("semantic" in hit.views for hit in matches.values()),
-                detail="cosine_threshold_0.35" if semantic_used else "embedding_not_configured",
+                detail="cosine_threshold_0.35"
+                if semantic_used
+                else "exact_field_lookup"
+                if self.embedder
+                else "embedding_not_configured",
             ),
         ]
         for channel in channels:
+            channel.elapsed_ms = by_view[channel.view].elapsed_ms if channel.view in by_view else 0.0
             channel.query_conditions = dict(conditions)
             if channel.view == "lexical":
                 channel.query_conditions["lexical_terms"] = sorted(terms)
@@ -657,11 +795,77 @@ class Retriever:
                         content=memory.content[:500],
                         content_truncated=len(memory.content) > 500,
                         matched=is_match,
-                        score=view_scores[channel.view].get((memory.memory_id, memory.version), 0.0),
+                        score=by_view[channel.view].scores.get((memory.memory_id, memory.version), 0.0),
                         reason=reason,
                     )
                 )
         return result, semantic_used, channels
+
+    @classmethod
+    def _query_type(cls, query: str, plan: QueryPlan) -> str:
+        if (
+            plan.response_intent == "action_plan"
+            or len(plan.required_info) > 1
+            or len({text.strip() for text in plan.semantic_queries if text.strip()}) > 1
+            or re.search(
+                r"总结|汇总|哪些|比较|对比|区别|相比|\b(?:summari\w*|compare|difference|list)\b",
+                query,
+                re.IGNORECASE,
+            )
+        ):
+            return "multi_info"
+        if cls._is_field_lookup(query, plan):
+            return "field_lookup"
+        if plan.temporal_mode == "history" or plan.as_of:
+            return "temporal"
+        return "open"
+
+    def _lexical_recall(self, terms, eligible, limit, namespace, generation) -> _RecallResult:
+        keys = set(self.projection.candidates(namespace, terms, eligible, max(limit * 4, 24), generation))
+        inspected = [m for m in eligible if self.projection.key(m) in keys]
+        documents = [" ".join([m.content, m.subject, m.predicate, m.value, *m.keywords]) for m in inspected]
+        scores = self._bm25(terms, documents)
+        matches = []
+        for memory, score in zip(inspected, scores):
+            if score > 0:
+                matches.append(_Match(memory, score, {"lexical"}))
+            path_score = _overlap(terms, " ".join(memory.hierarchy_path))
+            if path_score:
+                matches.append(_Match(memory, 0.4 * path_score, {"hierarchy"}))
+        return _RecallResult(
+            inspected, matches, {(m.memory_id, m.version): score for m, score in zip(inspected, scores)}
+        )
+
+    @staticmethod
+    def _symbolic_recall(plan, eligible) -> _RecallResult:
+        # Exact matches survive lexical candidate truncation.
+        matches = [
+            _Match(m, 1.0, {"symbolic"})
+            for m in eligible
+            if m.subject.casefold() == plan.subject.casefold()
+            and m.predicate.casefold() == plan.predicate.casefold()
+        ]
+        return _RecallResult(
+            eligible, matches, {(h.memory.memory_id, h.memory.version): 1.0 for h in matches}
+        )
+
+    async def _semantic_recall(self, query, plan, eligible, namespace, generation):
+        queries = list(dict.fromkeys(text.strip() for text in plan.semantic_queries if text.strip())) or [
+            query
+        ]
+        vectors, reused = await self._projected_vectors(queries, eligible, namespace, generation)
+
+        def score_vectors():
+            matches, scores = [], {}
+            for memory, vector in zip(eligible, vectors[len(queries) :]):
+                cosine = max(_cosine(qv, vector) for qv in vectors[: len(queries)])
+                score = (cosine + 1.0) / 2.0
+                scores[memory.memory_id, memory.version] = score
+                if cosine >= 0.35:
+                    matches.append(_Match(memory, score, {"semantic"}))
+            return _RecallResult(eligible, matches, scores)
+
+        return await asyncio.to_thread(score_vectors), reused
 
     async def _projected_vectors(self, queries, memories, namespace, generation):
         endpoint, model = getattr(self.embedder, "endpoint", None), getattr(self.embedder, "model", None)
@@ -881,7 +1085,22 @@ class Retriever:
         # Look at the full eligible field, not just the candidate top-k: a lower
         # ranked contradictory value must not silently make the field "sufficient".
         values = {m.value.casefold() for m in all_short if cls._eligible(m, session, plan, now)}
+        return bool(
+            plan.route == "short"
+            and hits
+            and cls._query_type(query, plan) == "field_lookup"
+            and plan.temporal_mode == "current"
+            and not plan.as_of
+            and len(values) == 1
+        )
+
+    @staticmethod
+    def _is_field_lookup(query: str, plan: QueryPlan) -> bool:
+        if not plan.subject or not plan.predicate:
+            return False
         remainder = query.casefold()
+        if plan.subject.casefold() not in remainder or plan.predicate.casefold() not in remainder:
+            return False
         for text in (
             plan.subject,
             plan.predicate,
@@ -900,17 +1119,7 @@ class Retriever:
         ):
             if text:
                 remainder = remainder.replace(text.casefold(), "")
-        only_field = not re.sub(r"[\s？?。.!！]", "", remainder)
-        return bool(
-            plan.route == "short"
-            and plan.subject
-            and plan.predicate
-            and hits
-            and len(plan.required_info) <= 1
-            and plan.temporal_mode == "current"
-            and len(values) == 1
-            and only_field
-        )
+        return not re.sub(r"[\s？?。.!！]", "", remainder)
 
     @staticmethod
     def _local_overrides(hits: list[_Match], plan: QueryPlan) -> set[str]:

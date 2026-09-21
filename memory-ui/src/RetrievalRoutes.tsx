@@ -1,8 +1,9 @@
-import { useId, useState } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import { ArrowDown, ArrowRight, Braces, Database, Fingerprint, Layers3, ScanText, Search, SlidersHorizontal } from "lucide-react";
 import type { DynamicK, Hit, QueryPlan, QueryStep, RetrievalChannel } from "./types";
 import "./RetrievalRoutes.css";
 import { ChannelContents, LibraryEvidence } from "./ChannelContents";
+import { channelIdleReason } from "./retrievalStatus";
 
 export type { RetrievalChannel } from "./types";
 type View = RetrievalChannel["view"];
@@ -40,58 +41,77 @@ export function RetrievalRoutes({ sources, steps, channels = [], plan, phase, li
   const modeKnownDisabled = retrievalMode === "lexical_baseline";
   const forView = (view: View) => channels.filter((channel) => channel.view === view);
   const forTier = (tier: "short" | "long") => steps.find((step) => step.phase === `${tier}_retrieval`);
+  const tierVisited = (tier: "short" | "long") => !!forTier(tier) || sources.some((source) => source.metadata.tier === tier) || channels.some((channel) => channel.tier === tier && channel.status === "complete");
+  const tierStatus = (tier: "short" | "long") => {
+    const step = forTier(tier);
+    if (step) return `${step.input_count} 条输入 · ${step.output_count} 条召回`;
+    const count = sources.filter((source) => source.metadata.tier === tier).length;
+    if (count) return `${count} 条入选来源`;
+    if (channels.some((channel) => channel.tier === tier && channel.status === "complete")) return completed ? "已检索 · 无入选来源" : "已执行检索";
+    if (channels.some((channel) => channel.tier === tier) && channels.filter((channel) => channel.tier === tier).every((channel) => channel.status !== "complete")) return "本次未检索";
+    return completed ? "未记录检索统计" : TIERS.find((item) => item.id === tier)!.note;
+  };
   const status = (view: View) => {
     const records = forView(view);
     if (skipped) return "本轮无需检索";
-    if (view === "semantic" && (modeKnownDisabled || records.some((record) => record.status === "disabled"))) return "未配置向量服务";
     if (records.some((record) => record.status === "complete")) return `${records.reduce((sum, record) => sum + record.matched_count, 0)} 次命中`;
-    if (records.length && records.every((record) => record.status === "skipped")) return "本轮未执行";
     const hits = hitsFor(sources, view).length;
     if (hits) return `${hits} 条入选证据`;
+    if (view === "semantic" && (records.some((record) => record.status === "disabled") || (!records.length && modeKnownDisabled))) return "可选 · 未启用";
+    if (records.length && records.every((record) => record.status === "skipped")) return "本次未触发";
     return completed ? "未记录通道统计" : "等待检索记录";
   };
   const state = (view: View) => {
     if (skipped) return "skipped";
-    if (view === "semantic" && (modeKnownDisabled || forView(view).some((record) => record.status === "disabled"))) return "disabled";
     if (forView(view).some((record) => record.status === "complete")) return "complete";
+    if (hitsFor(sources, view).length) return "complete";
+    if (view === "semantic" && (forView(view).some((record) => record.status === "disabled") || (!forView(view).length && modeKnownDisabled))) return "disabled";
     if (forView(view).some((record) => record.status === "skipped")) return "skipped";
     return hitsFor(sources, view).length ? "complete" : "waiting";
   };
   const knownInteraction = (view: View, tier: "short" | "long") => state(view) !== "disabled" && !skipped && (channels.some((channel) => channel.view === view && channel.tier === tier && channel.status === "complete") || hitsFor(sources, view, tier).length > 0);
   const stageRunning = live && phase === "retrieval";
   const detail = VIEWS.find((view) => view.id === focused);
+  const idleViews = VIEWS.filter((view) => ["disabled", "skipped"].includes(state(view.id)));
+  const visibleViews = VIEWS.filter((view) => !idleViews.includes(view));
+  const canvasHeight = visibleViews.length === 3 ? 300 : 220;
+  const selectView = (view: View) => { setFocusedLibrary(null); setFocused(focused === view ? null : view); };
 
   if (skipped) return <section className="retrieval-routes routes-skipped" aria-label="三路检索与记忆库"><Search size={18} /><span>本轮无需检索记忆</span><ArrowRight size={17} /><span>直接组织回答</span><p>没有执行语义、词法或符号召回。</p></section>;
 
-  return <section className={`retrieval-routes ${stageRunning ? "routes-live" : ""}`} aria-label="三路检索与记忆库">
-    <div className="routes-heading"><strong>三路检索与记忆库</strong><span>{stageRunning ? replaying ? "正在回放已有召回记录" : "正在接收召回记录" : completed ? "本次实际检索" : "等待实际检索记录"}</span></div>
-    <div className="routes-canvas">
-      <svg className="routes-wires" viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true">
+  return <section className={`retrieval-routes ${stageRunning ? "routes-live" : ""}`} aria-label="检索与记忆库">
+    <div className="routes-heading"><strong>检索与记忆库</strong><span>{stageRunning ? replaying ? "正在回放已有召回记录" : "正在接收召回记录" : completed ? "本次实际检索" : "等待实际检索记录"}</span></div>
+    {!!visibleViews.length && <div className="routes-canvas" style={{ "--route-height": `${canvasHeight}px` } as CSSProperties}>
+      <svg className="routes-wires" viewBox={`0 0 1000 ${canvasHeight}`} preserveAspectRatio="none" aria-hidden="true">
         <defs>{VIEWS.map((view) => <marker key={view.id} id={`${id}-${view.id}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path className={`route-arrow ${view.id}`} d="M 0 0 L 10 5 L 0 10 z" /></marker>)}</defs>
-        {VIEWS.map((view, index) => {
-          const y = 58 + index * 92;
+        {visibleViews.map((view, index) => {
+          const y = 12 + (canvasHeight - 24) * (index + 0.5) / visibleViews.length;
           return <g key={view.id} className={`route-lines ${view.id} ${focused && focused !== view.id ? "route-muted" : ""}`}>
-            <path className={`route-query-wire ${state(view.id) === "complete" ? "traversed" : ""}`} d={`M100 150 C180 150 175 ${y} 220 ${y}`} />
+            <path className={`route-query-wire ${state(view.id) === "complete" ? "traversed" : ""}`} d={`M100 ${canvasHeight / 2} C180 ${canvasHeight / 2} 175 ${y} 220 ${y}`} />
             {TIERS.map((tier, tierIndex) => {
               const interacted = knownInteraction(view.id, tier.id);
-              const bankY = tierIndex ? 212 : 104;
+              const bankY = canvasHeight / 2 + (tierIndex ? 54 : -54);
               return <path key={tier.id} data-view={view.id} data-tier={tier.id} className={`route-bank-wire ${interacted ? "traversed" : ""}`} d={`M500 ${y} C580 ${y} 607 ${bankY} 690 ${bankY}`} markerEnd={interacted ? `url(#${id}-${view.id})` : undefined} markerStart={interacted ? `url(#${id}-${view.id})` : undefined} />;
             })}
           </g>;
         })}
       </svg>
       <div className="route-query"><div><Search size={18} /></div><strong>查询计划</strong><span>{plan ? `${plan.required_info.length || 1} 个信息项` : "等待规划"}</span></div>
-      <div className="route-channels">{VIEWS.map((view) => <button key={view.id} type="button" className={`route-channel ${view.id} ${state(view.id)} ${focused === view.id ? "selected" : ""}`} aria-expanded={focused === view.id} onClick={() => { setFocusedLibrary(null); setFocused(focused === view.id ? null : view.id); }}>
+      <div className="route-channels">{visibleViews.map((view) => <button key={view.id} type="button" className={`route-channel ${view.id} ${state(view.id)} ${focused === view.id ? "selected" : ""}`} aria-expanded={focused === view.id} onClick={() => selectView(view.id)}>
         <view.icon size={18} /><span className="route-channel-copy"><strong>{view.name}</strong><small>{view.method}</small></span><span className="route-channel-status">{status(view.id)}</span>
       </button>)}</div>
-      <div className="route-libraries">{TIERS.map((tier) => {
-        const step = forTier(tier.id);
-        const sourceCount = sources.filter((source) => source.metadata.tier === tier.id).length;
-        return <button type="button" key={tier.id} aria-expanded={focusedLibrary === tier.id} aria-label={`查看${tier.name}本轮来源`} onClick={() => selectLibrary(tier.id)} className={`route-library ${step || sourceCount ? "visited" : ""} ${focusedLibrary === tier.id ? "selected" : ""}`}><div><Database size={17} /><strong>{tier.name}</strong></div><span>{step ? `${step.input_count} 条输入 · ${step.output_count} 条召回` : sourceCount ? `${sourceCount} 条入选来源` : completed ? "本轮未查" : tier.note}</span></button>;
-      })}</div>
-    </div>
-    <div className="routes-mobile-ledger" aria-label="分库检索记录">{TIERS.map((tier) => <button type="button" key={tier.id} aria-expanded={focusedLibrary === tier.id} aria-label={`查看${tier.name}本轮来源`} onClick={() => selectLibrary(tier.id)}><Database size={14} /><strong>{tier.name}</strong><span>{forTier(tier.id) ? `${forTier(tier.id)!.output_count} 条召回` : completed ? "本轮未查" : "等待记录"}</span></button>)}</div>
-    {detail && <div className={`route-detail ${detail.id}`}><div><detail.icon size={17} /><strong>{detail.name}</strong><span>{status(detail.id)}</span></div><details className="channel-method"><summary>这一路的匹配方法</summary><p>{detail.description}</p></details>{forView(detail.id).length ? <dl>{forView(detail.id).map((channel) => <div key={channel.tier}><dt>{channel.tier === "short" ? "短期库" : "长期库"}</dt><dd>{channel.status === "disabled" ? "未配置" : channel.status === "skipped" ? "已跳过" : `${channel.input_count} 条检查 / ${channel.matched_count} 条命中${completed ? ` / ${channel.selected_count} 条最终入选` : ""}`}</dd></div>)}</dl> : <p className="route-detail-empty">本次记录未提供该通道的完整统计，不从最终证据反推候选数量。</p>}<ChannelContents key={detail.id} channels={forView(detail.id)} view={detail.id} sources={sources} completed={completed} onSource={onSource} /></div>}
+      <div className="route-libraries">{TIERS.map((tier) => <button type="button" key={tier.id} aria-expanded={focusedLibrary === tier.id} aria-label={`查看${tier.name}本轮来源`} onClick={() => selectLibrary(tier.id)} className={`route-library ${tierVisited(tier.id) ? "visited" : ""} ${focusedLibrary === tier.id ? "selected" : ""}`}><div><Database size={17} /><strong>{tier.name}</strong></div><span>{tierStatus(tier.id)}</span></button>)}</div>
+    </div>}
+    {!visibleViews.length && <p className="routes-caption">本次没有执行检索通道匹配。</p>}
+    <div className="routes-mobile-ledger" aria-label="分库检索记录">{TIERS.map((tier) => <button type="button" key={tier.id} aria-expanded={focusedLibrary === tier.id} aria-label={`查看${tier.name}本轮来源`} onClick={() => selectLibrary(tier.id)}><Database size={14} /><strong>{tier.name}</strong><span>{tierStatus(tier.id)}</span></button>)}</div>
+    {!!idleViews.length && <details className="routes-idle" onToggle={(event) => { if (!event.currentTarget.open && idleViews.some((view) => view.id === focused)) setFocused(null); }}>
+      <summary>其他通道状态 · {idleViews.length}</summary>
+      <div>{idleViews.map((view) => <button type="button" key={view.id} className={`route-idle-channel ${view.id}`} aria-expanded={focused === view.id} onClick={() => selectView(view.id)}>
+        <view.icon size={16} /><strong>{view.name}</strong><span>{status(view.id)}</span>
+        <small>{forView(view.id).length ? [...new Set(forView(view.id).map(channelIdleReason))].join(" ") : "语义检索为可选增强，此次记录使用未配置向量服务的检索模式。"}</small>
+      </button>)}</div>
+    </details>}
+    {detail && <div className={`route-detail ${detail.id}`}><div><detail.icon size={17} /><strong>{detail.name}</strong><span>{status(detail.id)}</span></div><details className="channel-method"><summary>这一路的匹配方法</summary><p>{detail.description}</p></details>{forView(detail.id).length ? <dl>{forView(detail.id).map((channel) => <div key={channel.tier}><dt>{channel.tier === "short" ? "短期库" : "长期库"}</dt><dd>{channel.status !== "complete" ? channelIdleReason(channel) : `${channel.input_count} 条检查 / ${channel.matched_count} 条命中${completed ? ` / ${channel.selected_count} 条最终入选` : ""}`}</dd></div>)}</dl> : <p className="route-detail-empty">本次记录未提供该通道的完整统计，不从最终证据反推候选数量。</p>}<ChannelContents key={detail.id} channels={forView(detail.id)} view={detail.id} sources={sources} completed={completed} onSource={onSource} /></div>}
     {focusedLibrary && <LibraryEvidence sources={sources} tier={focusedLibrary} onSource={onSource} />}
     <div className="route-return"><ArrowDown size={13} /><span>召回结果返回并汇合</span></div>
     <div className="route-finish">

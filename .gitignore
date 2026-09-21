@@ -90,6 +90,7 @@ test_results/
 !memory-ui/package.json
 !memory-ui/tsconfig.json
 !memory-system/docs/EVALUATION.json
+!memory-system/docs/RETRIEVAL_ROUTES_BENCHMARK.json
 !memory-system/docs/LIVE_SMOKE.json
 !memory-system/docs/LIVE_QUALITY.json
 !memory-system/docs/LIVE_QUALITY_INITIAL.json

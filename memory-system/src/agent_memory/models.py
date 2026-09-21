@@ -161,9 +161,23 @@ class ExtractionResult(Contract):
 
 class QueryPlan(Contract):
     route: Literal["none", "short", "long", "both"] = "both"
+    response_intent: Literal["direct_answer", "action_plan"] = "direct_answer"
     semantic_queries: list[Annotated[str, Field(max_length=1000)]] = Field(default_factory=list, max_length=3)
     keywords: list[Annotated[str, Field(max_length=200)]] = Field(default_factory=list, max_length=30)
+    problem_breakdown: list[Annotated[str, Field(max_length=500)]] = Field(
+        default_factory=list, max_length=12
+    )
     required_info: list[Annotated[str, Field(max_length=500)]] = Field(default_factory=list, max_length=20)
+    information_gathering: list[Annotated[str, Field(max_length=700)]] = Field(
+        default_factory=list, max_length=20
+    )
+    integration_steps: list[Annotated[str, Field(max_length=700)]] = Field(
+        default_factory=list, max_length=12
+    )
+    action_template: Literal["none", "general_action_plan", "ops_plan_task_cards", "incident_action_plan"] = (
+        "none"
+    )
+    action_elements: list[Annotated[str, Field(max_length=300)]] = Field(default_factory=list, max_length=40)
     depth: int = Field(default=3, ge=1, le=20)
     subject: str | None = None
     predicate: str | None = None
@@ -218,6 +232,7 @@ class RetrievalChannel(Contract):
     input_count: int = Field(default=0, ge=0)
     matched_count: int = Field(default=0, ge=0)
     selected_count: int = Field(default=0, ge=0)
+    elapsed_ms: float = Field(default=0, ge=0)
     detail: str = ""
     query_conditions: dict = Field(default_factory=dict)
     candidates: list[ChannelCandidate] = Field(default_factory=list, max_length=20)
