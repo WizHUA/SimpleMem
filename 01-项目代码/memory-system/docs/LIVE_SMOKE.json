@@ -1,0 +1,104 @@
+{
+  "generated_at": "2026-09-17T06:59:19.641546+00:00",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "data": "synthetic temporary database",
+  "extraction_status": "processed",
+  "durable_count": 2,
+  "durable_contents": [
+    "用户明确要求将“我的回答偏好是中文”存入长期记忆，因此用户偏好以中文回答。",
+    "用户明确要求将“星河项目默认使用 PostgreSQL 数据库”存入长期记忆，因此星河项目默认数据库为 PostgreSQL。"
+  ],
+  "measurements": [
+    {
+      "mode": "baseline",
+      "answer": "你之前告诉过我，你的长期回答偏好是中文。【来源1】",
+      "citations": [
+        1
+      ],
+      "source_count": 2,
+      "acceleration": {
+        "enabled": false,
+        "cache_hit": false,
+        "cache_status": "disabled",
+        "strategy": "exact_context_generation_reuse",
+        "retrieval_ms": 1146.3876999914646,
+        "generation_ms": 747.7835000026971,
+        "total_ms": 1896.0282999905758,
+        "context_tokens_before": 1404,
+        "context_tokens_after": 1404,
+        "avoided_model_calls": 0,
+        "original_generation_ms": null,
+        "token_measurement": "conservative_character_estimate"
+      },
+      "warnings": [
+        "multi_slot_recall: symbolic labels do not restrict other required fields",
+        "fts5_projection: reranked=2; eligible=2",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ]
+    },
+    {
+      "mode": "cold",
+      "answer": "你长期的回答偏好是中文。【来源1】",
+      "citations": [
+        1
+      ],
+      "source_count": 2,
+      "acceleration": {
+        "enabled": true,
+        "cache_hit": false,
+        "cache_status": "miss",
+        "strategy": "exact_context_generation_reuse",
+        "retrieval_ms": 974.6799999848008,
+        "generation_ms": 1028.4797999775037,
+        "total_ms": 2004.2322999797761,
+        "context_tokens_before": 1404,
+        "context_tokens_after": 1404,
+        "avoided_model_calls": 0,
+        "original_generation_ms": null,
+        "token_measurement": "conservative_character_estimate"
+      },
+      "warnings": [
+        "multi_slot_recall: symbolic labels do not restrict other required fields",
+        "fts5_projection: reranked=2; eligible=2",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ]
+    },
+    {
+      "mode": "warm",
+      "answer": "你长期的回答偏好是中文。【来源1】",
+      "citations": [
+        1
+      ],
+      "source_count": 2,
+      "acceleration": {
+        "enabled": true,
+        "cache_hit": true,
+        "cache_status": "hit",
+        "strategy": "exact_context_generation_reuse",
+        "retrieval_ms": 1532.9612999921665,
+        "generation_ms": 0.010000017937272787,
+        "total_ms": 1534.0878999559209,
+        "context_tokens_before": 1404,
+        "context_tokens_after": 1404,
+        "avoided_model_calls": 1,
+        "original_generation_ms": 1028.392200008966,
+        "token_measurement": "conservative_character_estimate"
+      },
+      "warnings": [
+        "multi_slot_recall: symbolic labels do not restrict other required fields",
+        "fts5_projection: reranked=2; eligible=2",
+        "long_term_searched",
+        "required_info_coverage_unverified: retrieval similarity is not entailment"
+      ]
+    }
+  ],
+  "checks": {
+    "durable_memory_created": true,
+    "cross_session_recalled": true,
+    "chinese_preference_answered": true,
+    "warm_cache_hit": true
+  }
+}

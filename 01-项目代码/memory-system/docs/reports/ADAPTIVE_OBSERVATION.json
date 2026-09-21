@@ -1,0 +1,1220 @@
+{
+  "recorded_at": "2026-09-17T08:04:38.254975+00:00",
+  "kind": "real_provider_synthetic_adaptive_observation",
+  "model": "deepseek-flash",
+  "embedding_enabled": false,
+  "facts": [
+    "项目星舟的负责人是林然。",
+    "项目星舟的交付日期是2026年12月18日。",
+    "项目星舟的报告使用中文。"
+  ],
+  "adaptive_query": "项目星舟的负责人、交付日期和报告语言分别是什么？",
+  "adaptive_answer": {
+    "answer_id": "answer_201511128de847d3b0f479b807438472",
+    "generated_text": "项目星舟的负责人是林然【来源1】，交付日期是2026年12月18日【来源2】，报告使用中文【来源3】。",
+    "citations": [
+      1,
+      2,
+      3
+    ],
+    "sources": [
+      {
+        "content": "项目星舟的负责人是林然。",
+        "score": 0.8467835302763754,
+        "source_file": "[memory:mem_db91ee0af98f4f8386adf33b2a6df89c]",
+        "chunk_id": "mem_db91ee0af98f4f8386adf33b2a6df89c:1",
+        "engine": "simple_memory",
+        "metadata": {
+          "memory_id": "mem_db91ee0af98f4f8386adf33b2a6df89c",
+          "version": 1,
+          "tier": "short",
+          "assertion": "stated",
+          "kind": "fact",
+          "subject": "项目星舟",
+          "predicate": "负责人",
+          "value": "林然",
+          "durable": false,
+          "scope_type": "session",
+          "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+          "status": "active",
+          "valid_from": null,
+          "valid_to": null,
+          "matched_views": [
+            "lexical"
+          ],
+          "hierarchy_path": [],
+          "local_override": false,
+          "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+          "support_memory_ids": [],
+          "rank_score": 0.8467835302763754,
+          "age_decay_applied": false,
+          "conflict_pending": [],
+          "recorded_at": "2026-09-17T08:04:40.862434+00:00",
+          "evidence": [
+            {
+              "turn_id": "turn_6384c67941fa4448858580ba25252d80",
+              "event_index": 0,
+              "quote": "项目星舟的负责人是林然。"
+            }
+          ]
+        }
+      },
+      {
+        "content": "项目星舟的交付日期是2026年12月18日。",
+        "score": 0.9300495855929803,
+        "source_file": "[memory:mem_7cbbaca3940545ccaabd2534fff0ca87]",
+        "chunk_id": "mem_7cbbaca3940545ccaabd2534fff0ca87:1",
+        "engine": "simple_memory",
+        "metadata": {
+          "memory_id": "mem_7cbbaca3940545ccaabd2534fff0ca87",
+          "version": 1,
+          "tier": "short",
+          "assertion": "stated",
+          "kind": "fact",
+          "subject": "项目星舟",
+          "predicate": "交付日期",
+          "value": "2026年12月18日",
+          "durable": false,
+          "scope_type": "session",
+          "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+          "status": "active",
+          "valid_from": null,
+          "valid_to": null,
+          "matched_views": [
+            "lexical"
+          ],
+          "hierarchy_path": [],
+          "local_override": false,
+          "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+          "support_memory_ids": [],
+          "rank_score": 0.9300495855929803,
+          "age_decay_applied": false,
+          "conflict_pending": [],
+          "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+          "evidence": [
+            {
+              "turn_id": "turn_017af18d735844aa99035ed1d68cc039",
+              "event_index": 0,
+              "quote": "项目星舟的交付日期是2026年12月18日。"
+            }
+          ]
+        }
+      },
+      {
+        "content": "项目星舟的报告使用中文。",
+        "score": 0.8641672224013426,
+        "source_file": "[memory:mem_53c579f4bc5f478687a6ce48471efc87]",
+        "chunk_id": "mem_53c579f4bc5f478687a6ce48471efc87:1",
+        "engine": "simple_memory",
+        "metadata": {
+          "memory_id": "mem_53c579f4bc5f478687a6ce48471efc87",
+          "version": 1,
+          "tier": "short",
+          "assertion": "stated",
+          "kind": "fact",
+          "subject": "项目星舟",
+          "predicate": "报告语言",
+          "value": "中文",
+          "durable": false,
+          "scope_type": "session",
+          "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+          "status": "active",
+          "valid_from": null,
+          "valid_to": null,
+          "matched_views": [
+            "lexical"
+          ],
+          "hierarchy_path": [],
+          "local_override": false,
+          "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+          "support_memory_ids": [],
+          "rank_score": 0.8641672224013426,
+          "age_decay_applied": false,
+          "conflict_pending": [],
+          "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+          "evidence": [
+            {
+              "turn_id": "turn_c0850432bfbc445d8f5d95c7b66d0c68",
+              "event_index": 0,
+              "quote": "项目星舟的报告使用中文。"
+            }
+          ]
+        }
+      }
+    ],
+    "retrieval_count": 3,
+    "elapsed_ms": 4256,
+    "plan": {
+      "route": "short",
+      "semantic_queries": [
+        "项目星舟 负责人 交付日期 报告语言",
+        "项目星舟 负责人",
+        "星舟 交付日期 报告语言"
+      ],
+      "keywords": [
+        "星舟",
+        "林然",
+        "2026年12月18日",
+        "中文"
+      ],
+      "required_info": [
+        "项目星舟的负责人",
+        "项目星舟的交付日期",
+        "项目星舟的报告语言"
+      ],
+      "depth": 3,
+      "subject": "项目星舟",
+      "predicate": null,
+      "temporal_mode": "current",
+      "as_of": null
+    },
+    "query_steps": [
+      {
+        "order": 1,
+        "phase": "planning",
+        "action": "intent_plan",
+        "input_count": 1,
+        "output_count": 3,
+        "detail": "route=short; depth=3; mode=current"
+      },
+      {
+        "order": 2,
+        "phase": "short_retrieval",
+        "action": "semantic_lexical_symbolic_recall",
+        "input_count": 3,
+        "output_count": 3,
+        "detail": "candidate_limit=6"
+      },
+      {
+        "order": 3,
+        "phase": "long_retrieval",
+        "action": "semantic_lexical_symbolic_recall",
+        "input_count": 0,
+        "output_count": 0,
+        "detail": "candidate_limit=15"
+      },
+      {
+        "order": 4,
+        "phase": "filter",
+        "action": "deduplicate_scope_time_version",
+        "input_count": 3,
+        "output_count": 3,
+        "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+      },
+      {
+        "order": 5,
+        "phase": "selection",
+        "action": "dynamic_k_and_token_budget",
+        "input_count": 3,
+        "output_count": 3,
+        "detail": "target=3; context_tokens=358; evidence_chain_bundles=true"
+      }
+    ],
+    "retrieval_mode": "lexical_baseline",
+    "candidate_count": 3,
+    "selected_k": 3,
+    "context_tokens": 358,
+    "warnings": [
+      "multi_slot_recall: symbolic labels do not restrict other required fields",
+      "fts5_projection: reranked=3; eligible=3",
+      "long_term_searched",
+      "short_evidence_uncertain: one long-term supplement performed",
+      "required_info_coverage_unverified: retrieval similarity is not entailment"
+    ],
+    "acceleration": {
+      "enabled": false,
+      "cache_hit": false,
+      "cache_status": "disabled",
+      "strategy": "exact_context_generation_reuse",
+      "retrieval_ms": 3639.692999946419,
+      "generation_ms": 615.2492000255734,
+      "total_ms": 4256.806099961977,
+      "context_tokens_before": 2640,
+      "context_tokens_after": 2640,
+      "avoided_model_calls": 0,
+      "original_generation_ms": null,
+      "token_measurement": "conservative_character_estimate"
+    },
+    "memory_updates": [
+      {
+        "candidate_count": 3,
+        "evolution": {
+          "applied": [],
+          "review": [],
+          "warnings": []
+        }
+      }
+    ],
+    "channels": [
+      {
+        "view": "lexical",
+        "tier": "short",
+        "status": "complete",
+        "input_count": 3,
+        "matched_count": 3,
+        "selected_count": 3,
+        "detail": "fts5_candidates_bm25_scored"
+      },
+      {
+        "view": "symbolic",
+        "tier": "short",
+        "status": "skipped",
+        "input_count": 0,
+        "matched_count": 0,
+        "selected_count": 0,
+        "detail": "subject_and_predicate_required"
+      },
+      {
+        "view": "semantic",
+        "tier": "short",
+        "status": "disabled",
+        "input_count": 0,
+        "matched_count": 0,
+        "selected_count": 0,
+        "detail": "embedding_not_configured"
+      },
+      {
+        "view": "semantic",
+        "tier": "long",
+        "status": "disabled",
+        "input_count": 0,
+        "matched_count": 0,
+        "selected_count": 0,
+        "detail": "embedding_not_configured"
+      },
+      {
+        "view": "lexical",
+        "tier": "long",
+        "status": "skipped",
+        "input_count": 0,
+        "matched_count": 0,
+        "selected_count": 0,
+        "detail": "no_eligible_memories"
+      },
+      {
+        "view": "symbolic",
+        "tier": "long",
+        "status": "skipped",
+        "input_count": 0,
+        "matched_count": 0,
+        "selected_count": 0,
+        "detail": "no_eligible_memories"
+      }
+    ],
+    "dynamic_k": {
+      "planned_depth": 3,
+      "required_info_count": 3,
+      "candidate_limit": 18,
+      "safety_cap": 20,
+      "target_k": 3,
+      "selected_k": 3,
+      "token_limit": 3000,
+      "used_tokens": 358,
+      "selection_policy": "slot_diversity_complete_evidence_bundles_within_budget",
+      "score_semantics": "relevance_not_truth_confidence"
+    }
+  },
+  "checks": {
+    "adaptive_plan_reported": true,
+    "all_facts_answered": true,
+    "unconfigured_semantic_not_claimed": true,
+    "baseline_does_not_cache": true,
+    "cold_miss": true,
+    "warm_hit": true
+  },
+  "comparison_query": "请用一行列出项目星舟的负责人及交付日期。",
+  "comparison": [
+    {
+      "label": "baseline",
+      "answer": {
+        "answer_id": "answer_d8607589754e41e4a32b5b7660aeb22b",
+        "generated_text": "项目星舟的负责人是林然【来源1】，交付日期是2026年12月18日【来源2】。",
+        "citations": [
+          1,
+          2
+        ],
+        "sources": [
+          {
+            "content": "项目星舟的负责人是林然。",
+            "score": 0.8467835302763754,
+            "source_file": "[memory:mem_db91ee0af98f4f8386adf33b2a6df89c]",
+            "chunk_id": "mem_db91ee0af98f4f8386adf33b2a6df89c:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_db91ee0af98f4f8386adf33b2a6df89c",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "负责人",
+              "value": "林然",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8467835302763754,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.862434+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6384c67941fa4448858580ba25252d80",
+                  "event_index": 0,
+                  "quote": "项目星舟的负责人是林然。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "项目星舟的交付日期是2026年12月18日。",
+            "score": 0.9300495855929803,
+            "source_file": "[memory:mem_7cbbaca3940545ccaabd2534fff0ca87]",
+            "chunk_id": "mem_7cbbaca3940545ccaabd2534fff0ca87:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_7cbbaca3940545ccaabd2534fff0ca87",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "交付日期",
+              "value": "2026年12月18日",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9300495855929803,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_017af18d735844aa99035ed1d68cc039",
+                  "event_index": 0,
+                  "quote": "项目星舟的交付日期是2026年12月18日。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "项目星舟的报告使用中文。",
+            "score": 0.3963398508483255,
+            "source_file": "[memory:mem_53c579f4bc5f478687a6ce48471efc87]",
+            "chunk_id": "mem_53c579f4bc5f478687a6ce48471efc87:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_53c579f4bc5f478687a6ce48471efc87",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "报告语言",
+              "value": "中文",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.3963398508483255,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_c0850432bfbc445d8f5d95c7b66d0c68",
+                  "event_index": 0,
+                  "quote": "项目星舟的报告使用中文。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 3,
+        "elapsed_ms": 2028,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "项目星舟的负责人",
+            "项目星舟的交付日期",
+            "星舟 项目 负责人 交付日期"
+          ],
+          "keywords": [
+            "星舟",
+            "林然",
+            "2026年12月18日",
+            "负责人",
+            "交付日期"
+          ],
+          "required_info": [
+            "项目星舟的负责人",
+            "项目星舟的交付日期"
+          ],
+          "depth": 3,
+          "subject": "星舟",
+          "predicate": "负责人及交付日期",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=15"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "target=3; context_tokens=358; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 3,
+        "selected_k": 3,
+        "context_tokens": 358,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=3; eligible=3",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": false,
+          "cache_hit": false,
+          "cache_status": "disabled",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 1238.154700025916,
+          "generation_ms": 787.9800999653526,
+          "total_ms": 2028.240600018762,
+          "context_tokens_before": 2636,
+          "context_tokens_after": 2636,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [],
+        "channels": [
+          {
+            "view": "lexical",
+            "tier": "short",
+            "status": "complete",
+            "input_count": 3,
+            "matched_count": 3,
+            "selected_count": 3,
+            "detail": "fts5_candidates_bm25_scored"
+          },
+          {
+            "view": "symbolic",
+            "tier": "short",
+            "status": "complete",
+            "input_count": 3,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "exact_subject_predicate"
+          },
+          {
+            "view": "semantic",
+            "tier": "short",
+            "status": "disabled",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "embedding_not_configured"
+          },
+          {
+            "view": "semantic",
+            "tier": "long",
+            "status": "disabled",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "embedding_not_configured"
+          },
+          {
+            "view": "lexical",
+            "tier": "long",
+            "status": "skipped",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "no_eligible_memories"
+          },
+          {
+            "view": "symbolic",
+            "tier": "long",
+            "status": "skipped",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "no_eligible_memories"
+          }
+        ],
+        "dynamic_k": {
+          "planned_depth": 3,
+          "required_info_count": 2,
+          "candidate_limit": 18,
+          "safety_cap": 20,
+          "target_k": 3,
+          "selected_k": 3,
+          "token_limit": 3000,
+          "used_tokens": 358,
+          "selection_policy": "slot_diversity_complete_evidence_bundles_within_budget",
+          "score_semantics": "relevance_not_truth_confidence"
+        }
+      }
+    },
+    {
+      "label": "cold",
+      "answer": {
+        "answer_id": "answer_6bb45a5301484628b3dcd465e3d2cbf8",
+        "generated_text": "项目星舟的负责人是林然，交付日期是2026年12月18日。【来源1】【来源2】",
+        "citations": [
+          1,
+          2
+        ],
+        "sources": [
+          {
+            "content": "项目星舟的负责人是林然。",
+            "score": 0.8467835302763754,
+            "source_file": "[memory:mem_db91ee0af98f4f8386adf33b2a6df89c]",
+            "chunk_id": "mem_db91ee0af98f4f8386adf33b2a6df89c:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_db91ee0af98f4f8386adf33b2a6df89c",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "负责人",
+              "value": "林然",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8467835302763754,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.862434+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6384c67941fa4448858580ba25252d80",
+                  "event_index": 0,
+                  "quote": "项目星舟的负责人是林然。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "项目星舟的交付日期是2026年12月18日。",
+            "score": 0.9300495855929803,
+            "source_file": "[memory:mem_7cbbaca3940545ccaabd2534fff0ca87]",
+            "chunk_id": "mem_7cbbaca3940545ccaabd2534fff0ca87:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_7cbbaca3940545ccaabd2534fff0ca87",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "交付日期",
+              "value": "2026年12月18日",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9300495855929803,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_017af18d735844aa99035ed1d68cc039",
+                  "event_index": 0,
+                  "quote": "项目星舟的交付日期是2026年12月18日。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "项目星舟的报告使用中文。",
+            "score": 0.3963398508483255,
+            "source_file": "[memory:mem_53c579f4bc5f478687a6ce48471efc87]",
+            "chunk_id": "mem_53c579f4bc5f478687a6ce48471efc87:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_53c579f4bc5f478687a6ce48471efc87",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "报告语言",
+              "value": "中文",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.3963398508483255,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_c0850432bfbc445d8f5d95c7b66d0c68",
+                  "event_index": 0,
+                  "quote": "项目星舟的报告使用中文。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 3,
+        "elapsed_ms": 1591,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "项目星舟 负责人",
+            "项目星舟 交付日期"
+          ],
+          "keywords": [
+            "星舟",
+            "负责人",
+            "交付日期",
+            "林然",
+            "2026年12月18日"
+          ],
+          "required_info": [
+            "项目星舟的负责人",
+            "项目星舟的交付日期"
+          ],
+          "depth": 3,
+          "subject": "星舟",
+          "predicate": "负责人及交付日期",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=15"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "target=3; context_tokens=358; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 3,
+        "selected_k": 3,
+        "context_tokens": 358,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=3; eligible=3",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": true,
+          "cache_hit": false,
+          "cache_status": "miss",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 733.831999998074,
+          "generation_ms": 856.6424999735318,
+          "total_ms": 1591.5372999734245,
+          "context_tokens_before": 2636,
+          "context_tokens_after": 2636,
+          "avoided_model_calls": 0,
+          "original_generation_ms": null,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [],
+        "channels": [
+          {
+            "view": "lexical",
+            "tier": "short",
+            "status": "complete",
+            "input_count": 3,
+            "matched_count": 3,
+            "selected_count": 3,
+            "detail": "fts5_candidates_bm25_scored"
+          },
+          {
+            "view": "symbolic",
+            "tier": "short",
+            "status": "complete",
+            "input_count": 3,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "exact_subject_predicate"
+          },
+          {
+            "view": "semantic",
+            "tier": "short",
+            "status": "disabled",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "embedding_not_configured"
+          },
+          {
+            "view": "semantic",
+            "tier": "long",
+            "status": "disabled",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "embedding_not_configured"
+          },
+          {
+            "view": "lexical",
+            "tier": "long",
+            "status": "skipped",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "no_eligible_memories"
+          },
+          {
+            "view": "symbolic",
+            "tier": "long",
+            "status": "skipped",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "no_eligible_memories"
+          }
+        ],
+        "dynamic_k": {
+          "planned_depth": 3,
+          "required_info_count": 2,
+          "candidate_limit": 18,
+          "safety_cap": 20,
+          "target_k": 3,
+          "selected_k": 3,
+          "token_limit": 3000,
+          "used_tokens": 358,
+          "selection_policy": "slot_diversity_complete_evidence_bundles_within_budget",
+          "score_semantics": "relevance_not_truth_confidence"
+        }
+      }
+    },
+    {
+      "label": "warm",
+      "answer": {
+        "answer_id": "answer_2cfa0fa35b2d455e83a96e4ce8d62ac4",
+        "generated_text": "项目星舟的负责人是林然，交付日期是2026年12月18日。【来源1】【来源2】",
+        "citations": [
+          1,
+          2
+        ],
+        "sources": [
+          {
+            "content": "项目星舟的负责人是林然。",
+            "score": 0.8467835302763754,
+            "source_file": "[memory:mem_db91ee0af98f4f8386adf33b2a6df89c]",
+            "chunk_id": "mem_db91ee0af98f4f8386adf33b2a6df89c:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_db91ee0af98f4f8386adf33b2a6df89c",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "负责人",
+              "value": "林然",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.8467835302763754,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.862434+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_6384c67941fa4448858580ba25252d80",
+                  "event_index": 0,
+                  "quote": "项目星舟的负责人是林然。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "项目星舟的交付日期是2026年12月18日。",
+            "score": 0.9300495855929803,
+            "source_file": "[memory:mem_7cbbaca3940545ccaabd2534fff0ca87]",
+            "chunk_id": "mem_7cbbaca3940545ccaabd2534fff0ca87:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_7cbbaca3940545ccaabd2534fff0ca87",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "交付日期",
+              "value": "2026年12月18日",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.9300495855929803,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_017af18d735844aa99035ed1d68cc039",
+                  "event_index": 0,
+                  "quote": "项目星舟的交付日期是2026年12月18日。"
+                }
+              ]
+            }
+          },
+          {
+            "content": "项目星舟的报告使用中文。",
+            "score": 0.3963398508483255,
+            "source_file": "[memory:mem_53c579f4bc5f478687a6ce48471efc87]",
+            "chunk_id": "mem_53c579f4bc5f478687a6ce48471efc87:1",
+            "engine": "simple_memory",
+            "metadata": {
+              "memory_id": "mem_53c579f4bc5f478687a6ce48471efc87",
+              "version": 1,
+              "tier": "short",
+              "assertion": "stated",
+              "kind": "fact",
+              "subject": "项目星舟",
+              "predicate": "报告语言",
+              "value": "中文",
+              "durable": false,
+              "scope_type": "session",
+              "scope_id": "session_5badb3131d354c7487ba922840a17d92",
+              "status": "active",
+              "valid_from": null,
+              "valid_to": null,
+              "matched_views": [
+                "lexical"
+              ],
+              "hierarchy_path": [],
+              "local_override": false,
+              "score_kind": "max_normalized_bm25_cosine_symbolic_hierarchy_entity_link",
+              "support_memory_ids": [],
+              "rank_score": 0.3963398508483255,
+              "age_decay_applied": false,
+              "conflict_pending": [],
+              "recorded_at": "2026-09-17T08:04:40.863138+00:00",
+              "evidence": [
+                {
+                  "turn_id": "turn_c0850432bfbc445d8f5d95c7b66d0c68",
+                  "event_index": 0,
+                  "quote": "项目星舟的报告使用中文。"
+                }
+              ]
+            }
+          }
+        ],
+        "retrieval_count": 3,
+        "elapsed_ms": 1181,
+        "plan": {
+          "route": "short",
+          "semantic_queries": [
+            "项目星舟的负责人",
+            "项目星舟的交付日期"
+          ],
+          "keywords": [
+            "星舟",
+            "负责人",
+            "交付日期",
+            "林然",
+            "2026年12月18日"
+          ],
+          "required_info": [
+            "项目星舟的负责人姓名",
+            "项目星舟的交付日期"
+          ],
+          "depth": 3,
+          "subject": "星舟",
+          "predicate": "负责人及交付日期",
+          "temporal_mode": "current",
+          "as_of": null
+        },
+        "query_steps": [
+          {
+            "order": 1,
+            "phase": "planning",
+            "action": "intent_plan",
+            "input_count": 1,
+            "output_count": 2,
+            "detail": "route=short; depth=3; mode=current"
+          },
+          {
+            "order": 2,
+            "phase": "short_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "candidate_limit=6"
+          },
+          {
+            "order": 3,
+            "phase": "long_retrieval",
+            "action": "semantic_lexical_symbolic_recall",
+            "input_count": 0,
+            "output_count": 0,
+            "detail": "candidate_limit=15"
+          },
+          {
+            "order": 4,
+            "phase": "filter",
+            "action": "deduplicate_scope_time_version",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "local_overrides=0; rerank=bounded_age_decay; facts_and_preferences_protected=true"
+          },
+          {
+            "order": 5,
+            "phase": "selection",
+            "action": "dynamic_k_and_token_budget",
+            "input_count": 3,
+            "output_count": 3,
+            "detail": "target=3; context_tokens=358; evidence_chain_bundles=true"
+          }
+        ],
+        "retrieval_mode": "lexical_baseline",
+        "candidate_count": 3,
+        "selected_k": 3,
+        "context_tokens": 358,
+        "warnings": [
+          "multi_slot_recall: symbolic labels do not restrict other required fields",
+          "fts5_projection: reranked=3; eligible=3",
+          "long_term_searched",
+          "short_evidence_uncertain: one long-term supplement performed",
+          "required_info_coverage_unverified: retrieval similarity is not entailment"
+        ],
+        "acceleration": {
+          "enabled": true,
+          "cache_hit": true,
+          "cache_status": "hit",
+          "strategy": "exact_context_generation_reuse",
+          "retrieval_ms": 1169.705000007525,
+          "generation_ms": 0.03869994543492794,
+          "total_ms": 1181.2022000085562,
+          "context_tokens_before": 2636,
+          "context_tokens_after": 2636,
+          "avoided_model_calls": 1,
+          "original_generation_ms": 856.5529000479728,
+          "token_measurement": "conservative_character_estimate"
+        },
+        "memory_updates": [],
+        "channels": [
+          {
+            "view": "lexical",
+            "tier": "short",
+            "status": "complete",
+            "input_count": 3,
+            "matched_count": 3,
+            "selected_count": 3,
+            "detail": "fts5_candidates_bm25_scored"
+          },
+          {
+            "view": "symbolic",
+            "tier": "short",
+            "status": "complete",
+            "input_count": 3,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "exact_subject_predicate"
+          },
+          {
+            "view": "semantic",
+            "tier": "short",
+            "status": "disabled",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "embedding_not_configured"
+          },
+          {
+            "view": "semantic",
+            "tier": "long",
+            "status": "disabled",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "embedding_not_configured"
+          },
+          {
+            "view": "lexical",
+            "tier": "long",
+            "status": "skipped",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "no_eligible_memories"
+          },
+          {
+            "view": "symbolic",
+            "tier": "long",
+            "status": "skipped",
+            "input_count": 0,
+            "matched_count": 0,
+            "selected_count": 0,
+            "detail": "no_eligible_memories"
+          }
+        ],
+        "dynamic_k": {
+          "planned_depth": 3,
+          "required_info_count": 2,
+          "candidate_limit": 18,
+          "safety_cap": 20,
+          "target_k": 3,
+          "selected_k": 3,
+          "token_limit": 3000,
+          "used_tokens": 358,
+          "selection_policy": "slot_diversity_complete_evidence_bundles_within_budget",
+          "score_semantics": "relevance_not_truth_confidence"
+        }
+      }
+    }
+  ]
+}
